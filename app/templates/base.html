@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+    <head>
+        {% if title %}
+        <title>{{title}} - DreamProject</title>
+        {% else %}
+        <title>Dream Project</title>
+        {% endif %}
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet" media="screen">
+    </head>
+    <body>
+        <div>Dream Project: 
+            <a href="{{ url_for('index') }}">Home</a>
+            {% if g.user.is_authenticated() %}
+            | <a href="{{ url_for('user', username = g.user.username )}}">Your Profile</a>
+            | <form sytle="display=inline;" action="{{url_for('search')}}" method="post" name="search">{{g.search_form.hidden_tag()}}{{g.search_form.search(size=20)}}<input type="submit" value="Search!"></form>
+            | <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+        </div>
+        <hr>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ messages }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+        {% block scripts %}{% endblock %}
+        <form method="post" action="" id="disconnect-form"></form>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+        <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/js/bootstrap.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        $(function () {
+            $(document).on('click', 'a.disconnect', function (e) {
+                e.preventDefault();
+                $('form#disconnect-form')
+                    .attr('action', $(this).attr('href'))
+                    .submit();
+                });
+        });
+        </script>
+    </body>
+</html>
