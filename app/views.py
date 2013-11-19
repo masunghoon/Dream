@@ -30,7 +30,10 @@ def get_locale():
 def index(page=1):
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(body = form.post.data, timestamp = datetime.utcnow(), author = g.user)
+        language = guessLanguage(form.post.data)
+        if language == 'UNKNOWN' or len(language) > 5:
+            language = ''
+        post = Post(body=form.post.data, timestamp=datetime.utcnow(), author=g.user, language=language)
         db.session.add(post)
         db.session.commit()
         flash('Your post is now live!')
