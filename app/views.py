@@ -98,7 +98,7 @@ def after_login(resp):
         db.session.add(user)
         db.session.commit()
         # Make the user follow her/himself
-        db.session.add(user.follow(user))
+#         db.session.add(user.follow(user))
         db.session.commit()
     remember_me = False
     if 'remember_me' in session:
@@ -114,7 +114,7 @@ def after_login(resp):
 def user(username, page=1):
     user = User.query.filter_by(username = username).first()
     if user == None:
-        flash(gettext('User %(nickname)s not found.', nickname = nickname))
+        flash(gettext('User %(username)s not found.', username = username))
         return redirect(url_for('index'))
     posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
     return render_template('user.html',
