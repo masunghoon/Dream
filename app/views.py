@@ -114,7 +114,7 @@ def after_login(resp):
 def user(username, page=1):
     user = User.query.filter_by(username = username).first()
     if user == None:
-        flash('User ' + username + ' not found.')
+        flash(gettext('User %(nickname)s not found.', nickname = nickname))
         return redirect(url_for('index'))
     posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
     return render_template('user.html',

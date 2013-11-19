@@ -6,13 +6,15 @@
         {% else %}
             <title>Dream Project</title>
         {% endif %}
-		<link href="../static/css/app.css" rel="stylesheet">
+		<link href="{{ url_for('.static', filename = 'css/app.css') }}" rel="stylesheet">
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
         <!-- Optional theme -->
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css">
-        
-        <script src="../static/js/moment.min.js"></script>
+        <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
+        {% if g.locale != 'en' %}
+        <script src="{{ url_for('.static', filename = 'js/moment-' + g.locale + '.min.js') }}"></script>
+        {% endif %}
         <script>
             function translate(sourceLang, destLang, sourceId, destId, loadingId) {
                 $(destId).hide();
