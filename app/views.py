@@ -1,16 +1,26 @@
 from social.apps.flask_app import routes
 
-from flask import render_template, redirect, flash, url_for, request, g, session
+from flask import render_template, redirect, flash, url_for, request, g, session, jsonify
 from flask.ext.login import login_required, logout_user, login_user, current_user
+from flask.ext.babel import gettext
+from flask.ext.sqlalchemy import get_debug_queries
 
-from app import app, db, lm, oid, Base
-from forms import LoginForm, EditForm, PostForm
+from guess_language import guessLanguage
+
+from app import app, db, lm, oid, Base, babel
+from forms import LoginForm, EditForm, PostForm, SearchForm
 from models import User, Post, ROLE_USER, ROLE_ADMIN
 from emails import follower_notification
+from translate import microsoft_translate
 
 from datetime import datetime
 
-from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
+
+
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(LANGUAGES.keys())
 
 
 @app.route('/', methods=['GET','POST'])
@@ -30,6 +40,22 @@ def index(page=1):
         title = 'Home',
         form = form,
         posts = posts)
+
+
+@app.route('/delete/<int:id>')
+@login_required
+def delete(id):
+    post = Post.query.get(id)
+    if post == None:
+        flash('Post not found.')
+        return redirect(url_for('index'))
+    if post.author.id != g.user.id:
+        flash('You cannot delete this post.')
+        return redirect(url_for('index'))
+    db.session.delete(post)
+    db.session.commit()
+    flash('Your post has been deleted.')
+    return redirect(url_for('index'))
 
     
 @app.route('/login', methods = ['GET', 'POST'])
@@ -56,13 +82,14 @@ def logout():
 @oid.after_login
 def after_login(resp):
     if resp.email is None or resp.email == "":
-        flash('Invalid login. Please try again.')
+        flash(gettext('Invalid login. Please try again.'))
         return redirect(url_for('login'))
     user = User.query.filter_by(email = resp.email).first()
     if user is None:
         username = resp.nickname
         if username is None or username == "":
             username = resp.email.split('@')[0]
+        username = User.make_valid_username(username)
         username = User.make_unique_username(username)
         user = User(username = username, email = resp.email, role = ROLE_USER)
         db.session.add(user)
@@ -163,38 +190,49 @@ def search():
 @login_required
 def search_results(query):
     results = Post.query.whoosh_search(query, MAX_SEARCH_RESULTS).all()
-    print results
     return render_template('search_results.html',
                            query = query,
                            results = results)
 
 
-##### SOCIAL LOGIN #############################################
- 
-# @app.route('/social_login')
-# def main():
-#     return render_template('home.html')
- 
+##### TRANSLATION #############################################
 
-# @login_required
-# @app.route('/done/')
-# def done():
-#     return render_template('done.html')
-
-
-#@app.route('/logout')
-#def logout():
-#    """Logout view"""
-#    logout_user()
-#    return redirect('/')
+@app.route('/translate', methods=['POST'])
+@login_required
+def translate():
+    return jsonify({
+        'text': microsoft_translate(
+            request.form['text'],
+            request.form['sourceLang'],
+            request.form['destLang']) })
 
 
+@app.before_request
+#def before_reuqest():
+def global_user():
+    g.user = current_user
+    if g.user.is_authenticated():
+        g.user.last_seen = datetime.utcnow()
+        db.session.add(g.user)
+        db.session.commit()
+        g.search_form = SearchForm()
+    g.locale = get_locale()
 
-##### ERROR HANDLER #############################################
+
+@app.after_request
+def after_request(response):
+    for query in get_debug_queries():
+        if query.duration >= DATABASE_QUERY_TIMEOUT:
+            app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statement, query.parameters, query.duration, query.context))
+    return response
+
+
+##### ERROR HANDLING ########################################
 
 @app.errorhandler(404)
 def internal_error(error):
     return render_template('404.html'), 404
+
 
 @app.errorhandler(500)
 def internal_error(error):

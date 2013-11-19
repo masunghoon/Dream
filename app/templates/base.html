@@ -11,6 +11,27 @@
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
         <!-- Optional theme -->
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css">
+        
+        <script src="../static/js/moment.min.js"></script>
+        <script>
+            function translate(sourceLang, destLang, sourceId, destId, loadingId) {
+                $(destId).hide();
+                $(loadingId).show();
+                $.post('/translate', {
+                    text: $(sourceId).text(),
+                    sourceLang: sourceLang,
+                    destLang: destLang
+                }).done(function(translated) {
+                    $(destId).text(translated['text'])
+                    $(loadingId).hide();
+                    $(destId).show();
+                }).fail(function() {
+                    $(destId).text("{{ _('Error: Could not contact server.') }}");
+                    $(loadingId).hide();
+                    $(destId).show();
+                });
+            }
+        </script>
     </head>
     <body>
         <div class="navbar navbar-inverse navbar-fixed-top">
@@ -25,7 +46,7 @@
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
-                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('index') }}">{{ _('Home') }}</a></li>
                         {% if g.user.is_authenticated() %}
                         <li><a href="{{ url_for('user', username = g.user.username )}}">Your Profile</a></li>
                         {% endif %}
@@ -101,6 +122,7 @@
         </footer>
         </div>
         {% block scripts %}{% endblock %}
+        
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
         <!-- Latest compiled and minified JavaScript -->
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script> 

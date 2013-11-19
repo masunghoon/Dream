@@ -29,6 +29,10 @@ class User(db.Model):
         lazy = 'dynamic')
 
     @staticmethod
+    def make_valid_username(username):
+        return re.sub('[^a-zA-Z0-9_\.]','', username)
+    
+    @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(username = username).first() == None:
             return username
@@ -81,7 +85,8 @@ class Post(db.Model):
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-
+    language = db.Column(db.String(5))
+    
     def __repr__(self):
         return '<Post %r>' % (self.body)
 

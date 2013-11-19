@@ -8,6 +8,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext import login
 from flask.ext.openid import OpenID
 from flask.ext.mail import Mail
+from flask.ext.babel import Babel
 
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -20,12 +21,12 @@ from social.apps.flask_app.template_filters import backends
 
 from datetime import datetime
 
-
 # App
 app = Flask(__name__)
 app.config.from_object('config')
 
-from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
+from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, LANGUAGES
+from app.momentjs import momentjs
 
 # DB
 db = SQLAlchemy(app)
@@ -69,9 +70,15 @@ if not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info('microblog startup')
 
+# momentjs
+app.jinja_env.globals['momentjs'] = momentjs
 
 # Mailing
 mail = Mail(app)
+
+# I18n and L10n
+babel = Babel(app)
+
 
 from app import models
 from app import views
@@ -84,16 +91,6 @@ def load_user(userid):
     except (TypeError, ValueError):
         pass
 
-
-@app.before_request
-#def before_reuqest():
-def global_user():
-    g.user = login.current_user
-    if g.user.is_authenticated():
-        g.user.last_seen = datetime.utcnow()
-        db.session.add(g.user)
-        db.session.commit()
-        g.search_form = SearchForm()
 
 @app.teardown_appcontext
 def commit_on_success(error=None):
