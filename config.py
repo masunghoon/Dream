@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from app import app
 
 app.debug = True
@@ -10,7 +11,10 @@ SESSION_COOKIE_NAME = 'dream_project'
 import os 
 basedir = os.path.abspath(os.path.dirname(__file__))
 SQLALCHEMY_DATABASE_URI = 'mysql://root:root@112.170.48.13/Dream'
-SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+# SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+SQLALCHEMY_RECORD_QUERIES = True
+# slow database query threshold (in seconds)
+DATABASE_QUERY_TIMEOUT = 0.5
 DEBUG_TB_INTERCEPT_REDIRECTS = False
 SESSION_PROTECTION = 'strong'
 
@@ -41,6 +45,18 @@ POSTS_PER_PAGE = 3
 ##### SEARCHING ##################################
 WHOOSH_BASE = os.path.join(basedir, 'search.db')
 MAX_SEARCH_RESULTS = 50
+
+##### I18n and L10n ##############################
+# available languages
+LANGUAGES = {
+    'en': 'English',
+    'es': 'Español',
+    'ko': 'Korean'
+}
+
+# microsoft translation service
+MS_TRANSLATOR_CLIENT_ID = 'Dream_project' # enter your MS translator app id here
+MS_TRANSLATOR_CLIENT_SECRET = 'PyFBJRYDzH8DKqp+9bdU/hBFALTQcahMmcqjL83fe2I=' # enter your MS translator app secret here
 
 ##### SOCIAL AUTH ################################
 SOCIAL_AUTH_LOGIN_URL = '/login'
