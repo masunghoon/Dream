@@ -13,6 +13,8 @@ from flask.ext.babel import Babel
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+from werkzeug.contrib.fixers import ProxyFix
+
 sys.path.append('../..')
 
 from social.apps.flask_app.routes import social_auth
@@ -24,6 +26,8 @@ from datetime import datetime
 # App
 app = Flask(__name__)
 app.config.from_object('config')
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, LANGUAGES
 from app.momentjs import momentjs

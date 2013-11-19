@@ -10,9 +10,9 @@ SESSION_COOKIE_NAME = 'dream_project'
 ##### DATABASE ####################################
 import os 
 basedir = os.path.abspath(os.path.dirname(__file__))
-SQLALCHEMY_DATABASE_URI = 'mysql://root:root@112.170.48.13/Dream'
-# SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+
 SQLALCHEMY_RECORD_QUERIES = True
+SQLALCHEMY_DATABASE_URI = 'mysql://apps:apps@localhost/apps'
 # slow database query threshold (in seconds)
 DATABASE_QUERY_TIMEOUT = 0.5
 DEBUG_TB_INTERCEPT_REDIRECTS = False
@@ -27,7 +27,6 @@ OPENID_PROVIDERS = [
 
 ##### MAILING ####################################
 # mail server settings
-# MAIL_SERVER = 'smtp.googlemail.com'
 MAIL_SERVER = 'smtp.cafe24.com'
 MAIL_PORT = 587
 MAIL_USE_TLS = True
@@ -37,7 +36,6 @@ MAIL_PASSWORD = 'admin9988'
 
 # administrator list
 ADMINS = ['admin@massi.kr']
-# ADMINS = ['masunghoon@gmail.com']
 
 ##### PAGINATION #################################
 POSTS_PER_PAGE = 3
@@ -55,8 +53,8 @@ LANGUAGES = {
 }
 
 # microsoft translation service
-MS_TRANSLATOR_CLIENT_ID = 'Dream_project' # enter your MS translator app id here
-MS_TRANSLATOR_CLIENT_SECRET = 'PyFBJRYDzH8DKqp+9bdU/hBFALTQcahMmcqjL83fe2I=' # enter your MS translator app secret here
+MS_TRANSLATOR_CLIENT_ID = 'Dream_project'
+MS_TRANSLATOR_CLIENT_SECRET = 'PyFBJRYDzH8DKqp+9bdU/hBFALTQcahMmcqjL83fe2I='
 
 ##### SOCIAL AUTH ################################
 SOCIAL_AUTH_LOGIN_URL = '/login'

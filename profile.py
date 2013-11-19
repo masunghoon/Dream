@@ -1,4 +1,4 @@
-#!venv/mini/bin/python
+#!flask/bin/python
 from werkzeug.contrib.profiler import ProfilerMiddleware
 from app import app
 

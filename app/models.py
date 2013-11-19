@@ -4,6 +4,7 @@ from app import app, db
 from social.apps.flask_app import models
 
 import flask.ext.whooshalchemy as whooshalchemy
+import re
 
 ROLE_USER = 0
 ROLE_ADMIN = 1

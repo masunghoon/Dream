@@ -1,4 +1,4 @@
-#!venv/mini/bin/python
+#!flask/bin/python
 import os
 import unittest
 

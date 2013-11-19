@@ -1,10 +1,10 @@
-#!venv/mini/bin/python
+#!flask/bin/python
 import os
 import sys
 if sys.platform == 'wn32':
     pybabel = 'flask\\Scripts\\pybabel'
 else:
-    pybabel = 'venv/mini/bin/pybabel'
+    pybabel = 'flask/bin/pybabel'
 if len(sys.argv) != 2:
     print "usage: tr_init <language-code>"
     sys.exit(1)
