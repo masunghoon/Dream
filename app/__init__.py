@@ -9,6 +9,7 @@ from flask.ext import login
 from flask.ext.openid import OpenID
 from flask.ext.mail import Mail
 from flask.ext.babel import Babel
+from flask.ext.restful import Api, Resource, reqparse
 
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -32,6 +33,10 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, LANGUAGES
 from app.momentjs import momentjs
 
+# RESTful API
+api = Api(app)
+
+
 # DB
 db = SQLAlchemy(app)
 db.metadata.bind = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
@@ -42,14 +47,13 @@ engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'],
 Base = declarative_base()
 # Base.query = db_session.query_property()
 
+# authentication
 app.register_blueprint(social_auth)
 social_storage = init_social(app, Base, db.session)
 
 # Login Manager
 lm = login.LoginManager()
-#lm.login_view = 'main'
 lm.login_message = ''
-#lm.setup_app(app)
 lm.init_app(app)
 lm.login_view = 'login'
 

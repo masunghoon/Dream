@@ -1,3 +1,6 @@
 *.pyc
 flask
 backup
+config.py
+run.py
+runp.py

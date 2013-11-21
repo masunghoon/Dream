@@ -20,10 +20,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     username = db.Column(db.String(64), unique = True)
     email = db.Column(db.String(120), index = True, unique = True)
+    password = db.Column(db.String(128))
     role = db.Column(db.SmallInteger, default = ROLE_USER)
     posts = db.relationship('Post', backref = 'author', lazy = 'dynamic')
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime)
+    birthday = db.Column(db.String(8))
+    login_fault = db.Column(db.SmallInteger, default=0)         # if bigger than 5 = blocked
     followed = db.relationship('User', 
         secondary = followers, 
         primaryjoin = (followers.c.follower_id == id), 
@@ -61,25 +64,25 @@ class User(db.Model):
 
     def avatar(self, size):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
-        
+
     def follow(self, user):
         if not self.is_following(user):
             self.followed.append(user)
             return self
-            
+
     def unfollow(self, user):
         if self.is_following(user):
             self.followed.remove(user)
             return self
-            
+
     def is_following(self, user):
         return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
     def followed_posts(self):
         return Post.query.outerjoin(followers, (followers.c.followed_id == Post.user_id)).filter(or_(followers.c.follower_id == self.id, Post.user_id == self.id)).order_by(Post.timestamp.desc())
-        
+
     def __repr__(self):
-        return '<User %r>' % (self.username)    
+        return '<User %r>' % (self.username)
         
 class Post(db.Model):
     __searchable__ = ['body']
@@ -89,8 +92,25 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     language = db.Column(db.String(5))
-    
+
     def __repr__(self):
         return '<Post %r>' % (self.body)
 
+
+class Bucket(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    title = db.Column(db.String(256))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    level = db.Column(db.String(8))
+    is_live = db.Column(db.SmallInteger, default=0)         # live:0 ,done:1, deleted:9
+    is_private = db.Column(db.SmallInteger, default=0)      # private:1, public:0
+    reg_date = db.Column(db.DateTime)
+    deadline = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Bucket %r>' % (self.title)
+
+
 whooshalchemy.whoosh_index(app, Post)
+
+    

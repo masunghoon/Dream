@@ -7,13 +7,12 @@
             <title>Dream Project</title>
         {% endif %}
 		<link href="{{ url_for('.static', filename = 'css/app.css') }}" rel="stylesheet">
-        <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-        <!-- Optional theme -->
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css">
+        <!--  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css"> -->
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
+        <script src="{{ url_for('.static', filename = 'js/bucket.js') }}"</script>
         {% if g.locale != 'en' %}
-        <script src="{{ url_for('.static', filename = 'js/moment-' + g.locale + '.min.js') }}"></script>
+        <!-- <script src="{{ url_for('.static', filename = 'js/moment-' + 'g.locale' + '.min.js') }}"></script> -->
         {% endif %}
         <script>
             function translate(sourceLang, destLang, sourceId, destId, loadingId) {
@@ -56,24 +55,32 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li>
                             {% if g.user.is_authenticated() %}
-                                <button type="button" class="btn btn-success navbar-btn" data-href="{{url_for('logout')}}">
-                                    <span class="glyphicon glyphicon-user"></span> Logout
-                                </button>
-                            {% else %}
-        				    <!-- Split button -->
+                            <!-- Single button -->
                                 <div class="btn-group">
-                                  <button type="button" class="btn btn-success navbar-btn" data-href="{{url_for('login')}}">Sign in</button>
-                                  <button type="button" class="btn btn-success dropdown-toggle navbar-btn" data-toggle="dropdown">
+                                  <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
+                                    <span class="glyphicon glyphicon-user"></span> Profile <span class="caret"></span>
+                                  </button>
+                                  <ul class="dropdown-menu" role="menu">
+                                    <li><a href="{{ url_for('user', username = g.user.username )}}">User Profile</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="{{url_for('logout')}}">Sign out</a></li>
+                                  </ul>
+                                </div>
+                            {% else %}
+                              <!-- Split button -->
+                                <div class="btn-group">
+                                  <button type="button" class="btn btn-default navbar-btn" data-href="{{url_for('login')}}">
+                                      <span class="glyphicon glyphicon-user"></span> Sign in</button>
+                                  <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
                                     <span class="caret"></span>
                                     <span class="sr-only">Toggle Dropdown</span>
                                   </button>
                                   <ul class="dropdown-menu" role="menu">
-                                    <li><a href="{{ url_for("social.auth", backend="twitter") }}"><img src="../static/img/twt_login.png" width="130"></a> </li>
-                                    <li><a href="{{ url_for("social.auth", backend="facebook") }}">Facebook</a> </li>
+                                    <li><a href="{{ url_for("social.auth", backend="facebook") }}">Sign up with Facebook</a></li>
                                     <li class="divider"></li>
-                                    <li><a href="{{ url_for('login')}}">Sign Up</a></li>
+                                    <li><a href="{{ url_for('register')}}">Register</a></li>
                                   </ul>
-                                </div>
+                                </div>       
                             {% endif %}
                         </li>
                     </ul>
@@ -123,10 +130,9 @@
                 <p>© Company 2013</p>
         </footer>
         </div>
-        {% block scripts %}{% endblock %}
         
+        <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-        <!-- Latest compiled and minified JavaScript -->
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script> 
         <form method="post" action="" id="disconnect-form"></form>
         <script type="text/javascript">
@@ -142,5 +148,8 @@
             });
         });
         </script>
+        <script type="text/javascript">
+        {% block scripts %}{% endblock %}
+        </script>      
     </body>
 </html>
