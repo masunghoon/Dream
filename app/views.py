@@ -126,7 +126,7 @@ def oid_login():
     if form.validate_on_submit():
         session['remember_me'] = form.remember_me.data
         return oid.try_login(form.openid.data, ask_for = ['nickname','email'])
-    return render_template('login.html',
+    return render_template('login2.html',
                            title = 'Sign in',
                            form = form,
                            providers = app.config['OPENID_PROVIDERS'])
@@ -286,13 +286,6 @@ def after_request(response):
     return response
 
 
-##### Routes for RESTful API #################################
-
-@app.route('/buckets')
-def show_buckets():
-    return render_template('bucketlist.html')
-
-
 ##### for RESTful API #######################################
 
 @app.route('/api/v0.1/buckets', methods=['GET'])
@@ -310,9 +303,9 @@ def get_buckets():
     return jsonify({'buckets':data}), 200
 
 
-@app.route('/api/v0.1/buckets/<int:bkt_id>', methods=['GET'])
-def get_bucket(bkt_id):
-    bkt = Bucket.query.filter_by(id = bkt_id).first()
+@app.route('/api/v0.1/buckets/<int:id>', methods=['GET'])
+def get_bucket(id):
+    bkt = Bucket.query.filter_by(id = id).first()
     data = {
         'id':bkt.id,
         'user_id':bkt.user_id,
@@ -332,9 +325,9 @@ def create_bucket():
     return jsonify({'status':'success'}), 201
 
 
-@app.route('/api/v0.1/buckets/<int:bkt_id>', methods=['PUT'])
-def modify_bucket(bkt_id):
-    bkt = Bucket.query.filter_by(id = bkt_id).first()
+@app.route('/api/v0.1/buckets/<int:id>', methods=['PUT'])
+def modify_bucket(id):
+    bkt = Bucket.query.filter_by(id = id).first()
     bkt.title = request.json.get('title', bkt.title)
     bkt.level = request.json.get('level', bkt.level)
     bkt.is_live = request.json.get('is_live', bkt.is_live)
@@ -344,12 +337,19 @@ def modify_bucket(bkt_id):
     return jsonify({'status':'sucess'}), 201
     
     
-@app.route('/api/v0.1/buckets/<int:bkt_id>', methods=['DELETE'])
-def del_bucket(bkt_id):
-    bkt = Bucket.query.filter_by(id = bkt_id).first()
+@app.route('/api/v0.1/buckets/<int:id>', methods=['DELETE'])
+def del_bucket(id):
+    bkt = Bucket.query.filter_by(id = id).first()
     db.session.delete(bkt)
     db.session.commit()
     return jsonify({'status':'success'}), 201
+
+
+##### Routes for RESTful API #################################
+
+@app.route('/bucketlist')
+def show_buckets():
+    return render_template('bucketlist.html')
 
 
 ##### RESTful API with Flask-restful  ##################################
@@ -358,11 +358,12 @@ bucket_fields = {
     'id': fields.Integer,
     'user_id': fields.Integer,
     'title': fields.String,
+    'description':fields.String,
     'level': fields.String,
     'is_live': fields.Integer,
     'is_private': fields.Integer,
     'reg_date': fields.String,
-#     'uri': fields.Url('bucket')
+    'uri': fields.Url('bucket'),
 }
 
 class BucketListAPI(Resource):
@@ -371,6 +372,7 @@ class BucketListAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
+        self.reqparse.add_argument('description', type=str, default="", location='json')
         self.reqparse.add_argument('level', type=str, default="1", location='json')
         self.reqparse.add_argument('is_live', type=int, default=0, location='json')
         self.reqparse.add_argument('is_private', type=int, default=0, location='json')
@@ -380,28 +382,26 @@ class BucketListAPI(Resource):
 
     def get(self):
         data = []
-        bkt = Bucket.query.filter_by(user_id = g.user.id)\
-                          .filter_by(is_live = '0')\
-                          .all()
+        bkt = Bucket.query.filter_by(user_id = g.user.id).all()
         for i in bkt:
             data.append({
                 'id':i.id,
                 'user_id':i.user_id,
                 'title':i.title,
+                'description':i.description,
                 'level':i.level,
                 'is_live':i.is_live,
                 'is_private':i.is_private,
                 'reg_date':i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
             })
-#         return {'buckets':data}, 200 
         return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
-#         return {'buckets': marshal(data, bucket_fields)}, 200
     
     def post(self):
         args = self.reqparse.parse_args()
         if not request.json or not 'title' in request.json:
             abort(400)
         bkt = Bucket(title=args['title'], 
+                     description=args['description'],
                      user_id=g.user.id, 
                      level=args['level'], 
                      is_live=args['is_live'],
@@ -418,6 +418,7 @@ class BucketAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
+        self.reqparse.add_argument('description', type=str, default="", location='json')
         self.reqparse.add_argument('level', type=str, default="1", location='json')
         self.reqparse.add_argument('is_live', type=int, default=0, location='json')
         self.reqparse.add_argument('is_private', type=int, default=0, location='json')
@@ -425,34 +426,36 @@ class BucketAPI(Resource):
 #         self.reqparse.add_argument('deadline', type=datetime, default=strptime("31 Dec 2099" "%d %b %y"), location='json')
         super(BucketAPI, self).__init__()
 
-    def get(self, bkt_id):
-        bkt = Bucket.query.filter_by(id = bkt_id).first()
+    def get(self, id):
+        bkt = Bucket.query.filter_by(id = id).first()
         data = {
             'id':bkt.id,
             'user_id':bkt.user_id,
             'title':bkt.title.encode('utf-8'),
+            'description':bkt.description('utf-8'),
         }
-        return {'buckets':data}, 200
+        return {'bucket':data}, 200
     
-    def put(self, bkt_id):
-        bkt = Bucket.query.filter_by(id = bkt_id).first()
+    def put(self, id):
+        bkt = Bucket.query.filter_by(id = id).first()
         bkt.title = request.json.get('title', bkt.title)
+        bkt.description = request.json.get('description', bkt.description)
         bkt.level = request.json.get('level', bkt.level)
         bkt.is_live = request.json.get('is_live', bkt.is_live)
         bkt.is_private = request.json.get('is_private', bkt.is_private)
         bkt.deadline = request.json.get('deadline', bkt.deadline)
         db.session.commit()
-        return {'status':'sucess'}, 201
+        return {'bucket':marshal(bkt,bucket_fields)}, 201
     
     def delete(self, id):
-        bkt = Bucket.query.filter_by(id = bkt_id).first()
+        bkt = Bucket.query.filter_by(id = id).first()
         db.session.delete(bkt)
         db.session.commit()
         return {'status':'success'}, 201
 
     
 api.add_resource(BucketListAPI, '/api/buckets', endpoint='buckets')
-api.add_resource(BucketAPI, '/api/buckets/<int:bkt_id>', endpoint='bucket')
+api.add_resource(BucketAPI, '/api/buckets/<int:id>', endpoint='bucket')
 
 ##### ERROR HANDLING ########################################
 

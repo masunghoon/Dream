@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 
+{% block stylesheet %}
+<link href="{{ url_for('.static', filename = 'css/bootstrap-datetimepicker.css') }}" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <h1>{{g.user.username}}'s Bucket Lists</h1>
 {% include 'flash.html' %}
-<div id="main" class="well">
+
+<div id="bucketMain">
     <table class="table table-striped">
-        <tr><td style="width: 1px;"></td><td><b>Task</b></td><td><b>Options</b></td></tr>
+        <tr><td style="width: 15%;"></td><td style="width: 60%;"><b>Task</b></td><td style="width: 25%;"><b>Options</b></td></tr>
         <!-- ko foreach: tasks -->
         <tr>
             <td>
@@ -14,8 +18,8 @@
             </td>
             <td><p><b data-bind="text: title"></b></p><p data-bind="text: description"></p></td>
             <td>
-                <button data-bind="click: $parent.beginEdit" class="btn btn-default btn-sm">Edit</button>
-                <button data-bind="click: $parent.remove" class="btn btn-default btn-sm">Delete</button>
+                <!-- <button data-bind="click: $parent.beginEdit" class="btn btn-default btn-sm">Edit</button> -->
+                <button data-bind="click: $parent.delFromList" class="btn btn-default btn-sm">Delete</button>
                 <span data-bind="visible: done">
                     <button data-bind="click: $parent.markInProgress" class="btn btn-default btn-sm">Mark In Progress</button>
                 </span>
@@ -28,8 +32,47 @@
     </table>
     <button data-bind="click: beginAdd" class="btn btn-primary">Add Task</button>
 </div>
+
+<!-- Modal -->
+<div id="addBucket" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="addDialogLabel">Add Task</h3>
+        </div>
+        <div class="modal-body">
+            <form class="form-horizontal">
+                <div class="control-group">
+                    <label class="control-label" for="inputTask">Task</label>
+                    <div class="controls">
+                        <input data-bind="value: title" type="text" id="inputTask" placeholder="Task title" style="width: 150px;">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="inputDescription">Description</label>
+                    <div class="controls">
+                        <input data-bind="value: description" type="text" id="inputDescription" placeholder="Description" style="width: 300px;">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button data-bind="click: addTask" class="btn btn-primary">Add Task</button>
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 {% endblock %}
 {% block scripts %}
-        var tasksViewModel = new TasksViewModel();
-        ko.applyBindings(new TasksViewModel(), $('#main')[0]);
+<script src="{{ url_for('.static', filename = 'js/bootstrap-datetimepicker.min.js') }}"></script>
+<script>
+var tasksViewModel = new TasksViewModel();
+var addTaskViewModel = new AddTaskViewModel();
+ko.applyBindings(addTaskViewModel, $('#addBucket')[0]);
+ko.applyBindings(tasksViewModel, $('#BucketMain')[0]);
+alert("Apply Binding Done!!");
+</script>
 {% endblock %}

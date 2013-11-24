@@ -23,51 +23,56 @@ function TasksViewModel() {
         };
         return $.ajax(request);
     }
-//    self.updateTask = function(task, newTask) {
-//        var i = self.tasks.indexOf(task);
-//        self.tasks()[i].uri(newTask.uri);
-//        self.tasks()[i].title(newTask.title);
-//        self.tasks()[i].description(newTask.description);
-//        self.tasks()[i].done(newTask.done);
-//    }
-//
-//    self.beginAdd = function() {
-//        $('#add').modal('show');
-//    }
-//    self.add = function(task) {
-//        self.ajax(self.tasksURI, 'POST', task).done(function(data) {
-//            self.tasks.push({
-//                uri: ko.observable(data.task.uri),
-//                title: ko.observable(data.task.title),
-//                description: ko.observable(data.task.description),
-//                done: ko.observable(data.task.done)
-//            });
-//        });
-//    }
-//    self.beginEdit = function(task) {
-//        editTaskViewModel.setTask(task);
-//        $('#edit').modal('show');
-//    }
+    self.updateTask = function(task, newTask) {
+        var i = self.tasks.indexOf(task);
+        self.tasks()[i].uri(newTask.uri);
+        self.tasks()[i].title(newTask.title);
+       	self.tasks()[i].description(newTask.description);
+        self.tasks()[i].done(newTask.is_live);
+    }
+
+   self.beginAdd = function() {
+       $('#addBucket').modal('show');
+   }
+   self.add = function(task) {
+       self.ajax(self.tasksURI, 'POST', task).done(function(data) {
+           self.tasks.push({
+               uri: ko.observable(data.task.uri),
+               title: ko.observable(data.task.title),
+               description: ko.observable(data.task.description)
+               // done: ko.observable(data.task.done)
+           });
+       });
+   }
+   // self.beginEdit = function(task) {
+   //     editTaskViewModel.setTask(task);
+   //     $('#edit').modal('show');
+   // }
 //    self.edit = function(task, data) {
 //        self.ajax(task.uri(), 'PUT', data).done(function(res) {
 //            self.updateTask(task, res.task);
 //        });
 //    }
-//    self.remove = function(task) {
-//        self.ajax(task.uri(), 'DELETE').done(function() {
-//            self.tasks.remove(task);
-//        });
-//    }
-//    self.markInProgress = function(task) {
-//        self.ajax(task.uri(), 'PUT', { done: false }).done(function(res) {
-//            self.updateTask(task, res.task);
-//        });
-//    }
-//    self.markDone = function(task) {
-//        self.ajax(task.uri(), 'PUT', { done: true }).done(function(res) {
-//            self.updateTask(task, res.task);
-//        });
-//    }
+    // self.remove = function(task) {
+    //     self.ajax(task.uri(), 'DELETE').done(function() {
+    //         self.tasks.remove(task);
+    //     });
+    // }
+    self.delFromList = function(task) {
+    	self.ajax(task.uri(), 'PUT', { is_live: 9 }).done(function(res) {
+    		self.updateTask(task. res.bucket);
+    	});
+    }
+    self.markInProgress = function(task) {
+        self.ajax(task.uri(), 'PUT', { is_live: 0 }).done(function(res) {
+            self.updateTask(task, res.bucket);
+        });
+    }
+    self.markDone = function(task) {
+        self.ajax(task.uri(), 'PUT', { is_live: 1 }).done(function(res) {
+            self.updateTask(task, res.bucket);
+        });
+    }
 //    self.beginLogin = function() {
 //        $('#login').modal('show');
 //    }
@@ -77,10 +82,10 @@ function TasksViewModel() {
         	
             for (var i = 0; i < data.buckets.length; i++) {
                 self.tasks.push({
-//                    uri: ko.observable(data.buckets[i].uri),
+                    uri: ko.observable(data.buckets[i].uri),
                     title: ko.observable(data.buckets[i].title),
-                    description: ko.observable(data.buckets[i].description),
-                    done: ko.observable(data.buckets[i].done)
+                   	description: ko.observable(data.buckets[i].description),
+                    done: ko.observable(data.buckets[i].is_live)
                 });
             }
         });
@@ -88,3 +93,32 @@ function TasksViewModel() {
 
     self.do();
 }
+
+function AddTaskViewModel() {
+    var self = this;
+    self.title = ko.observable();
+    self.description = ko.observable();
+
+    self.addTask = function() {
+        $('#addBucket').modal('hide');
+        tasksViewModel.add({
+            title: self.title(),
+			description: self.description(),
+            // private: self.private()
+        });
+        self.title("");
+        self.description("");
+    }
+}
+
+$(function () {
+    $(document).on('click', 'a.disconnect', function (e) {
+        e.preventDefault();
+        $('form#disconnect-form')
+            .attr('action', $(this).attr('href'))
+            .submit();
+    });
+    $("button[data-href]").click( function() {
+        location.href = $(this).attr("data-href");
+    });
+});

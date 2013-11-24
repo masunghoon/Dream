@@ -1,6 +1,10 @@
 *.pyc
+*.swp
 flask
 backup
 config.py
 run.py
 runp.py
+tmp
+search.db
+

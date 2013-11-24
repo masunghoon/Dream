@@ -2,6 +2,11 @@
 
 {% block content %}
 <h1>Login</h1>
+<hr>
+<br>
+<a href="{{ url_for("social.auth", backend="facebook") }}"><h3>Log in with Facebook</h3></a> 
+<br>
+<h3>or Using Email/Password</h3>
 <form action="" method="post" name="login">
     {{form.hidden_tag()}}
     <table>

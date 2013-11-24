@@ -63,7 +63,7 @@ class User(db.Model):
         return unicode(self.id)
 
     def avatar(self, size):
-        return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
+        return 'http://s.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
     def follow(self, user):
         if not self.is_following(user):
@@ -99,7 +99,8 @@ class Post(db.Model):
 
 class Bucket(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    title = db.Column(db.String(256))
+    title = db.Column(db.String(128))
+    description = db.Column(db.String(512))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     level = db.Column(db.String(8))
     is_live = db.Column(db.SmallInteger, default=0)         # live:0 ,done:1, deleted:9

@@ -8,13 +8,12 @@
         {% endif %}
 		<link href="{{ url_for('.static', filename = 'css/app.css') }}" rel="stylesheet">
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-		{% block stylesheet %}{% endblock %}
         <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-        <script src="{{ url_for('.static', filename = 'js/bootstrap.min.js') }}"></script>
-        <script src="{{ url_for('.static', filename = 'js/bucket.js') }}"></script>
+        <script src="{{ url_for('.static', filename = 'js/bootstrap.min.js') }}"</script>
+        <script src="{{ url_for('.static', filename = 'js/bucket.js') }}"</script>
+
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
-		
         {% if g.locale != 'en' %}
         <!-- <script src="{{ url_for('.static', filename = 'js/moment-' + 'g.locale' + '.min.js') }}"></script> -->
         {% endif %}
@@ -51,7 +50,7 @@
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
-                        <li><a href="{{ url_for('index') }}">{{ _('Timeline') }}</a></li>
+                        <li><a href="{{ url_for('index') }}">{{ _('Home') }}</a></li>
                         {% if g.user.is_authenticated() %}
                         <li><a href="http://masunghoon.iptime.org:5000/bucketlist">{{ _('Bucket List') }}</a></li>
                         {% endif %}
@@ -134,6 +133,19 @@
 
         
         <form method="post" action="" id="disconnect-form"></form>
+        <script type="text/javascript">
+        $(function () {
+            $(document).on('click', 'a.disconnect', function (e) {
+                e.preventDefault();
+                $('form#disconnect-form')
+                    .attr('action', $(this).attr('href'))
+                    .submit();
+            });
+            $("button[data-href]").click( function() {
+                location.href = $(this).attr("data-href");
+            });
+        });
+        </script>
         {% block scripts %}{% endblock %}
     </body>
 </html>
