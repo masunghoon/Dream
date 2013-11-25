@@ -363,6 +363,7 @@ bucket_fields = {
     'is_live': fields.Integer,
     'is_private': fields.Integer,
     'reg_date': fields.String,
+    'deadline': fields.String,
     'uri': fields.Url('bucket'),
 }
 
@@ -377,39 +378,46 @@ class BucketListAPI(Resource):
         self.reqparse.add_argument('is_live', type=int, default=0, location='json')
         self.reqparse.add_argument('is_private', type=int, default=0, location='json')
         self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
-#         self.reqparse.add_argument('deadline', type=datetime, default=strptime("31 Dec 2099" "%d %b %y"), location='json')
+        self.reqparse.add_argument('deadline', type=str, location='json')
         super(BucketListAPI, self).__init__()
 
     def get(self):
         data = []
         bkt = Bucket.query.filter_by(user_id = g.user.id).all()
         for i in bkt:
-            data.append({
-                'id':i.id,
-                'user_id':i.user_id,
-                'title':i.title,
-                'description':i.description,
-                'level':i.level,
-                'is_live':i.is_live,
-                'is_private':i.is_private,
-                'reg_date':i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
-            })
+            if i.is_live < 9:
+                data.append({
+                    'id':i.id,
+                    'user_id':i.user_id,
+                    'title':i.title,
+                    'description':i.description,
+                    'level':i.level,
+                    'is_live':i.is_live,
+                    'is_private':i.is_private,
+                    'reg_date':i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    'deadline':i.deadline.strftime("%Y-%m-%d"),
+                })
         return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
     
     def post(self):
         args = self.reqparse.parse_args()
         if not request.json or not 'title' in request.json:
             abort(400)
+        if args['deadline'] == None:
+            dueDate = datetime.strptime('2999/12/13', '%Y/%m/%d').date()
+        else:
+            dueDate = datetime.strptime(args['deadline'],'%Y/%m/%d').date()
         bkt = Bucket(title=args['title'], 
                      description=args['description'],
                      user_id=g.user.id, 
                      level=args['level'], 
                      is_live=args['is_live'],
                      is_private=args['is_private'],
-                     reg_date=args['reg_date'])
+                     reg_date=args['reg_date'],
+                     deadline=dueDate)
         db.session.add(bkt)
         db.session.commit()
-        return {'status':'success'}, 201
+        return {'bucket':marshal(bkt,bucket_fields)}, 201
     
 
 class BucketAPI(Resource):

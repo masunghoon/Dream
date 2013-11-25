@@ -29,6 +29,7 @@ function TasksViewModel() {
         self.tasks()[i].title(newTask.title);
        	self.tasks()[i].description(newTask.description);
         self.tasks()[i].done(newTask.is_live);
+		self.tasks()[i].private(newTask.is_private);
     }
 
    self.beginAdd = function() {
@@ -37,10 +38,12 @@ function TasksViewModel() {
    self.add = function(task) {
        self.ajax(self.tasksURI, 'POST', task).done(function(data) {
            self.tasks.push({
-               uri: ko.observable(data.task.uri),
-               title: ko.observable(data.task.title),
-               description: ko.observable(data.task.description)
-               // done: ko.observable(data.task.done)
+               uri: ko.observable(data.bucket.uri),
+               title: ko.observable(data.bucket.title),
+               description: ko.observable(data.bucket.description),
+               private: ko.observable(data.bucket.is_private),
+			   done: ko.observable(data.bucket.is_live),
+			   deadline: ko.observable(data.bucket.deadline)
            });
        });
    }
@@ -85,7 +88,9 @@ function TasksViewModel() {
                     uri: ko.observable(data.buckets[i].uri),
                     title: ko.observable(data.buckets[i].title),
                    	description: ko.observable(data.buckets[i].description),
-                    done: ko.observable(data.buckets[i].is_live)
+                    done: ko.observable(data.buckets[i].is_live),
+					private: ko.observable(data.buckets[i].is_private),
+					deadline: ko.observable(data.buckets[i].deadline)
                 });
             }
         });
@@ -98,19 +103,51 @@ function AddTaskViewModel() {
     var self = this;
     self.title = ko.observable();
     self.description = ko.observable();
-
+	self.private = ko.observable();
+	self.done = ko.observable();
+	self.due = ko.observable();
     self.addTask = function() {
-        $('#addBucket').modal('hide');
-        tasksViewModel.add({
-            title: self.title(),
-			description: self.description(),
-            // private: self.private()
+    	alert(self.title());
+    	alert(self.due());
+    	$('#addBucket').modal('hide');
+    	tasksViewModel.add({
+    		title: self.title(),
+    		description: self.description(),
+    		is_private: self.private(),
+    		is_live: self.done(),
+    		deadline: self.due()
         });
         self.title("");
         self.description("");
+		self.private("");
+		self.done("");
+		self.due("");
     }
 }
-
+//function EditTaskViewModel() {
+//    var self = this;
+//    self.title = ko.observable();
+//    self.description = ko.observable();
+//    self.private
+//    self.done = ko.observable();
+//
+//    self.setTask = function(task) {
+//        self.task = task;
+//        self.title(task.title());
+//        self.description(task.description());
+//        self.done(task.done());
+//        $('edit').modal('show');
+//    }
+//
+//    self.editTask = function() {
+//        $('#edit').modal('hide');
+//        tasksViewModel.edit(self.task, {
+//            title: self.title(),
+//            description: self.description() ,
+//            done: self.done()
+//        });
+//    }
+//}
 $(function () {
     $(document).on('click', 'a.disconnect', function (e) {
         e.preventDefault();

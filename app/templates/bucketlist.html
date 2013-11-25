@@ -4,33 +4,54 @@
 <link href="{{ url_for('.static', filename = 'css/bootstrap-datetimepicker.css') }}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<h1>{{g.user.username}}'s Bucket Lists</h1>
+<h2><img src="{{user.avatar(48)}}" class="img-polaroid"><b> {{g.user.username}}'s Bucket Lists</b></h2>
 {% include 'flash.html' %}
-
-<div id="bucketMain">
-    <table class="table table-striped">
-        <tr><td style="width: 15%;"></td><td style="width: 60%;"><b>Task</b></td><td style="width: 25%;"><b>Options</b></td></tr>
-        <!-- ko foreach: tasks -->
-        <tr>
-            <td>
-                <span data-bind="visible: done" class="label label-success">Done</span>
-                <span data-bind="visible: !done()" class="label label-danger">In Progress</span>
-            </td>
-            <td><p><b data-bind="text: title"></b></p><p data-bind="text: description"></p></td>
-            <td>
-                <!-- <button data-bind="click: $parent.beginEdit" class="btn btn-default btn-sm">Edit</button> -->
-                <button data-bind="click: $parent.delFromList" class="btn btn-default btn-sm">Delete</button>
-                <span data-bind="visible: done">
-                    <button data-bind="click: $parent.markInProgress" class="btn btn-default btn-sm">Mark In Progress</button>
-                </span>
-                <span data-bind="visible: !done()">
-                    <button data-bind="click: $parent.markDone" class="btn btn-default btn-sm">Mark Done</button>
-                </span>
-            </td>
-        </tr>
-        <!-- /ko -->
-    </table>
-    <button data-bind="click: beginAdd" class="btn btn-primary">Add Task</button>
+<div class="col-md-2 well">
+	left
+</div>
+<div class="col-md-10">
+	<ol class="breadcrumb">
+		<li><a href="#">전체</a></li>
+		<li><a href="#">30대</a></li>
+		<li class="active">2013년</li>
+	</ol>
+    <div id="bucketMain">
+        <table class="table table-striped">
+            <tr>
+                <td style="width: 15%;"></td>
+                <td style="width: 55%;"><b>Task</b></td>
+                <td style="width: 15%;"><b>Due-Date</b></td>
+                <td style="width: 15%;"><b>Options</b></td>
+            </tr>
+            <!-- ko foreach: tasks -->
+            <tr>
+                <td>
+                    <span data-bind="visible: done" class="label label-success">Done</span>
+                    <span data-bind="visible: !done()" class="label label-danger">In Progress</span>
+                </td>
+                <td><p><b data-bind="text: title"></b></p><p data-bind="text: description"></p></td>
+                <td><p><span data-bind="text: deadline"></span></td>
+                <td>
+                    <!-- <button data-bind="click: $parent.beginEdit" class="btn btn-default btn-sm">Edit</button> -->
+                    <span data-bind="visible: done">
+                        <button data-bind="click: $parent.markInProgress" class="btn btn-default btn-sm">
+    						<span class="glyphicon glyphicon-unchecked"></span>
+    					</button>
+                    </span>
+                    <span data-bind="visible: !done()">
+                        <button data-bind="click: $parent.markDone" class="btn btn-default btn-sm">
+                        	<span class="glyphicon glyphicon-check"></span>
+                        </button>
+                    </span>
+                    <button data-bind="click: $parent.delFromList" class="btn btn-default btn-sm">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </td>
+            </tr>
+            <!-- /ko -->
+        </table>
+        <button data-bind="click: beginAdd" class="btn btn-primary">Add Task</button>
+    </div>
 </div>
 
 <!-- Modal -->
@@ -55,6 +76,29 @@
                         <input data-bind="value: description" type="text" id="inputDescription" placeholder="Description" style="width: 300px;">
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="control-group">
+                            <label class="control-label" for="setDueDate">Due Day</label>
+                            <div class='input-group date' id='datetimepicker5'>
+                                <input data-bind="value: due" type='text' class="form-control" data-format="YYYY/MM/DD" />
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-time"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <label class="checkbox">
+                            <input data-bind="checked: private" type="checkbox"> Private
+                        </label>
+                        <label class="checkbox">
+                            <input data-bind="checked: done" type="checkbox"> Done
+                        </label>
+                    </div>
+                </div>
             </form>
         </div>
         <div class="modal-footer">
@@ -64,14 +108,23 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('.static', filename = 'js/bootstrap-datetimepicker.min.js') }}"></script>
 <script>
+// $('.done-yn').tooltip('toggle');
+$(function () {
+    $('#datetimepicker5').datetimepicker({
+        pickTime: false
+    });
+});
+// alert("1");
 var tasksViewModel = new TasksViewModel();
+// alert("2");
 var addTaskViewModel = new AddTaskViewModel();
+// alert("3");
 ko.applyBindings(addTaskViewModel, $('#addBucket')[0]);
+// alert("4");
 ko.applyBindings(tasksViewModel, $('#BucketMain')[0]);
 alert("Apply Binding Done!!");
 </script>

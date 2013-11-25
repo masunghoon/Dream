@@ -14,7 +14,6 @@
         <script src="{{ url_for('.static', filename = 'js/bootstrap.min.js') }}"></script>
         <script src="{{ url_for('.static', filename = 'js/bucket.js') }}"></script>
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
-		
         {% if g.locale != 'en' %}
         <!-- <script src="{{ url_for('.static', filename = 'js/moment-' + 'g.locale' + '.min.js') }}"></script> -->
         {% endif %}
@@ -94,10 +93,10 @@
 	    </div>
         <div class="container" id="main">
             {% block content %}{% endblock %}
-            <hr>
             <footer>
+                <hr>
                 <p>© Company 2013</p>
-        </footer>
+        	</footer>
         </div>
         <!-- Modal -->
         <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
