@@ -8,12 +8,14 @@
         {% endif %}
 		<link href="{{ url_for('.static', filename = 'css/app.css') }}" rel="stylesheet">
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+		<link href="{{ url_for('.static', filename = 'css/bootstrap-datetimepicker.css') }}" rel="stylesheet">
+		
 		{% block stylesheet %}{% endblock %}
         <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
         <script src="{{ url_for('.static', filename = 'js/bootstrap.min.js') }}"></script>
-        <script src="{{ url_for('.static', filename = 'js/bucket.js') }}"></script>
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
+		
         {% if g.locale != 'en' %}
         <!-- <script src="{{ url_for('.static', filename = 'js/moment-' + 'g.locale' + '.min.js') }}"></script> -->
         {% endif %}
@@ -52,7 +54,7 @@
                     <ul class="nav navbar-nav">
                         <li><a href="{{ url_for('index') }}">{{ _('Timeline') }}</a></li>
                         {% if g.user.is_authenticated() %}
-                        <li><a href="http://masunghoon.iptime.org:5000/bucketlist">{{ _('Bucket List') }}</a></li>
+                        <li><a href="{{ url_for('show_buckets', username = g.user.username)}}">{{ _('My Buckets') }}</a></li>
                         {% endif %}
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
@@ -61,10 +63,10 @@
                             <!-- Single button -->
                                 <div class="btn-group">
                                   <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
-                                    <span class="glyphicon glyphicon-user"></span> Profile <span class="caret"></span>
+                                    <img src="{{g.user.avatar(18)}}" class="img-polaroid"><b> {{g.user.username}} </b><span class="caret"></span>
                                   </button>
                                   <ul class="dropdown-menu" role="menu">
-                                    <li><a href="{{ url_for('user', username = g.user.username )}}">User Profile</a></li>
+                                    <li><a href="{{ url_for('userprofile', username = g.user.username )}}">User Profile</a></li>
                                     <li class="divider"></li>
                                     <li><a href="{{url_for('logout')}}">Sign out</a></li>
                                   </ul>
@@ -93,46 +95,17 @@
 	    </div>
         <div class="container" id="main">
             {% block content %}{% endblock %}
+
+
             <footer>
                 <hr>
                 <p>© Company 2013</p>
-        	</footer>
+            </footer>
         </div>
-        <!-- Modal -->
-        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h3 class="modal-title" id="loginModalLabel">Sign In</h3>
-              </div>
-                <div class="modal-body">
-                    <form class="form-horizontal">
-                        <div class="control-group">
-                            <label class="control-label" for="inputUsername">Username</label>
-                            <div class="controls">
-                                <input data-bind="value: username" type="text" id="inputUsername" placeholder="Username">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label" for="inputPassword">Password</label>
-                            <div class="controls">
-                                <input data-bind="value: password" type="password" id="inputPassword" placeholder="Password">
-                            </div>
-                        </div>
-                    </form>
-                </div>              
-              <div class="modal-footer">
-                <!--<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>-->
-                <a href="{{ url_for('login') }}" role="button" class="btn btn-primary" >Sign in</a>&nbsp;&nbsp;or
-                <a href="{{ url_for('register') }}" role="button" class="btn btn-success" >Register</a>
-              </div>
-            </div><!-- /.modal-content -->
-          </div><!-- /.modal-dialog -->
-        </div><!-- /.modal -->
-
         
-        <form method="post" action="" id="disconnect-form"></form>
+        
+		<script src="{{ url_for('.static', filename = 'js/bootstrap-datetimepicker.min.js') }}"></script>
+
         {% block scripts %}{% endblock %}
     </body>
 </html>

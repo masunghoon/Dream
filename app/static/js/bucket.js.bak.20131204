@@ -1,15 +1,13 @@
 /**
  * @author Ma Sunghoon
  */
+// var baseUrl = 'http://masunghoon.iptime.org:5000/'
+
 
 function TasksViewModel(username) {
     var self = this;
-    self.tasksURI = '/api/users/'+username+'/buckets';
+    self.tasksURI = '/api/users/'+username+'/buckets/decade';
     self.tasks = ko.observableArray();
-    self.bucketDecade = ko.observableArray();
-    self.bucketYearly = ko.observableArray();
-    self.bucketMonthly = ko.observableArray();
-    self.bucketWeekly = ko.observableArray();
 
     self.ajax = function(uri, method, data) {
         var request = {
@@ -26,21 +24,7 @@ function TasksViewModel(username) {
         };
         return $.ajax(request);
     }
-    
     self.updateTask = function(task, newTask) {
-    	t = 'bucket'+capitalise(newTask.scope);
-		for (var j in self[t]()){
-			if (self[t]()[j].uri() == task.uri()){
-		        self[t]()[j].uri(newTask.uri);
-		        self[t]()[j].title(newTask.title);
-		       	self[t]()[j].description(newTask.description);
-		        self[t]()[j].done(newTask.is_live);
-				self[t]()[j].private(newTask.is_private);
-				self[t]()[j].deadline(newTask.deadline);
-				self[t]()[j].scope(newTask.scope);
-				self[t]()[j].range(newTask.range);
-			}
-		}
         var i = self.tasks.indexOf(task);
         self.tasks()[i].uri(newTask.uri);
         self.tasks()[i].title(newTask.title);
@@ -48,9 +32,6 @@ function TasksViewModel(username) {
         self.tasks()[i].done(newTask.is_live);
 		self.tasks()[i].private(newTask.is_private);
 		self.tasks()[i].deadline(newTask.deadline);
-		self.tasks()[i].scope(newTask.scope);
-		self.tasks()[i].range(newTask.range);
-		
     }
 
    self.beginAdd = function() {
@@ -59,7 +40,6 @@ function TasksViewModel(username) {
    }
    self.add = function(task) {
        self.ajax(self.tasksURI, 'POST', task).done(function(data) {
-    	   alert("Bucket Added!");
     	   self.tasks.push({
                uri: ko.observable(data.bucket.uri),
                title: ko.observable(data.bucket.title),
@@ -72,6 +52,8 @@ function TasksViewModel(username) {
        });
    	}
 	self.todoADD = function(data) {
+		alert("3");
+		alert(bucketID);
 		self.ajax('/api/buckets/'+bucketID, 'POST', data).done(function(res) {
 			self.todos.push({
                 todotitle: ko.observable(res.bucket.title),
@@ -80,6 +62,7 @@ function TasksViewModel(username) {
 			});
 			// self.updateTask(task, res.todo);
 		});
+		alert("4");
 	}
     self.beginEdit = function(task) {
         editTaskViewModel.setTask(task.id());
@@ -92,13 +75,7 @@ function TasksViewModel(username) {
     }
 	 self.remove = function(task) {
 	     self.ajax(task.uri(), 'DELETE').done(function() {
-	         t = 'bucket'+capitalise(task.scope());
-	 		 for (var j in self[t]()){
-	 			if (self[t]()[j].uri() == task.uri()){
-	 				self[t].remove(self[t]()[j])
-	 			}
-	 		}
-	 		self.tasks.remove(task);
+	         self.tasks.remove(task);
 	     });
 	 }
     self.delFromList = function(task) {
@@ -119,85 +96,45 @@ function TasksViewModel(username) {
     self.init = function() {
         self.ajax(self.tasksURI, 'GET').done(function(data) {
             for (var i = 0; i < data.buckets.length; i++) {
-            	if (data.buckets[i].scope != 'TODO'){
-            		t = 'bucket'+capitalise(data.buckets[i].scope);
-            		self[t].push({
-            			uri: ko.observable(data.buckets[i].uri),
-	                    id: ko.observable(data.buckets[i].id),
-	                    title: ko.observable(data.buckets[i].title),
-	                   	description: ko.observable(data.buckets[i].description),
-	                    done: ko.observable(data.buckets[i].is_live),
-						private: ko.observable(data.buckets[i].is_private),
-						deadline: ko.observable(data.buckets[i].deadline),
-						scope: ko.observable(data.buckets[i].scope),
-						range: ko.observable(data.buckets[i].range),
-						detailUri: ko.observable('/user/'+username+'/bucket/'+data.buckets[i].id)
-	            	});
-	                self.tasks.push({
-	                    uri: ko.observable(data.buckets[i].uri),
-	                    id: ko.observable(data.buckets[i].id),
-	                    title: ko.observable(data.buckets[i].title),
-	                   	description: ko.observable(data.buckets[i].description),
-	                    done: ko.observable(data.buckets[i].is_live),
-						private: ko.observable(data.buckets[i].is_private),
-						deadline: ko.observable(data.buckets[i].deadline),
-						scope: ko.observable(data.buckets[i].scope),
-						range: ko.observable(data.buckets[i].range),
-						detailUri: ko.observable('/user/'+username+'/bucket/'+data.buckets[i].id)
-	                });
-            	}
+                self.tasks.push({
+                    uri: ko.observable(data.buckets[i].uri),
+                    id: ko.observable(data.buckets[i].id),
+                    title: ko.observable(data.buckets[i].title),
+                   	description: ko.observable(data.buckets[i].description),
+                    done: ko.observable(data.buckets[i].is_live),
+					private: ko.observable(data.buckets[i].is_private),
+					deadline: ko.observable(data.buckets[i].deadline),
+					detailUri: ko.observable('/user/'+username+'/bucket/'+data.buckets[i].id)
+                });
             }
         });
     }
 
     self.init();
 }
-var sampleProductCategories = new Array();
+
 function AddTaskViewModel() {
     var self = this;
-    
-    self.ajax = function(uri, method, data) {
-        var request = {
-            url: uri,
-            type: method,
-            contentType: "application/json",
-            accepts: "application/json",
-            cache: false,
-            dataType: 'json',
-            data: JSON.stringify(data),
-            async: false,
-            error: function(jqXHR) {
-                console.log("ajax error " + jqXHR.status);
-            }
-        };
-        return $.ajax(request);
-    };
-   
-    self.ajax('/api/getUserDday','GET').done(function(res) {
-        sampleProductCategories = res.data;
-    });
-    
     self.title = ko.observable();
     self.description = ko.observable();
 	self.private = ko.observable();
 	self.done = ko.observable();
 	self.due = ko.observable();
 	
-	self.category = ko.observable();
-    self.product = ko.observable();
-    self.dueDate = ko.observable();
-	
     self.addTask = function() {
+//    	alert(self.title());
+//    	alert(self.description());
+//    	alert(self.private());
+//    	alert(self.done());
+//    	alert(self.due());
     	$('#addBucket').modal('hide');
     	tasksViewModel.add({
     		title: self.title(),
     		description: self.description(),
     		is_private: self.private(),
     		is_live: self.done(),
-//    		deadline: self.due(),
-    		scope: self.category().name,
-    		range: self.product().range,
-    		deadline: self.product().dueDate
+    		deadline: self.due(),
+    		dueType: "DECADE",
         });
     	self.setClear();
     }	
@@ -243,12 +180,14 @@ function EditTaskViewModel() {
     }
     
 	self.addTodo = function(){
+		alert("1");
 		tasksViewModel.todoADD({
 			title: self.inputTodoTitle(),
 			level: '00000100',
 			parent_id: bucketID,
-			scope: 'TODO_N'
+			dueType: 'TODO_N',
 		});
+		alert("2");
 	}
 
     self.editTask = function() {
@@ -261,8 +200,4 @@ function EditTaskViewModel() {
             deadline: self.deadline()
         });
     }
-}
-
-function capitalise(string){
-	return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 }

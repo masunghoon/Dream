@@ -19,7 +19,7 @@ from translate import microsoft_translate
 
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
 
-from datetime import datetime, timedelta, date
+from datetime import datetime
 import time
 
 now = datetime.utcnow()
@@ -235,8 +235,6 @@ def unfollow(username):
     return redirect(url_for('userprofile', username = g.user.username))        
 
 
-    
-
 ##### SEARCHING #############################################
 
 @app.route('/search', methods = ['POST'])
@@ -269,6 +267,7 @@ def translate():
 
 
 @app.before_request
+#def before_reuqest():
 def global_user():
     g.user = current_user
     if g.user.is_authenticated():
@@ -286,9 +285,6 @@ def after_request(response):
             app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statement, query.parameters, query.duration, query.context))
     return response
 
-
-
-        
 
 ##### for RESTful API #######################################
 # 
@@ -351,54 +347,6 @@ def after_request(response):
 
 ##### Routes for RESTful API #################################
 
-@app.route('/api/getUserDday', methods=['GET'])
-def getUserDday():
-    u = User.query.filter_by(username = g.user.username).first()
-    birth = datetime.strptime(u.birthday,'%Y%m%d')
-
-    decade = []
-    for i in range(1,10):
-        data = {'range': str((i-1)*10) + '\'s', 'dueDate':datetime.strftime(birth+timedelta(3652.5*i),'%Y/%m/%d')}
-        if int(data['dueDate'][0:4]) - 10 < datetime.now().year and int(data['dueDate'][0:4]) >= datetime.now().year:
-            data['current'] = 'OK'
-        else:
-            data['current'] = 'NO'
-        decade.append(data)
-    decade.append({'range':'lifetime', 'dueDate':'None', 'current':'NO'})
-
-    year = []
-    for i in range(100):
-        data = {'range':'Year '+str(birth.year + i), 'dueDate':datetime.strftime(date(birth.year+i,12,31),'%Y/%m/%d')}
-        if data['dueDate'][0:4] == str(datetime.now().year):
-            data['current'] = 'OK'
-        else:
-            data['current'] = 'NO'
-        year.append(data)
-
-    month = []
-    for i in range(1,13):
-        if i < 10:
-            ii = '0' + str(i)
-        else:
-            ii = str(i)
-        data = {'range':'Month '+ii, 'dueDate':'/'+ii+'/31'}
-        if i == datetime.now().month:
-            data['current'] = 'OK'
-            data['dueDate'] = str(datetime.now().year) + data['dueDate']
-        else:
-            data['current'] = 'NO'
-            if i < datetime.now().month:
-                data['dueDate'] = str(datetime.now().year + 1) + data['dueDate']
-            else:
-                data['dueDate'] = str(datetime.now().year) + data['dueDate']
-        month.append(data)
-
-    return jsonify({'data':[{'products':decade, 'name':'DECADE'},
-                            {'products':year,'name':'YEARLY'},
-                            {'products':month,'name':'MONTHLY'}]
-                    })
-
-
 @app.route('/user/<string:username>/bucketlist')
 @login_required
 def show_buckets(username=None):
@@ -409,10 +357,13 @@ def show_buckets(username=None):
     return render_template('bucketlist.html',
                            user = user)
 
-
 @app.route('/userlist')
 def show_userlist():
     return render_template('userlist.html')
+
+@app.route('/test')
+def test_template():
+    return render_template('test.html')
 
 
 @app.route('/user/<string:username>/bucket/<int:id>')
@@ -422,12 +373,6 @@ def bucketdetail(username, id):
         return jsonify({'status':'error'}), 400
     print bkt.title
     return render_template('bucketdetail.html', bucket = bkt)
-
-
-@app.route('/test')
-def test_template():
-    return render_template('test.html')
-
 
 ##### RESTful API with Flask-restful  ##################################
 
@@ -484,8 +429,6 @@ class BucketAPI(Resource):
                     'is_private':b.is_private,
                     'reg_date':b.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
                     'deadline':b.deadline.strftime("%Y-%m-%d"),
-                    'scope':b.scope,
-                    'range':b.range,
         }
         t = Bucket.query.filter_by(parentID = id).all()
         tododata = []
@@ -500,26 +443,27 @@ class BucketAPI(Resource):
                         'is_private':i.is_private,
                         'reg_date':i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
                         'deadline':i.deadline.strftime("%Y-%m-%d"),
-                        'scope':i.scope,
-                        'range':i.range,
             })
         return {'bucket':marshal(data,bucket_fields),
                 'todo':marshal(tododata,bucket_fields)}, 200
                 
     def post(self, id):
+#         args = self.reqparse.parse_args()
         if not request.json or not 'title' in request.json:
             abort(400)
         if not 'deadline' in request.json == None:
+#         if args['deadline'] == None:
             dueDate = datetime.strptime('2999/12/13', '%Y/%m/%d').date()
         else:
             dueDate = datetime.strptime(request.json.get('deadline'),'%Y/%m/%d').date()
-        bkt = Bucket(title=request.json.get('title'),
-                     description=request.json.get('description'),
+#             dueDate = datetime.strptime(args['deadline'],'%Y/%m/%d').date()
+        bkt = Bucket(title=request.json.get('title'),                   #args['title'], 
+                     description=request.json.get('description'),       #args['description'],
                      user_id=g.user.id, 
-                     level=request.json.get('level'),
-                     is_live=request.json.get('is_live'),
-                     is_private=request.json.get('is_private'),
-                     reg_date=datetime.now(),
+                     level=request.json.get('level'),                   #args['level'], 
+                     is_live=request.json.get('is_live'),               #args['is_live'],
+                     is_private=request.json.get('is_private'),         #args['is_private'],
+                     reg_date=datetime.strptime('2999/12/13', '%Y/%m/%d').date(),        #request.json.get('reg_date'),             #args['reg_date'],
                      deadline=dueDate,
                      parentID=id)
         db.session.add(bkt)
@@ -535,7 +479,6 @@ class BucketAPI(Resource):
         bkt.is_private = request.json.get('is_private', bkt.is_private)
         bkt.deadline = request.json.get('deadline', bkt.deadline)
         db.session.commit()
-        print bkt.scope
         return {'bucket':marshal(bkt,bucket_fields)}, 201
     
     def delete(self, id):
@@ -546,7 +489,8 @@ class BucketAPI(Resource):
 
 
 class UserListAPI(Resource):
-
+#     decorators = [login_required]
+    
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
@@ -557,8 +501,8 @@ class UserListAPI(Resource):
         self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
         self.reqparse.add_argument('deadline', type=str, location='json')
         self.reqparse.add_argument('parentID', type=str, default=0, location='json')
-        self.reqparse.add_argument('scope', type=str, location='json')
-        self.reqparse.add_argument('range', type=str, location='json')
+        self.reqparse.add_argument('dueType', type=str, location='json')
+        self.reqparse.add_argument('dueAttr', type=str, location='json')
         
         super(UserListAPI, self).__init__()
         
@@ -608,12 +552,12 @@ class UserAPI(Resource):
     
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        # self.reqparse.add_argument('email', type=str, location='json')
-        # self.reqparse.add_argument('username', type=str, location='json')
-        # self.reqparse.add_argument('password', type=str, location='json')
-        # self.reqparse.add_argument('about_me', type=str, location='json')
-        # self.reqparse.add_argument('last_seen', type=datetime, default=datetime.now(), location='json')
-        # self.reqparse.add_argument('birthday', type=str, location='json')
+        self.reqparse.add_argument('email', type=str, location='json')
+        self.reqparse.add_argument('username', type=str, location='json')
+        self.reqparse.add_argument('password', type=str, location='json')
+        self.reqparse.add_argument('about_me', type=str, location='json')
+        self.reqparse.add_argument('last_seen', type=datetime, default=datetime.now(), location='json')
+        self.reqparse.add_argument('birthday', type=str, location='json')
         super(UserAPI, self).__init__()
         
     def get(self, username):
@@ -654,26 +598,29 @@ class UserBucketAPI(Resource):
     
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        # self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
-        # self.reqparse.add_argument('description', type=str, default='', location='json')
-        # self.reqparse.add_argument('level', type=str, default='10000000', location='json')
-        # self.reqparse.add_argument('is_live', type=bool, default=False, location='json')
-        # self.reqparse.add_argument('is_private', type=bool, default=False, location='json')
-        # self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
-        # self.reqparse.add_argument('deadline', type=str, default='2999/12/31', location='json')
-        # self.reqparse.add_argument('parentID', type=int, default=0, location='json')
-        # self.reqparse.add_argument('scope', type=str, default='DECADE', location='json')
-        # self.reqparse.add_argument('range', type=str, default='20', location='json')
+        self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
+        self.reqparse.add_argument('description', type=str, default='', location='json')
+        self.reqparse.add_argument('level', type=str, default='10000000', location='json')
+        self.reqparse.add_argument('is_live', type=bool, default=False, location='json')
+        self.reqparse.add_argument('is_private', type=bool, default=False, location='json')
+        self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
+        self.reqparse.add_argument('deadline', type=str, default='2999/12/31', location='json')
+        self.reqparse.add_argument('parentID', type=int, default=0, location='json')
+        self.reqparse.add_argument('dueType', type=str, default='DECADE', location='json')
+        self.reqparse.add_argument('dueAttr', type=str, default='20', location='json')
         super(UserBucketAPI, self).__init__()
     
-    def get(self,username):
+    def get(self,username,scope):
         u = User.query.filter_by(username = username).first()
         if not g.user.is_following(u):
             if g.user == u:
                 pass
             else:
                 return {'status':'Unauthorized'}, 401
-        b = Bucket.query.filter_by(user_id = u.id).order_by(Bucket.deadline).all()
+        if scope == "all":
+            b = Bucket.query.filter_by(user_id = u.id).order_by(Bucket.deadline).all()
+        else:
+            b = Bucket.query.filter_by(user_id = u.id, dueType = scope.upper()).order_by(Bucket.deadline).all()
             
         data = []
         for i in b:
@@ -691,38 +638,50 @@ class UserBucketAPI(Resource):
                     'is_private':i.is_private,
                     'reg_date':i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
                     'deadline':i.deadline.strftime("%Y-%m-%d"),
-                    'scope':i.scope,
-                    'range':i.range,
+                    'scope':i.dueType,
+                    'range':i.dueAttr,
                 })
         return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
 
-    def post(self, username):
-        # args = self.reqparse.parse_args()
+    def post(self, username, scope):
+        args = self.reqparse.parse_args()
         if not request.json or not 'title' in request.json:
             return {'status':'error'}, 401
-        if not 'deadline' in request.json:
+        if args['deadline'] == "":
             dueDate = datetime.strptime('2999/12/31', '%Y/%m/%d').date()
         else:
-            dueDate = datetime.strptime(request.json.get('deadline'),'%Y/%m/%d').date()
-        bkt = Bucket(title=request.json.get('title'),
-                     description=request.json.get('description'),
-                     user_id=g.user.id,
-                     level=request.json.get('level'),
-                     is_live=bool(request.json.get('is_live')),
-                     is_private=bool(request.json.get('is_private')),
-                     reg_date=datetime.now(),
+            dueDate = datetime.strptime(args['deadline'],'%Y/%m/%d').date()
+        bkt = Bucket(title=args['title'], 
+                     description=args['description'],
+                     user_id=g.user.id, 
+                     level=args['level'], 
+                     is_live=args['is_live'],
+                     is_private=args['is_private'],
+                     reg_date=args['reg_date'],
                      deadline=dueDate,
-                     scope=request.json.get('scope'),
-                     range=request.json.get('range')
+                     dueType=args['dueType'],
+                     dueAttr=args['dueAttr'],
                      )
         db.session.add(bkt)
+        print bkt.title
+        print bkt.description
+        print bkt.user_id
+        print bkt.level
+        print bkt.is_live
+        print bkt.is_private
+        print bkt.reg_date
+        print bkt.deadline
+        print bkt.parentID
+        print bkt.dueType
+        print bkt.dueAttr
         db.session.commit()
+        print "2"
         return {'bucket':marshal(bkt,bucket_fields)}, 201
     
 api.add_resource(BucketAPI, '/api/buckets/<id>', endpoint='bucket')
-api.add_resource(UserListAPI, '/api/users', endpoint='users')
+api.add_resource(UserListAPI, '/api/users', endpoint='userlist')
 api.add_resource(UserAPI, '/api/users/<username>', endpoint='user')
-api.add_resource(UserBucketAPI, '/api/users/<username>/buckets', endpoint='buckets')
+api.add_resource(UserBucketAPI, '/api/users/<username>/buckets/<scope>', endpoint='buckets')
 
 ##### ERROR HANDLING ########################################
 

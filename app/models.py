@@ -107,6 +107,10 @@ class Bucket(db.Model):
     is_private = db.Column(db.SmallInteger, default=0)      # private:1, public:0
     reg_date = db.Column(db.DateTime)
     deadline = db.Column(db.DateTime)
+    language = db.Column(db.String(5))
+    parentID = db.Column(db.Integer, default=0)
+    scope = db.Column(db.Integer(8))
+    range = db.Column(db.Integer(11))
 
     def __repr__(self):
         return '<Bucket %r>' % (self.title)
