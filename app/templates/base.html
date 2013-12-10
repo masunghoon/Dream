@@ -11,9 +11,9 @@
 		<link rel="stylesheet" href="{{ url_for('.static', filename = 'css/bootstrap-datetimepicker.css') }}">
 		
 		{% block stylesheet %}{% endblock %}
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
         <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
 		
         {% if g.locale != 'en' %}
@@ -67,6 +67,9 @@
                                   </button>
                                   <ul class="dropdown-menu" role="menu">
                                     <li><a href="{{ url_for('userprofile', username = g.user.username )}}">User Profile</a></li>
+                                    {% if g.user.username == "masunghoon" %}
+                                        <li><a href="{{ url_for('html5_study')}}">HTML5 Study</a></li>
+                                    {% endif %}
                                     <li class="divider"></li>
                                     <li><a href="{{url_for('logout')}}">Sign out</a></li>
                                   </ul>

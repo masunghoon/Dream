@@ -38,7 +38,7 @@ function BucketDetailViewModel(bucketID) {
        	self.tasks()[i].description(newTask.description);
         self.tasks()[i].done(newTask.is_live);
 		self.tasks()[i].private(newTask.is_private);
-		self.tasks()[i].deadline(newTask.deadline);
+		self.tasks()[i].deadline(newTask.deadline.substr(0,10));
     }
 	
     self.editTask = function() {
@@ -61,7 +61,9 @@ function BucketDetailViewModel(bucketID) {
 	self.addTodo = function(){
 		self.add({
 			title: self.inputTodoTitle(),
-			parent_id: bucketID
+			parent_id: bucketID,
+            scope: 'TODO',
+            deadline: self.inputTodoDue()
 		});
 	}
 	
@@ -70,7 +72,7 @@ function BucketDetailViewModel(bucketID) {
 			self.todos.push({
                 todotitle: ko.observable(res.bucket.title),
                 tododone: ko.observable(res.bucket.is_live),
-                tododeadline: ko.observable(res.bucket.deadline)
+                tododeadline: ko.observable(res.bucket.deadline.substr(0,10))
 			});
 			// self.updateTask(task, res.todo);
 		});

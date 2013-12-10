@@ -59,14 +59,13 @@ function TasksViewModel(username) {
    }
    self.add = function(task) {
        self.ajax(self.tasksURI, 'POST', task).done(function(data) {
-    	   alert("Bucket Added!");
     	   self.tasks.push({
                uri: ko.observable(data.bucket.uri),
                title: ko.observable(data.bucket.title),
                description: ko.observable(data.bucket.description),
 			   done: ko.observable(data.bucket.is_live),
                private: ko.observable(data.bucket.is_private),
-			   deadline: ko.observable(data.bucket.deadline),
+			   deadline: ko.observable(data.bucket.deadline.substr(0,10)),
 			   detailUri: ko.observable('/user/'+username+'/bucket/'+data.bucket.id)
            });
        });
