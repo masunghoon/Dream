@@ -61,7 +61,6 @@ function BucketDetailViewModel(bucketID) {
 	self.addTodo = function(){
 		self.add({
 			title: self.inputTodoTitle(),
-			level: '00000100',
 			parent_id: bucketID
 		});
 	}

@@ -287,9 +287,6 @@ def after_request(response):
     return response
 
 
-
-        
-
 ##### for RESTful API #######################################
 # 
 # @app.route('/api/v0.1/buckets', methods=['GET'])
@@ -517,8 +514,8 @@ class BucketAPI(Resource):
                      description=request.json.get('description'),
                      user_id=g.user.id, 
                      level=request.json.get('level'),
-                     is_live=request.json.get('is_live'),
-                     is_private=request.json.get('is_private'),
+                     is_live=bool(request.json.get('is_live')),
+                     is_private=bool(request.json.get('is_private')),
                      reg_date=datetime.now(),
                      deadline=dueDate,
                      parentID=id)
