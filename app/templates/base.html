@@ -1,4 +1,5 @@
 <!doctype html>
+{#<html manifest="/static/js/html5study/tracker.appcache">#}
 <html>
     <head>
         {% if title %}
@@ -17,7 +18,7 @@
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
 		
         {% if g.locale != 'en' %}
-        <!-- <script src="{{ url_for('.static', filename = 'js/moment-' + 'g.locale' + '.min.js') }}"></script> -->
+{#        <!-- <script src="{{ url_for('.static', filename = 'js/moment-' + 'g.locale' + '.min.js') }}"></script> -->#}
         {% endif %}
         <script> // MicroSoft Translation
             function translate(sourceLang, destLang, sourceId, destId, loadingId) {
@@ -98,14 +99,11 @@
 	    </div>
         <div class="container" id="main">
             {% block content %}{% endblock %}
-
-
-            <footer>
-                <hr>
-                <p>© Company 2013</p>
-            </footer>
         </div>
-        
+        <footer class="container">
+            <hr>
+            <p>© Company 2013</p>
+        </footer>
         
 		<script src="{{ url_for('.static', filename = 'js/bootstrap-datetimepicker.min.js') }}"></script>
 

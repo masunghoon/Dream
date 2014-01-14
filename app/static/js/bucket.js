@@ -36,50 +36,46 @@ function TasksViewModel(username) {
 		       	self[t]()[j].description(newTask.description);
 		        self[t]()[j].done(newTask.is_live);
 				self[t]()[j].private(newTask.is_private);
-				self[t]()[j].deadline(newTask.deadline);
+				self[t]()[j].deadline(newTask.deadline.substr(0,10));
 				self[t]()[j].scope(newTask.scope);
 				self[t]()[j].range(newTask.range);
 			}
 		}
-        var i = self.tasks.indexOf(task);
-        self.tasks()[i].uri(newTask.uri);
-        self.tasks()[i].title(newTask.title);
-       	self.tasks()[i].description(newTask.description);
-        self.tasks()[i].done(newTask.is_live);
-		self.tasks()[i].private(newTask.is_private);
-		self.tasks()[i].deadline(newTask.deadline);
-		self.tasks()[i].scope(newTask.scope);
-		self.tasks()[i].range(newTask.range);
+//        var i = self.tasks.indexOf(task);
+        for (var i in self.tasks()) {
+            if (self.tasks()[i].uri() == task.uri()){
+                self.tasks()[i].uri(newTask.uri);
+                self.tasks()[i].title(newTask.title);
+                self.tasks()[i].description(newTask.description);
+                self.tasks()[i].done(newTask.is_live);
+                self.tasks()[i].private(newTask.is_private);
+                self.tasks()[i].deadline(newTask.deadline.substr(0,10));
+                self.tasks()[i].scope(newTask.scope);
+                self.tasks()[i].range(newTask.range);
+            }
+        }
+
 		
     }
 
-   self.beginAdd = function() {
-	   addTaskViewModel.setClear();
+    self.beginAdd = function() {
+       addTaskViewModel.setClear();
        $('#addBucket').modal('show');
-   }
-   self.add = function(task) {
-       self.ajax(self.tasksURI, 'POST', task).done(function(data) {
-    	   self.tasks.push({
-               uri: ko.observable(data.bucket.uri),
-               title: ko.observable(data.bucket.title),
-               description: ko.observable(data.bucket.description),
-			   done: ko.observable(data.bucket.is_live),
-               private: ko.observable(data.bucket.is_private),
-			   deadline: ko.observable(data.bucket.deadline.substr(0,10)),
-			   detailUri: ko.observable('/user/'+username+'/bucket/'+data.bucket.id)
-           });
-       });
-   	}
-	self.todoADD = function(data) {
-		self.ajax('/api/buckets/'+bucketID, 'POST', data).done(function(res) {
-			self.todos.push({
-                todotitle: ko.observable(res.bucket.title),
-                tododone: ko.observable(res.bucket.is_live),
-                tododeadline: ko.observable(res.bucket.deadline)
-			});
-			// self.updateTask(task, res.todo);
-		});
-	}
+    }
+    self.add = function(task) {
+        self.ajax(self.tasksURI, 'POST', task).done(function(data) {
+            self.tasks.push({
+                uri: ko.observable(data.bucket.uri),
+                title: ko.observable(data.bucket.title),
+                description: ko.observable(data.bucket.description),
+                done: ko.observable(data.bucket.is_live),
+                private: ko.observable(data.bucket.is_private),
+                deadline: ko.observable(data.bucket.deadline.substr(0,10)),
+                detailUri: ko.observable('/user/'+username+'/bucket/'+data.bucket.id)
+            });
+        });
+    }
+
     self.beginEdit = function(task) {
         editTaskViewModel.setTask(task.id());
         $('#editBucket').modal('show');
@@ -89,17 +85,17 @@ function TasksViewModel(username) {
             self.updateTask(task, res.bucket);
         });
     }
-	 self.remove = function(task) {
-	     self.ajax(task.uri(), 'DELETE').done(function() {
-	         t = 'bucket'+capitalise(task.scope());
-	 		 for (var j in self[t]()){
-	 			if (self[t]()[j].uri() == task.uri()){
-	 				self[t].remove(self[t]()[j])
-	 			}
-	 		}
-	 		self.tasks.remove(task);
-	     });
-	 }
+    self.remove = function(task) {
+        self.ajax(task.uri(), 'DELETE').done(function() {
+            t = 'bucket'+capitalise(task.scope());
+                for (var j in self[t]()){
+                    if (self[t]()[j].uri() == task.uri()){
+                        self[t].remove(self[t]()[j])
+                    }
+                }
+            self.tasks.remove(task);
+        });
+    }
     self.delFromList = function(task) {
     	self.ajax(task.uri(), 'PUT', { is_live: 9 }).done(function(res) {
     		self.updateTask(task. res.bucket);
@@ -170,9 +166,11 @@ function AddTaskViewModel() {
             }
         };
         return $.ajax(request);
-    };
-   
-    self.ajax('/api/getUserDday','GET').done(function(res) {
+    }
+
+    sampleProductCategories = {};
+
+   self.ajax('/api/getUserDday','GET').done(function(res) {
         sampleProductCategories = res.data;
     });
     
@@ -193,7 +191,6 @@ function AddTaskViewModel() {
     		description: self.description(),
     		is_private: self.private(),
     		is_live: self.done(),
-//    		deadline: self.due(),
     		scope: self.category().name,
     		range: self.product().range,
     		deadline: self.product().dueDate
@@ -212,6 +209,8 @@ function AddTaskViewModel() {
 
 function EditTaskViewModel() {
     var self = this;
+    self.id = ko.observable();
+    self.uri = ko.observable();
     self.title = ko.observable();
     self.description = ko.observable();
     self.private = ko.observable();
@@ -222,15 +221,48 @@ function EditTaskViewModel() {
     self.inputTodoDue = ko.observable();
     
     self.todos = ko.observableArray();
+    self.name = ko.observable();
+
+    sampleProductCategories = {};
+
+    self.ajax = function(uri, method, data) {
+        var request = {
+            url: uri,
+            type: method,
+            contentType: "application/json",
+            accepts: "application/json",
+            cache: false,
+            dataType: 'json',
+            data: JSON.stringify(data),
+            async: false,
+            error: function(jqXHR) {
+                console.log("ajax error " + jqXHR.status);
+            }
+        };
+        return $.ajax(request);
+    }
+
+    self.ajax('/api/getUserDday','GET').done(function(res){
+        sampleProductCategories = res.data;
+    });
+    self.category = ko.observable();
+    self.product = ko.observable();
+    self.dueDate = ko.observable();
+
 
     self.setTask = function(bucketID) {
     	self.todos.removeAll();
     	tasksViewModel.ajax('/api/buckets/'+bucketID, 'GET').done(function(data){
+//            alert('Scope:'+data.bucket.scope+'\nRange:'+data.bucket.range+'\nDue:'+data.bucket.deadline);
+            self.id(data.bucket.id);
+            self.uri(data.bucket.uri);
             self.title(data.bucket.title);
             self.description(data.bucket.description);
             self.private(data.bucket.private);
             self.done(data.bucket.done);
-            self.deadline(data.bucket.deadline);
+//            self.category(data.bucket.scope);
+//            self.product(data.bucket.range);
+//            self.dueDate(data.bucket.deadline);
             for (var i=0; i<data.todo.length; i++){
                 self.todos.push({
                     todotitle: ko.observable(data.todo[i].title),
@@ -238,15 +270,16 @@ function EditTaskViewModel() {
                     tododeadline: ko.observable(data.todo[i].deadline)
                 });
             }
+            self.task = self;
         });
     }
     
 	self.addTodo = function(){
-		tasksViewModel.todoADD({
+		self.todoADD(self.id(), {
 			title: self.inputTodoTitle(),
-			level: '00000100',
-			parent_id: bucketID,
-			scope: 'TODO_N'
+			parent_id: self.id(),
+			scope: 'TODO',
+            is_live: 'False'
 		});
 	}
 
@@ -254,10 +287,23 @@ function EditTaskViewModel() {
         $('#editBucket').modal('hide');
         tasksViewModel.edit(self.task, {
             title: self.title(),
-            description: self.description() ,
+            description: self.description(),
             is_private: self.private(),
             is_live: self.done(),
-            deadline: self.deadline()
+    		scope: self.category().name,
+    		range: self.product().range,
+    		deadline: self.product().dueDate
+        });
+    }
+
+    self.todoADD = function(bucketID, data) {
+        self.ajax('/api/buckets/'+bucketID, 'POST', data).done(function(res) {
+            self.todos.push({
+                todotitle: ko.observable(res.bucket.title),
+                tododone: ko.observable(res.bucket.is_live),
+                tododeadline: ko.observable(res.bucket.deadline.substr(0,10))
+            });
+            // self.updateTask(task, res.todo);
         });
     }
 }

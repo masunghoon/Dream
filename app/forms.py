@@ -66,11 +66,11 @@ class EditForm(Form):
         if self.username.data == self.original_username:
             return True
         if self.username.data != User.make_valid_username(self.username.data):
-            self.username.errorsappend(gettext('This username has invalid characters. Please use letters, numbers, dots and undersocres only.'))
+            self.username.errorsappend('This username has invalid characters. Please use letters, numbers, dots and undersocres only.')
             return False
         user = User.query.filter_by(username = self.username.data).first()
         if user != None:
-            self.username.errors.append(gettext('This username is aleady in use. Please choose another one.'))
+            self.username.errors.append('This username is aleady in use. Please choose another one.')
             return False
         return True
         

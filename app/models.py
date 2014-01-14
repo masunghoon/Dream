@@ -1,4 +1,5 @@
 from hashlib import md5
+from passlib.apps import custom_app_context as pwd_context
 from app import app, db
 
 from social.apps.flask_app import models
@@ -7,6 +8,8 @@ from sqlalchemy import and_, or_
 
 import flask.ext.whooshalchemy as whooshalchemy
 import re
+
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -81,6 +84,28 @@ class User(db.Model):
     def followed_posts(self):
         return Post.query.outerjoin(followers, (followers.c.followed_id == Post.user_id)).filter(or_(followers.c.follower_id == self.id, Post.user_id == self.id)).order_by(Post.timestamp.desc())
 
+    def hash_password(self, password):
+        self.password = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password)
+
+    def generate_auth_token(self, expiration = 600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id':self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None
+        except BadSignature:
+            return None
+        user = User.query.get(data['id'])
+        return user
+
     def __repr__(self):
         return '<User %r>' % (self.username)
         
@@ -115,6 +140,23 @@ class Bucket(db.Model):
     def __repr__(self):
         return '<Bucket %r>' % (self.title)
 
+
+class Login(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(45))
+    password = db.Column(db.String(45))
+
+    def __repr__(self):
+        return '<Login %r>' % (self.username)
+
+
+class Photos(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    title = db.Column(db.String(100))
+    idUser = db.Column(db.Integer)
+
+    def __repr__(self):
+        return '<Photos %r>' % (self.title)
 
 whooshalchemy.whoosh_index(app, Post)
 

@@ -1,0 +1,60 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0" is_locked="false">
+    <option name="myName" value="Project Default" />
+    <option name="myLocal" value="false" />
+    <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="3">
+            <item index="0" class="java.lang.String" itemvalue="role" />
+            <item index="1" class="java.lang.String" itemvalue="aria-valuenow" />
+            <item index="2" class="java.lang.String" itemvalue="aria-valuemin" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="16">
+            <item index="0" class="java.lang.String" itemvalue="nobr" />
+            <item index="1" class="java.lang.String" itemvalue="noembed" />
+            <item index="2" class="java.lang.String" itemvalue="comment" />
+            <item index="3" class="java.lang.String" itemvalue="noscript" />
+            <item index="4" class="java.lang.String" itemvalue="embed" />
+            <item index="5" class="java.lang.String" itemvalue="script" />
+            <item index="6" class="java.lang.String" itemvalue="use" />
+            <item index="7" class="java.lang.String" itemvalue="lineargradient" />
+            <item index="8" class="java.lang.String" itemvalue="stop" />
+            <item index="9" class="java.lang.String" itemvalue="pattern" />
+            <item index="10" class="java.lang.String" itemvalue="image" />
+            <item index="11" class="java.lang.String" itemvalue="g" />
+            <item index="12" class="java.lang.String" itemvalue="defs" />
+            <item index="13" class="java.lang.String" itemvalue="path" />
+            <item index="14" class="java.lang.String" itemvalue="text" />
+            <item index="15" class="java.lang.String" itemvalue="svg" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="E501" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <value>
+          <list size="2">
+            <item index="0" class="java.lang.String" itemvalue="werkzeug.generate_password_hash" />
+            <item index="1" class="java.lang.String" itemvalue="werkzeug.check_password_hash" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

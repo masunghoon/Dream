@@ -11,11 +11,11 @@
 <div class="col-md-10">
     <div style="margin: 10px">
 	<ul class="nav nav-pills">
-        <li class="active"><a href="#bucketAll" data-toggle="tab">전체</a></li>
-        <li><a href="#bucketDecade" data-toggle="tab">10년</a></li>
-        <li><a href="#bucketYearly" data-toggle="tab">1년</a></li>
-        <li><a href="#bucketMonthly" data-toggle="tab">1개월</a></li>
-        <li><a href="#bucketWeekly" data-toggle="tab">1주일</a></li>
+        <li class="active"><a href="#bucketAll" data-toggle="tab">Whole List</a></li>
+        <li><a href="#bucketDecade" data-toggle="tab">for a Lifetime</a></li>
+        <li><a href="#bucketYearly" data-toggle="tab">for this Year</a></li>
+        <li><a href="#bucketMonthly" data-toggle="tab">for this Month</a></li>
+        <li><a href="#bucketWeekly" data-toggle="tab">Today's List</a></li>
     </ul>
     </div>
     <div id="bucketMain" class="tab-content">
@@ -429,6 +429,7 @@ $(function () {
         pickTime: false
     });
 });
+
 var tasksViewModel = new TasksViewModel('{{ user.username }}');
 var addTaskViewModel = new AddTaskViewModel();
 var editTaskViewModel = new EditTaskViewModel();

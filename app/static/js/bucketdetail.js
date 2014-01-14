@@ -1,3 +1,5 @@
+var sampleProductCategories = new Array();
+
 function BucketDetailViewModel(bucketID) {
     var self = this;
 	
@@ -14,6 +16,10 @@ function BucketDetailViewModel(bucketID) {
     self.inputTodoDue = ko.observable();
     
     self.todos = ko.observableArray();
+
+    self.category = ko.observable();
+    self.product = ko.observable();
+    self.dueDate = ko.observable();
     
     self.ajax = function(uri, method, data) {
         var request = {
@@ -23,6 +29,7 @@ function BucketDetailViewModel(bucketID) {
             accepts: "application/json",
             cache: false,
             dataType: 'json',
+            async: false,
             data: JSON.stringify(data),
             error: function(jqXHR) {
                 console.log("ajax error " + jqXHR.status);
@@ -30,6 +37,10 @@ function BucketDetailViewModel(bucketID) {
         };
         return $.ajax(request);
     }
+
+    self.ajax('/api/getUserDday','GET').done(function(res) {
+        sampleProductCategories = res.data;
+    });
 
     self.updateTask = function(task, newTask) {
         var i = self.tasks.indexOf(task);
@@ -63,7 +74,8 @@ function BucketDetailViewModel(bucketID) {
 			title: self.inputTodoTitle(),
 			parent_id: bucketID,
             scope: 'TODO',
-            deadline: self.inputTodoDue()
+            deadline: self.inputTodoDue(),
+            is_live: 'False'
 		});
 	}
 	

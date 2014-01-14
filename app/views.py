@@ -1,4 +1,4 @@
-from social.apps.flask_app import routes
+# from social.apps.flask_app import routes
 
 from flask import render_template, redirect, flash, url_for, request, g, session, jsonify, abort
 from flask.ext.login import login_required, logout_user, login_user, current_user
@@ -6,8 +6,9 @@ from flask.ext.babel import gettext
 from flask.ext.sqlalchemy import get_debug_queries
 from flask.ext.restful import Resource, reqparse, fields, marshal
 from werkzeug import check_password_hash, generate_password_hash
+from flask.ext.httpauth import HTTPBasicAuth
 
-from sqlalchemy import and_, or_
+auth = HTTPBasicAuth()
 
 from guess_language import guessLanguage
 
@@ -20,7 +21,6 @@ from translate import microsoft_translate
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
 
 from datetime import datetime, timedelta, date
-import time
 
 now = datetime.utcnow()
 
@@ -33,7 +33,7 @@ def get_locale():
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 @app.route('/index/<int:page>', methods=['GET', 'POST'])
-@login_required
+@auth.login_required
 def index(page=1):
     form = PostForm()
     if form.validate_on_submit():
@@ -53,7 +53,7 @@ def index(page=1):
 
 
 @app.route('/delete/<int:id>')
-@login_required
+@auth.login_required
 def delete(id):
     post = Post.query.get(id)
     if post is None:
@@ -101,10 +101,10 @@ def login():
             else:
                 print "ID " + user.email + " Blocked!!"
                 return redirect(url_for('login'))
-            #         if login_error_cnt > 5:
-            #             print login_error_cnt
-            #             user.is_blocked = 1
-            #             return redirect(url_for('index'))
+                #         if login_error_cnt > 5:
+                #             print login_error_cnt
+                #             user.is_blocked = 1
+                #             return redirect(url_for('index'))
         else:
             session_user = db.session.query(User).filter_by(email=form.email.data).first()
             login_user(session_user)
@@ -166,7 +166,7 @@ def after_login(resp):
 
 @app.route('/userprofile/<username>')
 @app.route('/userprofile/<username>/<int:page>')
-@login_required
+@auth.login_required
 def userprofile(username, page=1):
     user = User.query.filter_by(username=username).first()
     if user is None:
@@ -179,7 +179,7 @@ def userprofile(username, page=1):
 
 
 @app.route('/edit', methods=['GET', 'POST'])
-@login_required
+@auth.login_required
 def edit():
     form = EditForm(g.user.username)
     if form.validate_on_submit():
@@ -238,7 +238,7 @@ def unfollow(username):
 ##### SEARCHING #############################################
 
 @app.route('/search', methods=['POST'])
-@login_required
+@auth.login_required
 def search():
     if not g.search_form.validate_on_submit():
         return redirect(url_for('index'))
@@ -246,7 +246,7 @@ def search():
 
 
 @app.route('/search_results/<query>')
-@login_required
+@auth.login_required
 def search_results(query):
     results = Post.query.whoosh_search(query, MAX_SEARCH_RESULTS).all()
     return render_template('search_results.html',
@@ -257,7 +257,7 @@ def search_results(query):
 ##### TRANSLATION #############################################
 
 @app.route('/translate', methods=['POST'])
-@login_required
+@auth.login_required
 def translate():
     return jsonify({
         'text': microsoft_translate(
@@ -286,8 +286,77 @@ def after_request(response):
     return response
 
 
+##### ERROR HANDLING ########################################
+
+@app.errorhandler(404)
+def internal_error(error):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
+
+##### Routes for RESTful API #################################
+@app.route('/user/<string:username>/bucketlist')
+@auth.login_required
+def show_buckets(username=None):
+    if not username:
+        user = g.user
+    else:
+        user = User.query.filter_by(username=username).first()
+    return render_template('bucketlist.html',
+                           user=user)
+
+
+@app.route('/user/<string:username>/bucket/<int:id>')
+def bucketdetail(username, id):
+    bkt = Bucket.query.filter_by(id=id).first()
+    if bkt.parentID:
+        return jsonify({'status': 'error'}), 400
+    return render_template('bucketdetail.html', bucket=bkt)
+
+
+@app.route('/test')
+def test_template():
+    return render_template('test.html')
+
+
+@app.route('/html5study')
+def html5_study():
+    return render_template('html5study/studyMain.html')
+
+
+@app.route('/html5study/<string:id>')
+def uri_redirect(id):
+    return render_template('html5study/' + id + '.html')
+
+#
+# @app.route('/iReporter', methods=['POST'])
+# def ios_register():
+#     if not request:
+#         print "no REQUEST"
+#         return jsonify({'status': 'fail'}), 999
+#     print "11"
+#     username = request.form.get('username')
+#     password = request.form.get('password')
+#     chk = User.query.filter_by(email=username).first()
+#     print chk.email
+#     print username
+#     print chk.password
+#     print password
+#     print chk
+#     l = User.query.filter_by(email=username, password=password).first()
+#     print l.username
+#     db.session.add(l)
+#     db.session.commit()
+#     return jsonify({'result': [{'IdUser': l.id, 'username': l.username}]}), 200
+
+
 ##### for RESTful API #######################################
-# 
+#
 # @app.route('/api/v0.1/buckets', methods=['GET'])
 # def get_buckets():
 #     data = []
@@ -301,8 +370,8 @@ def after_request(response):
 #             'title':i.title.encode('utf-8'),
 #         })
 #     return jsonify({'buckets':data}), 200
-# 
-# 
+#
+#
 # @app.route('/api/v0.1/buckets/<int:id>', methods=['GET'])
 # def get_bucket(id):
 #     bkt = Bucket.query.filter_by(id = id).first()
@@ -312,8 +381,8 @@ def after_request(response):
 #         'title':bkt.title.encode('utf-8'),
 #     }
 #     return jsonify({'buckets':data}), 200
-# 
-# 
+#
+#
 # @app.route('/api/v0.1/buckets', methods=['POST'])
 # def create_bucket():
 #     if not request.json or not 'title' in request.json:
@@ -323,8 +392,8 @@ def after_request(response):
 #     db.session.add(bkt)
 #     db.session.commit()
 #     return jsonify({'status':'success'}), 201
-# 
-# 
+#
+#
 # @app.route('/api/v0.1/buckets/<int:id>', methods=['PUT'])
 # def modify_bucket(id):
 #     bkt = Bucket.query.filter_by(id = id).first()
@@ -335,8 +404,8 @@ def after_request(response):
 #     bkt.deadline = request.json.get('deadline', bkt.deadline)
 #     db.session.commit()
 #     return jsonify({'status':'sucess'}), 201
-#     
-#     
+#
+#
 # @app.route('/api/v0.1/buckets/<int:id>', methods=['DELETE'])
 # def del_bucket(id):
 #     bkt = Bucket.query.filter_by(id = id).first()
@@ -345,7 +414,38 @@ def after_request(response):
 #     return jsonify({'status':'success'}), 201
 
 
-##### Routes for RESTful API #################################
+@app.route('/api/token')
+@auth.login_required
+def get_auth_token():
+    token = g.user.generate_auth_token()
+    return jsonify({'user':{'id': g.user.id,
+            'username': g.user.username,
+            'email': g.user.email,
+            'birthday': g.user.birthday,},
+            'token': token.decode('ascii')})
+
+
+@app.route('/api/resource')
+@auth.login_required
+def get_resource():
+    return jsonify({'id': g.user.id,
+            'username': g.user.username,
+            'email': g.user.email,
+            'birthday': g.user.birthday,})
+
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    user = User.verify_auth_token(username_or_token)
+    if not user:
+        # try to authenticate with username/password
+        user = User.query.filter_by(email = username_or_token).first()
+        if not user or not user.verify_password(password):
+            return False
+    g.user = user
+    return True
+
 
 @app.route('/api/getUserDday', methods=['GET'])
 def getUserDday():
@@ -355,13 +455,14 @@ def getUserDday():
     decade = []
     for i in range(1, 10):
         data = {'range': str((i - 1) * 10) + '\'s',
-                'dueDate': datetime.strftime(birth + timedelta(3652.5 * i), '%Y/%m/%d')}
-        if int(data['dueDate'][0:4]) - 10 < datetime.now().year and int(data['dueDate'][0:4]) >= datetime.now().year:
+                'userDueDate': datetime.strftime(birth + timedelta(3652.5 * i), '%Y-%m-%d')}
+        if int(data['userDueDate'][0:4]) - 10 < datetime.now().year <= int(data['userDueDate'][0:4]):
+        # if int(data['userDueDate'][0:4]) - 10 < datetime.now().year and int(data['userDueDate'][0:4]) >= datetime.now().year:
             data['current'] = 'OK'
         else:
             data['current'] = 'NO'
         decade.append(data)
-    decade.append({'range': 'lifetime', 'dueDate': 'None', 'current': 'NO'})
+    decade.append({'range': 'lifetime', 'userDueDate': 'None', 'current': 'NO'})
 
     year = []
     for i in range(100):
@@ -391,45 +492,7 @@ def getUserDday():
                 data['dueDate'] = str(datetime.now().year) + data['dueDate']
         month.append(data)
 
-    return jsonify({'data': [{'products': decade, 'name': 'DECADE'},
-                             {'products': year, 'name': 'YEARLY'},
-                             {'products': month, 'name': 'MONTHLY'}]
-    })
-
-
-@app.route('/user/<string:username>/bucketlist')
-@login_required
-def show_buckets(username=None):
-    if not username:
-        user = g.user
-    else:
-        user = User.query.filter_by(username=username).first()
-    return render_template('bucketlist.html',
-                           user=user)
-
-
-@app.route('/userlist')
-def show_userlist():
-    return render_template('userlist.html')
-
-
-@app.route('/user/<string:username>/bucket/<int:id>')
-def bucketdetail(username, id):
-    bkt = Bucket.query.filter_by(id=id).first()
-    if bkt.parentID:
-        return jsonify({'status': 'error'}), 400
-    print bkt.title
-    return render_template('bucketdetail.html', bucket=bkt)
-
-
-@app.route('/test')
-def test_template():
-    return render_template('test.html')
-
-
-@app.route('/html5study')
-def html5_study():
-    return render_template('html5study/studyMain.html')
+    return jsonify({'decade': decade, 'yearly': year, 'monthly': month})
 
 
 ##### RESTful API with Flask-restful  ##################################
@@ -446,7 +509,8 @@ bucket_fields = {
     'deadline': fields.String,
     'scope': fields.String,
     'range': fields.String,
-    'uri': fields.Url('bucket'),
+    'parent_id': fields.Integer,
+    'uri': fields.Url('bucket')
 }
 
 user_fields = {
@@ -463,21 +527,50 @@ user_fields = {
 
 
 class BucketAPI(Resource):
-    decorators = [login_required]
+    decorators = [auth.login_required]
 
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
-        self.reqparse.add_argument('description', type=str, default="", location='json')
-        self.reqparse.add_argument('level', type=str, default="1", location='json')
-        self.reqparse.add_argument('is_live', type=int, default=0, location='json')
-        self.reqparse.add_argument('is_private', type=int, default=0, location='json')
-        self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
-        self.reqparse.add_argument('deadline', type=str, location='json')
+        # self.reqparse = reqparse.RequestParser()
+        # self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
+        # self.reqparse.add_argument('description', type=str, default="", location='json')
+        # self.reqparse.add_argument('level', type=str, default="1", location='json')
+        # self.reqparse.add_argument('is_live', type=int, default=0, location='json')
+        # self.reqparse.add_argument('is_private', type=int, default=0, location='json')
+        # self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
+        # self.reqparse.add_argument('deadline', type=str, location='json')
         super(BucketAPI, self).__init__()
 
     def get(self, id):
-        b = Bucket.query.filter_by(id=id).first()
+        u = User.query.filter_by(username=g.user.username).first()
+        if not g.user.is_following(u):
+            if g.user == u:
+                pass
+            else:
+                return {'status': 'Unauthorized'}, 401
+        b = Bucket.query.filter_by(id=id).order_by(Bucket.deadline).first()
+        # data = []
+
+        if u != g.user:
+            if b.is_private:
+                return {'status': 'Unauthorized'}, 401
+        todo = []
+        t = Bucket.query.filter_by(parentID=id).order_by(Bucket.deadline).all()
+        for j in t:
+            if u != g.user:
+                if j.is_private:
+                    continue
+            todo.append({
+                'todoID': j.id,
+                'todoTitle': j.title,
+                'todoIsLive': j.is_live,
+                'todoIsPrivate': j.is_private,
+                'todoParent_id': j.parentID,
+                'todoRegDate': j.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'todoDeadline': j.deadline.strftime("%Y-%m-%d"),
+                'todoScope': j.scope,
+                'todoRange': j.range
+            })
+
         data = {
             'id': b.id,
             'user_id': b.user_id,
@@ -486,29 +579,15 @@ class BucketAPI(Resource):
             'level': b.level,
             'is_live': b.is_live,
             'is_private': b.is_private,
+            'parent_id': b.parentID,
             'reg_date': b.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
             'deadline': b.deadline.strftime("%Y-%m-%d"),
             'scope': b.scope,
             'range': b.range,
+            'todos': todo
         }
-        t = Bucket.query.filter_by(scope='TODO').filter_by(parentID=id).all()
-        tododata = []
-        for i in t:
-            tododata.append({
-                'id': i.id,
-                'user_id': i.user_id,
-                'title': i.title,
-                'description': i.description,
-                'level': i.level,
-                'is_live': i.is_live,
-                'is_private': i.is_private,
-                'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
-                'deadline': i.deadline.strftime("%Y-%m-%d"),
-                'scope': i.scope,
-                'range': i.range,
-            })
-        return {'bucket': marshal(data, bucket_fields),
-                'todo': marshal(tododata, bucket_fields)}, 200
+
+        return data, 200
 
     def post(self, id):
         if not request.json or not 'title' in request.json:
@@ -535,14 +614,39 @@ class BucketAPI(Resource):
 
     def put(self, id):
         bkt = Bucket.query.filter_by(id=id).first()
-        bkt.title = request.json.get('title', bkt.title)
-        bkt.description = request.json.get('description', bkt.description)
-        bkt.level = request.json.get('level', bkt.level)
-        bkt.is_live = request.json.get('is_live', bkt.is_live)
-        bkt.is_private = request.json.get('is_private', bkt.is_private)
-        bkt.deadline = request.json.get('deadline', bkt.deadline)
+        if request.json.get('title'):
+            bkt.title = request.json.get('title', bkt.title)
+        # else:
+        #     bkt.title = bkt.title
+        if request.json.get('description'):
+            bkt.description = request.json.get('description', bkt.description)
+        # else:
+        #     bkt.description = bkt.description
+        if request.json.get('level'):
+            bkt.level = request.json.get('level', bkt.level)
+        # else:
+        #     bkt.level = bkt.level
+        if request.json.get('is_live'):
+            bkt.is_live = request.json.get('is_live', bkt.is_live)
+        # else:
+        #     bkt.is_live = bkt.is_live
+        if request.json.get('is_private'):
+            bkt.is_private = request.json.get('is_private', bkt.is_private)
+        # else:
+        #     bkt.is_private = bkt.is_private
+        if request.json.get('deadline'):
+            bkt.deadline = datetime.strptime(request.json.get('deadline'), '%Y-%m-%d').date()
+        # else:
+        #     bkt.deadline = bkt.deadline
+        if request.json.get('scope'):
+            bkt.scope = request.json.get('scope', bkt.scope)
+        # else:
+        #     bkt.scope = bkt.scope
+        if request.json.get('range'):
+            bkt.range = request.json.get('range', bkt.range)
+        # else:
+        #     bkt.range = bkt.range
         db.session.commit()
-        print bkt.scope
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
     def delete(self, id):
@@ -554,21 +658,20 @@ class BucketAPI(Resource):
 
 class UserListAPI(Resource):
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
-        self.reqparse.add_argument('description', type=str, default="", location='json')
-        self.reqparse.add_argument('level', type=str, default="1", location='json')
-        self.reqparse.add_argument('is_live', type=int, default=0, location='json')
-        self.reqparse.add_argument('is_private', type=int, default=0, location='json')
-        self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
-        self.reqparse.add_argument('deadline', type=str, location='json')
-        self.reqparse.add_argument('parentID', type=str, default=0, location='json')
-        self.reqparse.add_argument('scope', type=str, location='json')
-        self.reqparse.add_argument('range', type=str, location='json')
-
+        # self.reqparse = reqparse.RequestParser()
+        # self.reqparse.add_argument('title', type=str, required=True, help='No task title privided', location='json')
+        # self.reqparse.add_argument('description', type=str, default="", location='json')
+        # self.reqparse.add_argument('level', type=str, default="1", location='json')
+        # self.reqparse.add_argument('is_live', type=int, default=0, location='json')
+        # self.reqparse.add_argument('is_private', type=int, default=0, location='json')
+        # self.reqparse.add_argument('reg_date', type=datetime, default=now, location='json')
+        # self.reqparse.add_argument('deadline', type=str, location='json')
+        # self.reqparse.add_argument('parentID', type=str, default=0, location='json')
+        # self.reqparse.add_argument('scope', type=str, location='json')
+        # self.reqparse.add_argument('range', type=str, location='json')
         super(UserListAPI, self).__init__()
 
-    @login_required
+    @auth.login_required
     def get(self):
         data = []
         u = User.query.all()
@@ -588,29 +691,55 @@ class UserListAPI(Resource):
                 })
         return {'users': map(lambda t: marshal(t, user_fields), data)}, 200
 
+
     def post(self):
-        args = self.reqparse.parse_args()
-        if not request.json or not 'email' in request.json or not 'password' in request.json:
-            abort(400)
-        if args['username'] is None or args['username'] == "":
-            username = args['email'].split('@')[0]
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
         else:
-            username = args['username']
-        username = User.make_valid_username(username)
-        username = User.make_unique_username(username)
-        u = User(email=args['email'],
-                 password=generate_password_hash(args['password']),
-                 username=username,
-                 about_me=args['about_me'],
-                 last_seen=datetime.now(),
-                 birthday=args['birthday'])
-        db.session.add(u)
-        db.session.commit()
+            return {'status':'Request Failed!'}
+
+        if not 'email' in params:
+            return {'status':'error','reason':'Email Address input error!'}
+        elif not 'password' in params:
+            return {'status':'error','reason':'Password Missing'}
+
+        if params.get('command') == 'register':
+            if params.get('username') is None or params.get('username') == "":
+                username = params.get('email').split('@')[0]
+            else:
+                username = params.get('username')
+            username = User.make_valid_username(username)
+            username = User.make_unique_username(username)
+            u = User(email=params.get('email'),
+                     username=username,
+                     # birthday=params.get('birthday'),
+                     last_seen=datetime.now())
+            u.hash_password(params.get('password'))
+            db.session.add(u)
+            db.session.commit()
+        elif params.get('command') == 'login':
+            u = User.query.filter_by(email=params.get('email')).first()
+            if u is None:
+                return {'status':'error','reason':'User Not Exists!'}
+            elif not u.verify_password(params.get('password')):
+                return {'status':'error','reason':'Wrong Password!'}
+            try:
+                login_user(u)
+                u.login_fault = 0
+                db.session.commit()
+                flash('You were logged in')
+            except:
+                return{'status':'error','reason':'Something wrong after Authentication.'}
+        else:
+            return{'status':'error','reason':'Command is worng(login or register)'}
+
         return {'user': marshal(u, user_fields)}, 201
 
 
 class UserAPI(Resource):
-    decorators = [login_required]
+    decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -622,6 +751,7 @@ class UserAPI(Resource):
         # self.reqparse.add_argument('birthday', type=str, location='json')
         super(UserAPI, self).__init__()
 
+    #get specific User's Profile
     def get(self, username):
         u = User.query.filter_by(username=username).first()
         data = {
@@ -631,9 +761,12 @@ class UserAPI(Resource):
             'about_me': u.about_me,
             'last_seen': u.last_seen.strftime("%Y-%m-%d %H:%M:%S"),
             'birthday': u.birthday,
+            'is_following': g.user.is_following(u),
+            'pic': '<img src="' + u.avatar(64) + '">',
         }
-        return {'user': marshal(u, user_fields)}, 200
+        return {'user': marshal(data, user_fields)}, 200
 
+    #modify My User Profile
     def put(self, username):
         u = User.query.filter_by(username=username).first()
         if u != g.user:
@@ -641,11 +774,22 @@ class UserAPI(Resource):
         u.username = request.json.get('username', u.username)
         u.birthday = request.json.get('birthday', u.birthday)
         if request.json.get('password'):
-            u.password = generate_password_hash(request.json.get('password'))
+            u.hash_password(request.json.get('password'))
         u.about_me = request.json.get('about_me', u.about_me)
         db.session.commit()
-        return {'user': marshal(u, user_fields)}, 201
+        data = {
+            'id': u.id,
+            'username': u.username,
+            'email': u.email,
+            'about_me': u.about_me,
+            'last_seen': u.last_seen.strftime("%Y-%m-%d %H:%M:%S"),
+            'birthday': u.birthday,
+            'is_following': g.user.is_following(u),
+            'pic': '<img src="' + u.avatar(64) + '">',
+        }
+        return {'user': marshal(data, user_fields)}, 201
 
+    #delete a User
     def delete(self, username):
         u = User.query.filter_by(username=username).first()
         if u != g.user:
@@ -656,7 +800,7 @@ class UserAPI(Resource):
 
 
 class UserBucketAPI(Resource):
-    decorators = [login_required]
+    decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -686,59 +830,81 @@ class UserBucketAPI(Resource):
             if u != g.user:
                 if i.is_private:
                     continue
-            if i.is_live < 9:
-                data.append({
-                    'id': i.id,
-                    'user_id': i.user_id,
-                    'title': i.title,
-                    'description': i.description,
-                    'level': i.level,
-                    'is_live': i.is_live,
-                    'is_private': i.is_private,
-                    'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    'deadline': i.deadline.strftime("%Y-%m-%d"),
-                    'scope': i.scope,
-                    'range': i.range,
+            if i.scope == 'TODO':
+                continue
+            todo = []
+            t = Bucket.query.filter_by(parentID=i.id).order_by(Bucket.deadline).all()
+            for j in t:
+                if u != g.user:
+                    if j.is_private:
+                        continue
+                todo.append({
+                    'todoID': j.id,
+                    'todoTitle': j.title,
+                    'todoIsLive': j.is_live,
+                    'todoIsPrivate': j.is_private,
+                    'todoParent_id': j.parentID,
+                    'todoRegDate': j.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    'todoDeadline': j.deadline.strftime("%Y-%m-%d"),
+                    'todoScope': j.scope,
+                    'todoRange': j.range
                 })
-        return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
+
+            data.append({
+                'id': i.id,
+                'user_id': i.user_id,
+                'title': i.title,
+                'description': i.description,
+                'level': i.level,
+                'is_live': i.is_live,
+                'is_private': i.is_private,
+                'parent_id': i.parentID,
+                'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'deadline': i.deadline.strftime("%Y-%m-%d"),
+                'scope': i.scope,
+                'range': i.range,
+                'todos': todo
+            })
+
+        return data, 200
+        # return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
 
     def post(self, username):
-        # args = self.reqparse.parse_args()
-        if not request.json or not 'title' in request.json:
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
+        else:
+            return {'status':'Request Failed!'}
+
+        print params
+
+        if not 'title' in params:
             return {'status': 'error'}, 401
-        if not 'deadline' in request.json:
+        if not 'deadline' in params:
             dueDate = datetime.strptime('2999/12/31', '%Y/%m/%d').date()
         else:
-            dueDate = datetime.strptime(request.json.get('deadline'), '%Y/%m/%d').date()
-        bkt = Bucket(title=request.json.get('title'),
-                     description=request.json.get('description'),
+            dueDate = datetime.strptime(params.get('deadline'), '%Y-%m-%d').date()
+        bkt = Bucket(title=params.get('title'),
+                     description=params.get('description'),
                      user_id=g.user.id,
-                     level=request.json.get('level'),
-                     is_live=bool(request.json.get('is_live')),
-                     is_private=bool(request.json.get('is_private')),
+                     level=params.get('level'),
+                     is_live=bool(params.get('is_live')),
+                     is_private=bool(params.get('is_private')),
                      reg_date=datetime.now(),
                      deadline=dueDate,
-                     scope=request.json.get('scope'),
-                     range=request.json.get('range')
+                     scope=params.get('scope'),
+                     range=params.get('range')
         )
         db.session.add(bkt)
         db.session.commit()
+        print bkt.title
+        print bkt.scope
+
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
 
-api.add_resource(BucketAPI, '/api/buckets/<id>', endpoint='bucket')
+api.add_resource(UserAPI, '/api/user/<username>', endpoint='user')
 api.add_resource(UserListAPI, '/api/users', endpoint='users')
-api.add_resource(UserAPI, '/api/users/<username>', endpoint='user')
-api.add_resource(UserBucketAPI, '/api/users/<username>/buckets', endpoint='buckets')
-
-##### ERROR HANDLING ########################################
-
-@app.errorhandler(404)
-def internal_error(error):
-    return render_template('404.html'), 404
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return render_template('500.html'), 500
+api.add_resource(BucketAPI, '/api/bucket/<id>', endpoint='bucket')
+api.add_resource(UserBucketAPI, '/api/buckets/<username>', endpoint='buckets')
