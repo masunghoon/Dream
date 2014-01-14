@@ -614,38 +614,9 @@ class BucketAPI(Resource):
 
     def put(self, id):
         bkt = Bucket.query.filter_by(id=id).first()
-        if request.json.get('title'):
-            bkt.title = request.json.get('title', bkt.title)
-        # else:
-        #     bkt.title = bkt.title
-        if request.json.get('description'):
-            bkt.description = request.json.get('description', bkt.description)
-        # else:
-        #     bkt.description = bkt.description
-        if request.json.get('level'):
-            bkt.level = request.json.get('level', bkt.level)
-        # else:
-        #     bkt.level = bkt.level
-        if request.json.get('is_live'):
-            bkt.is_live = request.json.get('is_live', bkt.is_live)
-        # else:
-        #     bkt.is_live = bkt.is_live
-        if request.json.get('is_private'):
-            bkt.is_private = request.json.get('is_private', bkt.is_private)
-        # else:
-        #     bkt.is_private = bkt.is_private
-        if request.json.get('deadline'):
-            bkt.deadline = datetime.strptime(request.json.get('deadline'), '%Y-%m-%d').date()
-        # else:
-        #     bkt.deadline = bkt.deadline
-        if request.json.get('scope'):
-            bkt.scope = request.json.get('scope', bkt.scope)
-        # else:
-        #     bkt.scope = bkt.scope
-        if request.json.get('range'):
-            bkt.range = request.json.get('range', bkt.range)
-        # else:
-        #     bkt.range = bkt.range
+        for item in request.json:
+            if item:
+                setattr(bkt, item, request.json.get(item))
         db.session.commit()
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
