@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">DreamProject</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="main_menu_add_bucket">추가</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="main_btn_login">로그인</string>
+    <string name="main_btn_list">버킷리스트</string>
+    <string name="lb_login_email">이메일</string>
+    <string name="lb_login_password">비밀번호</string>
+    <string name="bucket_item_like">응원</string>
+    <string name="bucket_item_reply">댓글</string>
+    <string name="bucket_item_scope">기간</string>
+    <string name="bucket_item_remain">잔여시간</string>
+    <string name="bucket_item_live">실행중</string>
+    <string name="bucket_item_done">완료</string>
+    <string name="bucket_option_plan">Plan</string>
+    <string name="bucket_option_repeat">Repeat</string>
+    <string name="bucket_input_title">Title</string>
+    <string name="main_btn_refresh">새로고침</string>
+    <string name="main_menu_refresh_bucket_list">새로고침</string>
+    <string name="main_menu_login">로그인</string>
+    <string name="save">저장</string>
+    <string name="cancel">취소</string>
+    <string name="main_left_menu_setting">설정</string>
+    <string name="main_left_menu_notice">공지사항</string>
+    <string name="main_left_menu_update">업데이트</string>
+    <string name="main_left_menu_logout">로그아웃</string>
+    <string name="main_left_menu_txt_bucket">버킷</string>
+    <string name="main_left_menu_txt_friends">친구</string>
+    <string name="main_left_menu_txt_badge">뱃지</string>
+    <string name="btn_bucket_option_sun">일</string>
+    <string name="btn_bucket_option_mon">월</string>
+    <string name="btn_bucket_option_tue">화</string>
+    <string name="btn_bucket_option_wen">수</string>
+    <string name="btn_bucket_option_thu">목</string>
+    <string name="btn_bucket_option_fri">금</string>
+    <string name="btn_bucket_option_sat">토</string>
+    <string name="txt_bucket_option_repeat_cnt">회</string>
+    <string name="btn_confirm">확인</string>
+    <string name="txt_save">저장</string>
+    <string name="txt_cancel">취소</string>
+    <string name="btn_del">삭제</string>
+    <string name="main_menu_plan">Plan</string>
+    <string name="main_menu_life">라이프</string>
+    <string name="plan_done_true">완료</string>
+    <string name="plan_done_false">미완료</string>
+    <string name="popup_plan_done_description">오늘 하루 어떠셨나요? 내일을 위해 오늘 기록을 남겨보세요.</string>
+
+</resources>

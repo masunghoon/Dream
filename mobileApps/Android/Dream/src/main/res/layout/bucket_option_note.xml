@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/layout_bucket_option_note">
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp">
+
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:id="@+id/imageView"
+                android:src="@drawable/notes" />
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/bucket_option_note" />
+
+        </LinearLayout>
+
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:id="@+id/btn_option_remove"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/glyphicons_197_remove" />
+
+    </RelativeLayout>
+
+</LinearLayout>
