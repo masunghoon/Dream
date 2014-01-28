@@ -49,7 +49,8 @@ Base = declarative_base()
 
 # authentication
 app.register_blueprint(social_auth)
-social_storage = init_social(app, Base, db.session)
+#social_storage = init_social(app, Base, db.session)
+social_storage = init_social(app, db)
 
 # Login Manager
 lm = login.LoginManager()
