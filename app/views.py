@@ -5,6 +5,7 @@ from flask.ext.login import login_required, logout_user, login_user, current_use
 from flask.ext.babel import gettext
 from flask.ext.sqlalchemy import get_debug_queries
 from flask.ext.restful import Resource, reqparse, fields, marshal
+from sqlalchemy.sql import func
 from werkzeug import check_password_hash, generate_password_hash
 from flask.ext.httpauth import HTTPBasicAuth
 
@@ -14,7 +15,7 @@ from guess_language import guessLanguage
 
 from app import app, db, lm, oid, Base, babel, api
 from forms import LoginForm, OidLoginForm, EditForm, PostForm, SearchForm, RegisterForm
-from models import User, Post, Bucket, ROLE_USER, ROLE_ADMIN
+from models import User, Post, Bucket, Plan, ROLE_USER, ROLE_ADMIN
 from emails import follower_notification
 from translate import microsoft_translate
 
@@ -333,87 +334,10 @@ def html5_study():
 def uri_redirect(id):
     return render_template('html5study/' + id + '.html')
 
-#
-# @app.route('/iReporter', methods=['POST'])
-# def ios_register():
-#     if not request:
-#         print "no REQUEST"
-#         return jsonify({'status': 'fail'}), 999
-#     print "11"
-#     username = request.form.get('username')
-#     password = request.form.get('password')
-#     chk = User.query.filter_by(email=username).first()
-#     print chk.email
-#     print username
-#     print chk.password
-#     print password
-#     print chk
-#     l = User.query.filter_by(email=username, password=password).first()
-#     print l.username
-#     db.session.add(l)
-#     db.session.commit()
-#     return jsonify({'result': [{'IdUser': l.id, 'username': l.username}]}), 200
-
 
 ##### for RESTful API #######################################
-#
-# @app.route('/api/v0.1/buckets', methods=['GET'])
-# def get_buckets():
-#     data = []
-#     bkt = Bucket.query.filter_by(user_id = '6')\
-#                       .filter_by(is_live = '0')\
-#                       .all()
-#     for i in bkt:
-#         data.append({
-#             'id':i.id,
-#             'user_id':i.user_id,
-#             'title':i.title.encode('utf-8'),
-#         })
-#     return jsonify({'buckets':data}), 200
-#
-#
-# @app.route('/api/v0.1/buckets/<int:id>', methods=['GET'])
-# def get_bucket(id):
-#     bkt = Bucket.query.filter_by(id = id).first()
-#     data = {
-#         'id':bkt.id,
-#         'user_id':bkt.user_id,
-#         'title':bkt.title.encode('utf-8'),
-#     }
-#     return jsonify({'buckets':data}), 200
-#
-#
-# @app.route('/api/v0.1/buckets', methods=['POST'])
-# def create_bucket():
-#     if not request.json or not 'title' in request.json:
-#         abort(400)
-# #     print request.json
-#     bkt = Bucket(title=request.json['title'], user_id='6')
-#     db.session.add(bkt)
-#     db.session.commit()
-#     return jsonify({'status':'success'}), 201
-#
-#
-# @app.route('/api/v0.1/buckets/<int:id>', methods=['PUT'])
-# def modify_bucket(id):
-#     bkt = Bucket.query.filter_by(id = id).first()
-#     bkt.title = request.json.get('title', bkt.title)
-#     bkt.level = request.json.get('level', bkt.level)
-#     bkt.is_live = request.json.get('is_live', bkt.is_live)
-#     bkt.is_private = request.json.get('is_private', bkt.is_private)
-#     bkt.deadline = request.json.get('deadline', bkt.deadline)
-#     db.session.commit()
-#     return jsonify({'status':'sucess'}), 201
-#
-#
-# @app.route('/api/v0.1/buckets/<int:id>', methods=['DELETE'])
-# def del_bucket(id):
-#     bkt = Bucket.query.filter_by(id = id).first()
-#     db.session.delete(bkt)
-#     db.session.commit()
-#     return jsonify({'status':'success'}), 201
 
-
+### Authentication ###
 @app.route('/api/token')
 @auth.login_required
 def get_auth_token():
@@ -447,55 +371,70 @@ def verify_password(username_or_token, password):
     return True
 
 
-@app.route('/api/getUserDday', methods=['GET'])
-def getUserDday():
-    u = User.query.filter_by(username=g.user.username).first()
-    birth = datetime.strptime(u.birthday, '%Y%m%d')
 
-    decade = []
-    for i in range(1, 10):
-        data = {'range': str((i - 1) * 10) + '\'s',
-                'userDueDate': datetime.strftime(birth + timedelta(3652.5 * i), '%Y-%m-%d')}
-        if int(data['userDueDate'][0:4]) - 10 < datetime.now().year <= int(data['userDueDate'][0:4]):
-        # if int(data['userDueDate'][0:4]) - 10 < datetime.now().year and int(data['userDueDate'][0:4]) >= datetime.now().year:
-            data['current'] = 'OK'
-        else:
-            data['current'] = 'NO'
-        decade.append(data)
-    decade.append({'range': 'lifetime', 'userDueDate': 'None', 'current': 'NO'})
 
-    year = []
-    for i in range(100):
-        data = {'range': 'Year ' + str(birth.year + i),
-                'dueDate': datetime.strftime(date(birth.year + i, 12, 31), '%Y/%m/%d')}
-        if data['dueDate'][0:4] == str(datetime.now().year):
-            data['current'] = 'OK'
-        else:
-            data['current'] = 'NO'
-        year.append(data)
 
-    month = []
-    for i in range(1, 13):
-        if i < 10:
-            ii = '0' + str(i)
-        else:
-            ii = str(i)
-        data = {'range': 'Month ' + ii, 'dueDate': '/' + ii + '/31'}
-        if i == datetime.now().month:
-            data['current'] = 'OK'
-            data['dueDate'] = str(datetime.now().year) + data['dueDate']
-        else:
-            data['current'] = 'NO'
-            if i < datetime.now().month:
-                data['dueDate'] = str(datetime.now().year + 1) + data['dueDate']
-            else:
-                data['dueDate'] = str(datetime.now().year) + data['dueDate']
-        month.append(data)
-
-    return jsonify({'decade': decade, 'yearly': year, 'monthly': month})
+# @app.route('/api/getUserDday', methods=['GET'])
+# def getUserDday():
+#     u = User.query.filter_by(username=g.user.username).first()
+#     birth = datetime.strptime(u.birthday, '%Y%m%d')
+#
+#     decade = []
+#     for i in range(1, 10):
+#         data = {'range': str((i - 1) * 10) + '\'s',
+#                 'userDueDate': datetime.strftime(birth + timedelta(3652.5 * i), '%Y-%m-%d')}
+#         if int(data['userDueDate'][0:4]) - 10 < datetime.now().year <= int(data['userDueDate'][0:4]):
+#         # if int(data['userDueDate'][0:4]) - 10 < datetime.now().year and int(data['userDueDate'][0:4]) >= datetime.now().year:
+#             data['current'] = 'OK'
+#         else:
+#             data['current'] = 'NO'
+#         decade.append(data)
+#     decade.append({'range': 'lifetime', 'userDueDate': 'None', 'current': 'NO'})
+#
+#     year = []
+#     for i in range(100):
+#         data = {'range': 'Year ' + str(birth.year + i),
+#                 'dueDate': datetime.strftime(date(birth.year + i, 12, 31), '%Y/%m/%d')}
+#         if data['dueDate'][0:4] == str(datetime.now().year):
+#             data['current'] = 'OK'
+#         else:
+#             data['current'] = 'NO'
+#         year.append(data)
+#
+#     month = []
+#     for i in range(1, 13):
+#         if i < 10:
+#             ii = '0' + str(i)
+#         else:
+#             ii = str(i)
+#         data = {'range': 'Month ' + ii, 'dueDate': '/' + ii + '/31'}
+#         if i == datetime.now().month:
+#             data['current'] = 'OK'
+#             data['dueDate'] = str(datetime.now().year) + data['dueDate']
+#         else:
+#             data['current'] = 'NO'
+#             if i < datetime.now().month:
+#                 data['dueDate'] = str(datetime.now().year + 1) + data['dueDate']
+#             else:
+#                 data['dueDate'] = str(datetime.now().year) + data['dueDate']
+#         month.append(data)
+#
+#     return jsonify({'decade': decade, 'yearly': year, 'monthly': month})
 
 
 ##### RESTful API with Flask-restful  ##################################
+
+user_fields = {
+    'id': fields.Integer,
+    'username': fields.String,
+    'email': fields.String,
+    'about_me': fields.String,
+    'last_seen': fields.String,
+    'birthday': fields.String,
+    'is_following': fields.Boolean,
+    'pic': fields.String,
+    'uri': fields.Url('user'),
+}
 
 bucket_fields = {
     'id': fields.Integer,
@@ -513,16 +452,21 @@ bucket_fields = {
     'uri': fields.Url('bucket')
 }
 
-user_fields = {
+plan_fields = {
     'id': fields.Integer,
-    'username': fields.String,
-    'email': fields.String,
-    'about_me': fields.String,
-    'last_seen': fields.String,
-    'birthday': fields.String,
-    'is_following': fields.Boolean,
-    'pic': fields.String,
-    'uri': fields.Url('user'),
+    'date': fields.String,
+    'bucket_id': fields.Integer,
+    'user_id': fields.Integer,
+    'isDone': fields.Integer,
+    'title': fields.String,
+    'is_live': fields.Integer,
+    'is_private': fields.Integer,
+    'deadline': fields.String,
+    'scope': fields.String,
+    'range': fields.String,
+    'rptType': fields.String,
+    'rptCndt': fields.String,
+    'parent_id': fields.Integer,
 }
 
 
@@ -548,7 +492,6 @@ class BucketAPI(Resource):
             else:
                 return {'status': 'Unauthorized'}, 401
         b = Bucket.query.filter_by(id=id).order_by(Bucket.deadline).first()
-        # data = []
 
         if u != g.user:
             if b.is_private:
@@ -568,7 +511,9 @@ class BucketAPI(Resource):
                 'todoRegDate': j.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
                 'todoDeadline': j.deadline.strftime("%Y-%m-%d"),
                 'todoScope': j.scope,
-                'todoRange': j.range
+                'todoRange': j.range,
+                'todoRptType': j.rptType,
+                'todoRptCndt': j.rptCndt
             })
 
         data = {
@@ -584,47 +529,72 @@ class BucketAPI(Resource):
             'deadline': b.deadline.strftime("%Y-%m-%d"),
             'scope': b.scope,
             'range': b.range,
+            'rptType': b.rptType,
+            'rptCndt': b.rptCndt,
             'todos': todo
         }
 
         return data, 200
 
     def post(self, id):
-        if not request.json or not 'title' in request.json:
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
+        else:
+            return {'status':'Request Failed!'}
+
+        if not params or not 'title' in params:
             abort(400)
-        if not 'deadline' in request.json or request.json.get('deadline') == "":
+        if not 'deadline' in params or params.get('deadline') == "":
             dueDate = Bucket.query.filter_by(id=id).first().deadline
         else:
-            dueDate = datetime.strptime(request.json.get('deadline'), '%Y/%m/%d').date()
-        bkt = Bucket(title=request.json.get('title'),
-                     description=request.json.get('description'),
+            dueDate = datetime.strptime(params.get('deadline'), '%Y/%m/%d').date()
+        bkt = Bucket(title=params.get('title'),
+                     description=params.get('description'),
                      user_id=g.user.id,
-                     level=request.json.get('level'),
-                     is_live=bool(request.json.get('is_live')),
-                     is_private=bool(request.json.get('is_private')),
+                     level=params.get('level'),
+                     is_live=bool(params.get('is_live')),
+                     is_private=bool(params.get('is_private')),
                      reg_date=datetime.now(),
                      deadline=dueDate,
-                     parentID=id,
-                     scope=request.json.get('scope'),
-                     range=request.json.get('range')
+                     # parentID=id,
+                     parentID=params.get('parent_id'),
+                     scope=params.get('scope'),
+                     range=params.get('range')
         )
         db.session.add(bkt)
         db.session.commit()
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
     def put(self, id):
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
+        else:
+            return {'status':'Request Failed!'}
+
         bkt = Bucket.query.filter_by(id=id).first()
-        for item in request.json:
+        for item in params:
             if item:
-                setattr(bkt, item, request.json.get(item))
+                setattr(bkt, item, params.get(item))
         db.session.commit()
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
     def delete(self, id):
+        print id
         bkt = Bucket.query.filter_by(id=id).first()
-        db.session.delete(bkt)
-        db.session.commit()
-        return {'status': 'success'}, 201
+        print bkt.title
+        try:
+            print "1"
+            db.session.delete(bkt)
+            print "2"
+            db.session.commit()
+            print "3"
+            return {'status': 'success'}, 200
+        except:
+            return {'status': 'delete failed'}, 400 # HTTP Status Code Review
 
 
 class UserListAPI(Resource):
@@ -818,7 +788,9 @@ class UserBucketAPI(Resource):
                     'todoRegDate': j.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
                     'todoDeadline': j.deadline.strftime("%Y-%m-%d"),
                     'todoScope': j.scope,
-                    'todoRange': j.range
+                    'todoRange': j.range,
+                    'todoRptType': j.rptType,
+                    'todoRptCndt': j.rptCndt
                 })
 
             data.append({
@@ -834,6 +806,8 @@ class UserBucketAPI(Resource):
                 'deadline': i.deadline.strftime("%Y-%m-%d"),
                 'scope': i.scope,
                 'range': i.range,
+                'rptType': i.rptType,
+                'rptCndt': i.rptCndt,
                 'todos': todo
             })
 
@@ -848,11 +822,9 @@ class UserBucketAPI(Resource):
         else:
             return {'status':'Request Failed!'}
 
-        print params
-
         if not 'title' in params:
             return {'status': 'error'}, 401
-        if not 'deadline' in params:
+        if not 'deadline' in params or params.get('deadline') is None:
             dueDate = datetime.strptime('2999/12/31', '%Y/%m/%d').date()
         else:
             dueDate = datetime.strptime(params.get('deadline'), '%Y-%m-%d').date()
@@ -862,6 +834,7 @@ class UserBucketAPI(Resource):
                      level=params.get('level'),
                      is_live=bool(params.get('is_live')),
                      is_private=bool(params.get('is_private')),
+                     parentID=params.get('parentID'),
                      reg_date=datetime.now(),
                      deadline=dueDate,
                      scope=params.get('scope'),
@@ -869,13 +842,333 @@ class UserBucketAPI(Resource):
         )
         db.session.add(bkt)
         db.session.commit()
-        print bkt.title
-        print bkt.scope
 
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
+
+class PlanListAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(PlanListAPI, self).__init__()
+
+    def get(self,username):
+
+        data = []
+        u = User.query.filter_by(username = username).first()
+        if u is None:
+            return jsonify({'status':'User does not Exists'})
+
+        for p, b in db.session.query(Plan, Bucket).filter(Plan.bucket_id == Bucket.id,Plan.user_id == g.user.id).order_by(Plan.date.desc(), Bucket.deadline.desc()).all():
+            data.append({
+                'id': p.id,
+                'date': p.date,
+                'bucket_id': p.bucket_id,
+                'user_id': p.user_id,
+                'isDone': p.isDone,
+                'title': b.title,
+                'is_live': b.is_live,
+                'is_private': b.is_private,
+                'deadline': b.deadline,
+                'scope': b.scope,
+                'range': b.range,
+                'rptType': b.rptType,
+                'rptCndt': b.rptCndt,
+                'parent_id': b.parentID
+            })
+
+        return map(lambda t: marshal(t, plan_fields), data), 200
+
+
+class PlanAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(PlanAPI, self).__init__()
+
+    def put(self, id):
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
+        else:
+            return {'status':'Request Failed!'}
+
+        p = Plan.query.filter_by(id=id).first()
+        if p.user_id != g.user.id:
+            return {'status':'Unauthorized'}, 401
+
+        try:
+            for item in params:
+                if item:
+                    setattr(p, item, params.get(item))
+            db.session.commit()
+        except:
+            return {'status':'failed'}, 401
+
+        return {'status':'succeed'}, 200
+
+
+class TestAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(TestAPI, self).__init__()
+
+    def get(self, username):
+        data = []
+        u = User.query.filter_by(username=username).first()
+        if u is None:
+            return jsonify({'status':'User does not Exists'})
+
+        b = Bucket.query.filter_by(user_id=u.id, level='0').all()
+        for i in b:
+            data.append({
+                'id': i.id,
+                'user_id': i.user_id,
+                'title': i.title,
+                'description': i.description,
+                'level': i.level,
+                'is_live': i.is_live,
+                'is_private': i.is_private,
+                'parent_id': i.parentID,
+                'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                'deadline': i.deadline.strftime("%Y-%m-%d"),
+                'scope': i.scope,
+                'range': i.range,
+                'rptType': i.rptType,
+                'rptCndt': i.rptCndt,
+                'subBuckets': []
+            })
+
+        b1 = Bucket.query.filter_by(user_id=u.id, level='1').all()
+        for i in b1:
+            for j in range(0,len(data)):
+                if data[j]['id'] == i.parentID:
+                    data[j]['subBuckets'].append({
+                        'id': i.id,
+                        'user_id': i.user_id,
+                        'title': i.title,
+                        'description': i.description,
+                        'level': i.level,
+                        'is_live': i.is_live,
+                        'is_private': i.is_private,
+                        'parent_id': i.parentID,
+                        'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                        'deadline': i.deadline.strftime("%Y-%m-%d"),
+                        'scope': i.scope,
+                        'range': i.range,
+                        'rptType': i.rptType,
+                        'rptCndt': i.rptCndt,
+                        'subBuckets': []
+                    })
+
+        b2 = Bucket.query.filter_by(user_id=u.id, level='2').all()
+        for i in b2:
+            for j in range(0,len(data)):
+                for k in range(0,len(data[j]['subBuckets'])):
+                    if data[j]['subBuckets'][k]['id'] == i.parentID:
+                        data[j]['subBuckets'][k]['subBuckets'].append({
+                            'id': i.id,
+                            'user_id': i.user_id,
+                            'title': i.title,
+                            'description': i.description,
+                            'level': i.level,
+                            'is_live': i.is_live,
+                            'is_private': i.is_private,
+                            'parent_id': i.parentID,
+                            'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                            'deadline': i.deadline.strftime("%Y-%m-%d"),
+                            'scope': i.scope,
+                            'range': i.range,
+                            'rptType': i.rptType,
+                            'rptCndt': i.rptCndt,
+                            'subBuckets':[]
+                        })
+
+        b3 = Bucket.query.filter_by(user_id=u.id, level='3').all()
+        for i in b3:
+            for j in range(0,len(data)):
+                for k in range(0,len(data[j]['subBuckets'])):
+                    for l in range(0,len(data[j]['subBuckets'][k]['subBuckets'])):
+                        if data[j]['subBuckets'][k]['subBuckets'][l]['id'] == i.parentID:
+                            data[j]['subBuckets'][k]['subBuckets'][l]['subBuckets'].append({
+                                'id': i.id,
+                                'user_id': i.user_id,
+                                'title': i.title,
+                                'description': i.description,
+                                'level': i.level,
+                                'is_live': i.is_live,
+                                'is_private': i.is_private,
+                                'parent_id': i.parentID,
+                                'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                                'deadline': i.deadline.strftime("%Y-%m-%d"),
+                                'scope': i.scope,
+                                'range': i.range,
+                                'rptType': i.rptType,
+                                'rptCndt': i.rptCndt,
+                                'subBuckets':[]
+                            })
+
+        b4 = Bucket.query.filter_by(user_id=u.id, level='4').all()
+        for i in b4:
+            for j in range(0,len(data)):
+                for k in range(0,len(data[j]['subBuckets'])):
+                    for l in range(0,len(data[j]['subBuckets'][k]['subBuckets'])):
+                        for m in range(0,len(data[j]['subBuckets'][k]['subBuckets'][l]['subBuckets'])):
+                            if data[j]['subBuckets'][k]['subBuckets'][l]['subBuckets'][m]['id'] == i.parentID:
+                                data[j]['subBuckets'][k]['subBuckets'][l]['subBuckets'][m]['subBuckets'].append({
+                                    'id': i.id,
+                                    'user_id': i.user_id,
+                                    'title': i.title,
+                                    'description': i.description,
+                                    'level': i.level,
+                                    'is_live': i.is_live,
+                                    'is_private': i.is_private,
+                                    'parent_id': i.parentID,
+                                    'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                                    'deadline': i.deadline.strftime("%Y-%m-%d"),
+                                    'scope': i.scope,
+                                    'range': i.range,
+                                    'rptType': i.rptType,
+                                    'rptCndt': i.rptCndt,
+                                    'subBuckets':[]
+                                })
+
+        return data, 200
+
+class TestAPI2(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(TestAPI2, self).__init__()
+
+    def get(self, id):
+        # data = []
+        u = User.query.filter_by(username=g.user.username).first()
+        if u is None:
+            return jsonify({'status':'User does not Exists'})
+
+        b = Bucket.query.filter_by(user_id=u.id, id=id).first()
+        data={
+            'id': b.id,
+            'user_id': b.user_id,
+            'title': b.title,
+            'description': b.description,
+            'level': b.level,
+            'is_live': b.is_live,
+            'is_private': b.is_private,
+            'parent_id': b.parentID,
+            'reg_date': b.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+            'deadline': b.deadline.strftime("%Y-%m-%d"),
+            'scope': b.scope,
+            'range': b.range,
+            'rptType': b.rptType,
+            'rptCndt': b.rptCndt,
+            'subBuckets': []
+        }
+
+        b1 = Bucket.query.filter_by(user_id=u.id, level=int(data['level'])+1).all()
+        for i in b1:
+            if data['id'] == i.parentID:
+                data['subBuckets'].append({
+                    'id': i.id,
+                    'user_id': i.user_id,
+                    'title': i.title,
+                    'description': i.description,
+                    'level': i.level,
+                    'is_live': i.is_live,
+                    'is_private': i.is_private,
+                    'parent_id': i.parentID,
+                    'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    'deadline': i.deadline.strftime("%Y-%m-%d"),
+                    'scope': i.scope,
+                    'range': i.range,
+                    'rptType': i.rptType,
+                    'rptCndt': i.rptCndt,
+                    'subBuckets': []
+                })
+
+        b2 = Bucket.query.filter_by(user_id=u.id, level=int(data['level'])+2).all()
+        for i in b2:
+            for j in range(0,len(data['subBuckets'])):
+                if data['subBuckets'][j]['id'] == i.parentID:
+                    data['subBuckets'][j]['subBuckets'].append({
+                        'id': i.id,
+                        'user_id': i.user_id,
+                        'title': i.title,
+                        'description': i.description,
+                        'level': i.level,
+                        'is_live': i.is_live,
+                        'is_private': i.is_private,
+                        'parent_id': i.parentID,
+                        'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                        'deadline': i.deadline.strftime("%Y-%m-%d"),
+                        'scope': i.scope,
+                        'range': i.range,
+                        'rptType': i.rptType,
+                        'rptCndt': i.rptCndt,
+                        'subBuckets':[]
+                    })
+
+        b3 = Bucket.query.filter_by(user_id=u.id, level=int(data['level'])+3).all()
+        for i in b3:
+            for j in range(0,len(data['subBuckets'])):
+                for k in range(0,len(data['subBuckets'][j]['subBuckets'])):
+                    if data['subBuckets'][j]['subBuckets'][k]['id'] == i.parentID:
+                        data['subBuckets'][j]['subBuckets'][k]['subBuckets'].append({
+                            'id': i.id,
+                            'user_id': i.user_id,
+                            'title': i.title,
+                            'description': i.description,
+                            'level': i.level,
+                            'is_live': i.is_live,
+                            'is_private': i.is_private,
+                            'parent_id': i.parentID,
+                            'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                            'deadline': i.deadline.strftime("%Y-%m-%d"),
+                            'scope': i.scope,
+                            'range': i.range,
+                            'rptType': i.rptType,
+                            'rptCndt': i.rptCndt,
+                            'subBuckets':[]
+                        })
+
+        b4 = Bucket.query.filter_by(user_id=u.id, level=int(data['level'])+4).all()
+        for i in b4:
+            for j in range(0,len(data['subBuckets'])):
+                for k in range(0,len(data['subBuckets'][j]['subBuckets'])):
+                    for l in range(0,len(data['subBuckets'][j]['subBuckets'][k]['subBuckets'])):
+                        if data['subBuckets'][j]['subBuckets'][k]['subBuckets'][l]['id'] == i.parentID:
+                            data['subBuckets'][j]['subBuckets'][k]['subBuckets'][l]['subBuckets'].append({
+                                'id': i.id,
+                                'user_id': i.user_id,
+                                'title': i.title,
+                                'description': i.description,
+                                'level': i.level,
+                                'is_live': i.is_live,
+                                'is_private': i.is_private,
+                                'parent_id': i.parentID,
+                                'reg_date': i.reg_date.strftime("%Y-%m-%d %H:%M:%S"),
+                                'deadline': i.deadline.strftime("%Y-%m-%d"),
+                                'scope': i.scope,
+                                'range': i.range,
+                                'rptType': i.rptType,
+                                'rptCndt': i.rptCndt,
+                                'subBuckets':[]
+                            })
+
+        return data, 200
 
 api.add_resource(UserAPI, '/api/user/<username>', endpoint='user')
 api.add_resource(UserListAPI, '/api/users', endpoint='users')
 api.add_resource(BucketAPI, '/api/bucket/<id>', endpoint='bucket')
 api.add_resource(UserBucketAPI, '/api/buckets/<username>', endpoint='buckets')
+api.add_resource(PlanListAPI, '/api/plans/<username>', endpoint='plans')
+api.add_resource(PlanAPI, '/api/plan/<id>', endpoint='plan')
+api.add_resource(TestAPI, '/api/test/<username>', endpoint='test')
+api.add_resource(TestAPI2, '/api/test2/<id>', endpoint='test2')

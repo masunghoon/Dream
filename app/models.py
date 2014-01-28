@@ -4,7 +4,8 @@ from app import app, db
 
 from social.apps.flask_app import models
 
-from sqlalchemy import and_, or_
+from sqlalchemy import select, and_, or_
+from datetime import datetime
 
 import flask.ext.whooshalchemy as whooshalchemy
 import re
@@ -90,7 +91,7 @@ class User(db.Model):
     def verify_password(self, password):
         return pwd_context.verify(password, self.password)
 
-    def generate_auth_token(self, expiration = 600):
+    def generate_auth_token(self, expiration = 86400):
         s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({'id':self.id})
 
@@ -107,8 +108,9 @@ class User(db.Model):
         return user
 
     def __repr__(self):
-        return '<User %r>' % (self.username)
-        
+        return '<User %r>' % self.username
+
+
 class Post(db.Model):
     __searchable__ = ['body']
 
@@ -119,7 +121,7 @@ class Post(db.Model):
     language = db.Column(db.String(5))
 
     def __repr__(self):
-        return '<Post %r>' % (self.body)
+        return '<Post %r>' % self.body
 
 
 class Bucket(db.Model):
@@ -136,28 +138,23 @@ class Bucket(db.Model):
     parentID = db.Column(db.Integer, default=0)
     scope = db.Column(db.Integer(8))
     range = db.Column(db.Integer(11))
+    rptType = db.Column(db.String(4))
+    rptCndt = db.Column(db.String(8))
 
     def __repr__(self):
-        return '<Bucket %r>' % (self.title)
+        return '<Bucket %r>' % self.title
 
 
-class Login(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(45))
-    password = db.Column(db.String(45))
-
-    def __repr__(self):
-        return '<Login %r>' % (self.username)
-
-
-class Photos(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    title = db.Column(db.String(100))
-    idUser = db.Column(db.Integer)
+class Plan(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.String(8))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    bucket_id = db.Column(db.Integer, db.ForeignKey('bucket.id'))
+    isDone = db.Column(db.Integer(1))
+    lastModified = db.Column(db.DateTime)
 
     def __repr__(self):
-        return '<Photos %r>' % (self.title)
+        return '<Plan %r>' % self.doneYN
+
 
 whooshalchemy.whoosh_index(app, Post)
-
-    
