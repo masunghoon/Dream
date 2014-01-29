@@ -36,6 +36,7 @@ def get_locale():
 @app.route('/index/<int:page>', methods=['GET', 'POST'])
 @auth.login_required
 def index(page=1):
+    print g.user
     form = PostForm()
     if form.validate_on_submit():
         language = guessLanguage(form.post.data)

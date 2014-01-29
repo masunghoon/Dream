@@ -30,3 +30,4 @@ python-social-auth
 flask-restful
 passlib
 itsdangerous
+rauth

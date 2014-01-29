@@ -38,6 +38,8 @@ class User(db.Model):
         backref = db.backref('followers', lazy = 'dynamic'), 
         lazy = 'dynamic')
 
+    def __init__(self, username, fb_id):
+        self.username = username
     @staticmethod
     def make_valid_username(username):
         return re.sub('[^a-zA-Z0-9_\.]','', username)
