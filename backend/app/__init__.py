@@ -11,20 +11,12 @@ from flask.ext.mail import Mail
 from flask.ext.babel import Babel
 from flask.ext.restful import Api, Resource, reqparse
 
-from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 from werkzeug.contrib.fixers import ProxyFix
 
 sys.path.append('../..')
 
-from social.apps.flask_app.routes import social_auth
-from social.apps.flask_app.models import init_social
-from social.apps.flask_app.template_filters import backends
-
-from datetime import datetime
-
-# App
 app = Flask(__name__)
 app.config.from_object('config')
 
@@ -43,14 +35,7 @@ db.metadata.bind = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
 engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'],
                        convert_unicode=True)
-# session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
-# Base.query = db_session.query_property()
-
-# authentication
-app.register_blueprint(social_auth)
-#social_storage = init_social(app, Base, db.session)
-social_storage = init_social(app, db)
 
 # Login Manager
 lm = login.LoginManager()
@@ -120,4 +105,4 @@ def inject_user():
         return {'user': None}
 
 
-app.context_processor(backends)
+# app.context_processor(backends)

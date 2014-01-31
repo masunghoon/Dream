@@ -17,7 +17,7 @@
     <p>{{ _('Followers:') }} {{user.followers.count()}} | {{ _('Following:') }} {{user.followed.count()}} |
     {% if user.id == g.user.id %}
         <a href="{{url_for('edit')}}">{{ _('Edit your profile') }}</a>
-		{% include 'social_auth.html' %}
+{#		{% include 'social_auth.html' %}#}
     {% elif not g.user.is_following(user) %}
         <a href="{{url_for('follow', username = user.username)}}">{{ _('Follow') }}</a>
     {% else %}

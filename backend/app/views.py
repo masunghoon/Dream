@@ -5,7 +5,6 @@ from flask.ext.login import login_required, logout_user, login_user, current_use
 from flask.ext.babel import gettext
 from flask.ext.sqlalchemy import get_debug_queries
 from flask.ext.restful import Resource, reqparse, fields, marshal
-from sqlalchemy.sql import func
 from werkzeug import check_password_hash, generate_password_hash
 from flask.ext.httpauth import HTTPBasicAuth
 from rauth.service import OAuth2Service
@@ -14,7 +13,7 @@ auth = HTTPBasicAuth()
 
 from guess_language import guessLanguage
 
-from app import app, db, lm, oid, Base, babel, api
+from app import app, db,  oid, babel, api
 from forms import LoginForm, OidLoginForm, EditForm, PostForm, SearchForm, RegisterForm
 from models import User, Post, Bucket, Plan, ROLE_USER, ROLE_ADMIN
 from emails import follower_notification
@@ -22,7 +21,7 @@ from translate import microsoft_translate
 
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT, FB_CLIENT_ID, FB_CLIENT_SECRET
 
-from datetime import datetime, timedelta, date
+from datetime import datetime
 
 now = datetime.utcnow()
 
@@ -45,7 +44,6 @@ def get_locale():
 @app.route('/index/<int:page>', methods=['GET', 'POST'])
 @auth.login_required
 def index(page=1):
-    print g.user
     form = PostForm()
     if form.validate_on_submit():
         language = guessLanguage(form.post.data)
@@ -390,10 +388,10 @@ def verify_password(username_or_token, password):
     return True
 
 
-@app.route('/facebook/login')
+@app.route('/login/facebook')
 def login():
     redirect_uri = url_for('authorized', _external=True)
-    params = {'redirect_uri': redirect_uri, 'scope': 'email'}
+    params = {'redirect_uri': redirect_uri, 'scope': 'email, user_birthday'}
     return redirect(facebook.get_authorize_url(**params))
 
 
@@ -412,9 +410,9 @@ def authorized():
 
     # the "me" response
     me = auth.get('me').json()
-    u = User.get_or_create(me['email'], me['id'])
+    birthday = me['birthday'][6:10] + me['birthday'][0:2] + me['birthday'][3:5]
+    u = User.get_or_create(me['email'], me['username'], me['id'], birthday)
 
-    print u.id
     return jsonify({'user':{'id':u.id,
                             'username':u.username,
                             'email':u.email,
@@ -424,8 +422,6 @@ def authorized():
 
 # @app.route('/facebook/get_resource')
 # def get_fb_resource():
-#     print request.authorization.get('username')
-#     print request.authorization.get('password')
 #     access_token = request.authorization.get('username')
 #     # u = User.filter_by()
 #     auth = facebook.get_session(token=access_token)
@@ -651,15 +647,10 @@ class BucketAPI(Resource):
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
     def delete(self, id):
-        print id
         bkt = Bucket.query.filter_by(id=id).first()
-        print bkt.title
         try:
-            print "1"
             db.session.delete(bkt)
-            print "2"
             db.session.commit()
-            print "3"
             return {'status': 'success'}, 200
         except:
             return {'status': 'delete failed'}, 400 # HTTP Status Code Review

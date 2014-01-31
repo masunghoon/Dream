@@ -2,10 +2,10 @@ from hashlib import md5
 from passlib.apps import custom_app_context as pwd_context
 from app import app, db
 
-from social.apps.flask_app import models
+# from social.apps.flask_app import models
 
 from sqlalchemy import select, and_, or_
-from datetime import datetime
+# from datetime import datetime
 
 import flask.ext.whooshalchemy as whooshalchemy
 import re
@@ -39,9 +39,11 @@ class User(db.Model):
         backref = db.backref('followers', lazy = 'dynamic'), 
         lazy = 'dynamic')
 
-    def __init__(self, username, fb_id):
-        self.username = username
+    def __init__(self, email, username, fb_id, birthday):
+        self.email = email
         self.fb_id = fb_id
+        self.username = username
+        self.birthday = birthday
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -116,18 +118,19 @@ class User(db.Model):
         return user
 
     @staticmethod
-    def get_or_create(email, fb_id):
+    def get_or_create(email, username, fb_id, birthday):
         user = User.query.filter_by(email=email).first()
-        print user.email
-        print user.fb_id
         if user is None:
-            user = User(email=email, fb_id=fb_id)
+            user = User(email=email, username=username, fb_id=fb_id, birthday=birthday)
             db.session.add(user)
             db.session.commit()
-        elif user.fb_id is None:
-            print "!!!!!!"
-            user.fb_id = fb_id
-            db.session.commit()
+        else:
+            if user.fb_id is None or user.fb_id == "":
+                user.fb_id = fb_id
+                db.session.commit()
+            if user.birthday is None or user.birthday == "":
+                user.birthday = birthday
+                db.session.commit()
         return user
 
 
