@@ -8,6 +8,7 @@ from flask.ext.restful import Resource, reqparse, fields, marshal
 from sqlalchemy.sql import func
 from werkzeug import check_password_hash, generate_password_hash
 from flask.ext.httpauth import HTTPBasicAuth
+from rauth.service import OAuth2Service
 
 auth = HTTPBasicAuth()
 
@@ -19,12 +20,20 @@ from models import User, Post, Bucket, Plan, ROLE_USER, ROLE_ADMIN
 from emails import follower_notification
 from translate import microsoft_translate
 
-from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT, FB_CLIENT_ID, FB_CLIENT_SECRET
 
 from datetime import datetime, timedelta, date
 
 now = datetime.utcnow()
 
+
+graph_url = 'https://graph.facebook.com/'
+facebook = OAuth2Service(name='facebook',
+                         authorize_url='https://www.facebook.com/dialog/oauth',
+                         access_token_url=graph_url+'oauth/access_token',
+                         client_id=FB_CLIENT_ID,
+                         client_secret=FB_CLIENT_SECRET,
+                         base_url=graph_url);
 
 @babel.localeselector
 def get_locale():
@@ -344,10 +353,10 @@ def uri_redirect(id):
 def get_auth_token():
     token = g.user.generate_auth_token()
     return jsonify({'user':{'id': g.user.id,
-            'username': g.user.username,
-            'email': g.user.email,
-            'birthday': g.user.birthday,},
-            'token': token.decode('ascii')})
+                            'username': g.user.username,
+                            'email': g.user.email,
+                            'birthday': g.user.birthday,},
+                    'token': token.decode('ascii')})
 
 
 @app.route('/api/resource')
@@ -362,7 +371,16 @@ def get_resource():
 @auth.verify_password
 def verify_password(username_or_token, password):
     # first try to authenticate by token
-    user = User.verify_auth_token(username_or_token)
+    if password == "facebook":
+        auth = facebook.get_session(token=username_or_token)
+        resp = auth.get('/me')
+        if resp.status_code == 200:
+            fb_user = resp.json()
+            user = User.query.filter_by(email=fb_user.get('email')).first()
+        else:
+            return False
+    else:
+        user = User.verify_auth_token(username_or_token)
     if not user:
         # try to authenticate with username/password
         user = User.query.filter_by(email = username_or_token).first()
@@ -372,7 +390,56 @@ def verify_password(username_or_token, password):
     return True
 
 
+@app.route('/facebook/login')
+def login():
+    redirect_uri = url_for('authorized', _external=True)
+    params = {'redirect_uri': redirect_uri, 'scope': 'email'}
+    return redirect(facebook.get_authorize_url(**params))
 
+
+@app.route('/facebook/authorized')
+def authorized():
+    # check to make sure the user authorized the request
+    if not 'code' in request.args:
+        return jsonify({'status':'error',
+                        'reason':'Authentication failed'})
+
+    # make a request for the access token credentials using code
+    redirect_uri = url_for('authorized', _external=True)
+    data = dict(code=request.args['code'], redirect_uri=redirect_uri)
+
+    auth = facebook.get_auth_session(data=data)
+
+    # the "me" response
+    me = auth.get('me').json()
+    u = User.get_or_create(me['email'], me['id'])
+
+    print u.id
+    return jsonify({'user':{'id':u.id,
+                            'username':u.username,
+                            'email':u.email,
+                            'birthday':u.birthday,},
+                    'access_token':auth.access_token})
+
+
+# @app.route('/facebook/get_resource')
+# def get_fb_resource():
+#     print request.authorization.get('username')
+#     print request.authorization.get('password')
+#     access_token = request.authorization.get('username')
+#     # u = User.filter_by()
+#     auth = facebook.get_session(token=access_token)
+#     resp = auth.get('/me')
+#     if resp.status_code == 200:
+#         user = resp.json()
+#         u = User.query.filter_by(email=user.get('email')).first()
+#         return jsonify({'email':u.email,
+#                         'username':u.username,
+#                         'id':u.id,
+#                         'birthday':u.birthday
+#                         })
+#
+#     return jsonify({'status':'success'})
 
 
 # @app.route('/api/getUserDday', methods=['GET'])

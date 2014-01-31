@@ -31,6 +31,7 @@ class User(db.Model):
     last_seen = db.Column(db.DateTime)
     birthday = db.Column(db.String(8))
     login_fault = db.Column(db.SmallInteger, default=0)         # if bigger than 5 = blocked
+    fb_id = db.Column(db.String(128))
     followed = db.relationship('User', 
         secondary = followers, 
         primaryjoin = (followers.c.follower_id == id), 
@@ -40,6 +41,11 @@ class User(db.Model):
 
     def __init__(self, username, fb_id):
         self.username = username
+        self.fb_id = fb_id
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+
     @staticmethod
     def make_valid_username(username):
         return re.sub('[^a-zA-Z0-9_\.]','', username)
@@ -109,8 +115,20 @@ class User(db.Model):
         user = User.query.get(data['id'])
         return user
 
-    def __repr__(self):
-        return '<User %r>' % self.username
+    @staticmethod
+    def get_or_create(email, fb_id):
+        user = User.query.filter_by(email=email).first()
+        print user.email
+        print user.fb_id
+        if user is None:
+            user = User(email=email, fb_id=fb_id)
+            db.session.add(user)
+            db.session.commit()
+        elif user.fb_id is None:
+            print "!!!!!!"
+            user.fb_id = fb_id
+            db.session.commit()
+        return user
 
 
 class Post(db.Model):
