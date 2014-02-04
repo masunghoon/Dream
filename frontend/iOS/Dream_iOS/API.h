@@ -6,6 +6,7 @@
 //  Copyright (c) 2014년 Ma Sunghoon. All rights reserved.
 //
 
+#import <FacebookSDK/FacebookSDK.h>
 #import "AFNetworking.h"
 #import "AFHTTPRequestOperationManager.h"
 
@@ -32,6 +33,7 @@ typedef void (^JSONResponseBlock)(NSDictionary *json);
 
 //Authorization
 -(void)getAuthTokenWithID:(NSString *)email andPassword:(NSString *)password  onCompletion:(JSONResponseBlock)completionBlock;
+-(void)setFacebookAccessToken:(NSString *)FBAccessToken onCompletion:(JSONResponseBlock)completionBlock;
 -(void)logout;
 
 @end

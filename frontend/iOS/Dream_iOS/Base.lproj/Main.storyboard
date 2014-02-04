@@ -1233,7 +1233,7 @@ AQABAAEAAQAB//+dkAEA//+PgAAE//+dkAEI//+dkAEMUERUAFBTVABQV1QAUFBUAAAAAAEAAAABA
         <!--Login Screen-->
         <scene sceneID="tgf-yP-mpy">
             <objects>
-                <viewController id="CIw-tN-VMw" customClass="LoginScreen" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="LoginScreen" id="CIw-tN-VMw" customClass="LoginScreen" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="wSy-1t-fgG">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -1287,12 +1287,15 @@ AQABAAEAAQAB//+dkAEA//+PgAAE//+dkAEI//+dkAEMUERUAFBTVABQV1QAUFBUAAAAAAEAAAABA
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <button opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="WXx-CO-Wd6">
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="WXx-CO-Wd6">
                                 <rect key="frame" x="80" y="295" width="157" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Login with FACEBOOK">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="btnFBLoginTapped:" destination="CIw-tN-VMw" eventType="touchUpInside" id="pCe-yI-RoQ"/>
+                                </connections>
                             </button>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="or" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="fhH-t4-Shu">
                                 <rect key="frame" x="150" y="341" width="16" height="21"/>
@@ -1315,6 +1318,7 @@ AQABAAEAAQAB//+dkAEA//+PgAAE//+dkAEI//+dkAEMUERUAFBTVABQV1QAUFBUAAAAAAEAAAABA
                     </view>
                     <navigationItem key="navigationItem" id="VBp-yd-NuB"/>
                     <connections>
+                        <outlet property="FBLoginBtn" destination="WXx-CO-Wd6" id="ON5-Al-7lj"/>
                         <outlet property="fldEmail" destination="Fv1-Wl-Re8" id="rSv-iN-VTI"/>
                         <outlet property="fldPasswd" destination="KYl-4g-YKN" id="2o6-RD-h0q"/>
                     </connections>
@@ -1433,8 +1437,8 @@ AQABAAEAAQAB//+dkAEA//+PgAAE//+dkAEI//+dkAEMUERUAFBTVABQV1QAUFBUAAAAAAEAAAABA
         <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
+        <segue reference="W3z-Cj-e9Z"/>
+        <segue reference="BP2-B8-EoE"/>
         <segue reference="58B-nc-D0E"/>
-        <segue reference="D9O-Y2-fnS"/>
-        <segue reference="S6a-lp-sbq"/>
     </inferredMetricsTieBreakers>
 </document>

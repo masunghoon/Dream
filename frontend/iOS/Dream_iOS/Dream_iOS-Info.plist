@@ -20,8 +20,21 @@
 	<string>0.1</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb268430496627035</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>0.1</string>
+	<key>FacebookAppID</key>
+	<string>268430496627035</string>
+	<key>FacebookDisplayName</key>
+	<string>Mass­i­n­e­t­_­TEST</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIMainStoryboardFile</key>

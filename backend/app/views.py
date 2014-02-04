@@ -374,7 +374,9 @@ def verify_password(username_or_token, password):
         resp = auth.get('/me')
         if resp.status_code == 200:
             fb_user = resp.json()
-            user = User.query.filter_by(email=fb_user.get('email')).first()
+            # user = User.query.filter_by(email=fb_user.get('email')).first()
+            birthday = fb_user['birthday'][6:10] + fb_user['birthday'][0:2] + fb_user['birthday'][3:5]
+            user = User.get_or_create(fb_user['email'], fb_user['username'], fb_user['id'], birthday)
         else:
             return False
     else:

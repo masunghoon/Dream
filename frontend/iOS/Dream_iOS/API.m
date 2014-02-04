@@ -12,7 +12,7 @@
 #import "UIAlertView+error.h"
 
 //the web location of the service
-#define kAPIHost @"http://masunghoon.iptime.org:5000/"
+#define kAPIHost @"http://masunghoon.iptime.org:5001/"
 
 @implementation API
 
@@ -117,16 +117,45 @@
     ];
 }
 
+//Get Facebook Access token
+-(void)setFacebookAccessToken:(NSString *)FBAccessToken onCompletion:(JSONResponseBlock)completionBlock {
+    [manager.requestSerializer setAuthorizationHeaderFieldWithUsername:FBAccessToken password:@"facebook"];
+    [manager GET:@"api/resource"
+      parameters:nil
+         success:^(AFHTTPRequestOperation *operation, id responseObject){
+//             [UICKeyChainStore setString:[responseObject objectForKey:@"token"] forKey:@"access_token"];
+//             [manager.requestSerializer setAuthorizationHeaderFieldWithUsername:[UICKeyChainStore stringForKey:@"token"] password:@"facebook"];
+//             completionBlock([responseObject objectForKey:@"user"]);
+//             NSLog(@"%@",responseObject);
+             completionBlock(responseObject);
+         }
+         failure:^(AFHTTPRequestOperation *operation, NSError *error){
+             completionBlock([NSDictionary dictionaryWithObject:@"Unauthorized" forKey:@"error"]);
+         }
+    ];
+}
+
 //Logout
 -(void)logout{
+    NSString *lastLoggedInUsername = [[[API sharedInstance] user] objectForKey:@"username"];
+    NSString *lastLoggedInEmail = [[[API sharedInstance] user] objectForKey:@"email"];
+    //TODO: Insert YES/NO Question Box
+    if (FBSession.activeSession.state == FBSessionStateOpen || FBSession.activeSession.state == FBSessionStateOpenTokenExtended) {
+
+        // Close the session and remove the access token from the cache
+        // The session state handler (in the app delegate) will be called automatically
+        [FBSession.activeSession closeAndClearTokenInformation];
+
+        // If the session state is not any of the two "open" states when the button is clicked
+    }
     [[API sharedInstance] setUser:nil];
     [UICKeyChainStore removeItemForKey:@"token"];
     [UICKeyChainStore removeItemForKey:@"password"];
-    [manager.requestSerializer setAuthorizationHeaderFieldWithUsername:[UICKeyChainStore stringForKey:@"email"] password:@"unsued"];
+    [manager.requestSerializer setAuthorizationHeaderFieldWithUsername:lastLoggedInEmail password:@"unsued"];
     [self getFromURI:@"api/resource"
           withParams:nil
         onCompletion:^(NSDictionary *json){
-            [UIAlertView error:[NSString stringWithFormat:@"bye bye %@", [UICKeyChainStore stringForKey:@"email"]]];
+            [UIAlertView error:[NSString stringWithFormat:@"bye bye %@", lastLoggedInUsername]];
     }];
 }
 

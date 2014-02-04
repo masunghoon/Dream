@@ -7,6 +7,8 @@ run.py
 runp.py
 tmp
 search.db
+.DS_Store
+.idea
 
 ### about HTML5 Study ###
 *html5study*
