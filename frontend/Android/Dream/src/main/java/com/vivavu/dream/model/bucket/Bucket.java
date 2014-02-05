@@ -1,5 +1,6 @@
 package com.vivavu.dream.model.bucket;
 
+import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.JsonDateDeserializer;
 import com.vivavu.dream.util.JsonDateSerializer;
 import com.vivavu.dream.util.JsonDeadlineDateSerializer;
@@ -230,6 +231,11 @@ public class Bucket implements Serializable{
 
     public void setSubBuckets(List<Bucket> subBuckets) {
         this.subBuckets = subBuckets;
+    }
+
+    @JsonIgnore
+    public String getRemainDays(){
+        return DateUtils.getRemainDayInString(getDeadline());
     }
 
     @Override

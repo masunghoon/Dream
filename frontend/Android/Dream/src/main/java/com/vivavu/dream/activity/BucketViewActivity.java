@@ -278,7 +278,7 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
 
         mBucketItemScope.setText(bucket.getRange());
 
-        mBucketItemRemain.setText("remain " + DateUtils.getRemainDay(bucket.getDeadline()).toString() + " Days");
+        mBucketItemRemain.setText(bucket.getRemainDays());
 
         if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
             mBucketItemProgressbar.setVisibility(ProgressBar.GONE);

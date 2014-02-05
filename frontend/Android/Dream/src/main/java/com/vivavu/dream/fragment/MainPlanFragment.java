@@ -12,7 +12,6 @@ import com.vivavu.dream.common.CustomBaseFragment;
 import com.vivavu.dream.model.bucket.Plan;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -54,7 +53,6 @@ public class MainPlanFragment extends CustomBaseFragment {
     public void refreshList(List<Plan> plans){
         if(context != null){
             planAdapter.setPlans(plans);
-            Collections.reverse(this.plans);
             planAdapter.notifyDataSetChanged();
         }
     }

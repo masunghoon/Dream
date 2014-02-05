@@ -51,5 +51,6 @@
     <string name="btn_unroll">펼치기</string>
     <string name="btn_roll">감추기</string>
     <string name="txt_subbucket">하위버킷</string>
+    <string name="bucket_custom_date_cancel">cancel</string>
 
 </resources>

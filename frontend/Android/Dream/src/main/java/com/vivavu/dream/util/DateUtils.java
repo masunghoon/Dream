@@ -16,11 +16,40 @@ import java.util.List;
  */
 public class DateUtils {
     public static Long getRemainDay(Date endDate){
-        Long now = Calendar.getInstance().getTimeInMillis();
-        Long end = endDate.getTime();
+        Calendar nowCal = Calendar.getInstance();
+        nowCal.set(Calendar.HOUR_OF_DAY, 0);
+        nowCal.set(Calendar.MINUTE, 0);
+        nowCal.set(Calendar.SECOND, 0);
+        nowCal.set(Calendar.MILLISECOND, 0);
+
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(endDate);
+        endCal.set(Calendar.HOUR_OF_DAY, 0);
+        endCal.set(Calendar.MINUTE, 0);
+        endCal.set(Calendar.SECOND, 0);
+        endCal.set(Calendar.MILLISECOND, 0);
+
+        Long now = nowCal.getTimeInMillis();
+        Long end = endCal.getTimeInMillis();
         Long remain = (end-now)/1000/60/60/24;
 
         return remain;
+    }
+
+    public static String getRemainDayInString(Date deadline){
+        if(deadline != null){
+            Long remain = DateUtils.getRemainDay(deadline);
+            if(remain > 0 ){
+                return String.format("remain %,d Days", remain);
+            }else if(remain < 0){
+                return String.format("over %,d Days", Math.abs(remain));
+            }else{
+                return "Today!!!";
+            }
+
+        }else{
+            return "in my life";
+        }
     }
 
     public static int getProgress(Date startDate, Date endDate){
@@ -37,17 +66,24 @@ public class DateUtils {
 
     public static List<Dday> getUserDdays(Date birthday){
         Calendar cal = Calendar.getInstance();
-
-        int ageInFull = getAgeInFull(birthday);
         List<Dday> ddays = new ArrayList<Dday>();
-        cal.setTime(birthday);
 
-        int period = ageInFull - (ageInFull%10);
-        cal.add(Calendar.YEAR, period);
-        cal.add(Calendar.DATE, -1);
-        for(int i = 0; i < 6; i++){
-            cal.add(Calendar.YEAR, 10 );
-            ddays.add(new Dday( (period + i*10) +"대" , cal.getTime()));
+        if(birthday != null){
+            int ageInFull = getAgeInFull(birthday);
+            cal.setTime(birthday);
+            int period = ageInFull - (ageInFull%10);
+            cal.add(Calendar.YEAR, period);
+            cal.add(Calendar.DATE, -1);
+            for(int i = 0; i < 6; i++){
+                cal.add(Calendar.YEAR, 10 );
+                ddays.add(new Dday( (period + i*10) +"대" , cal.getTime()));
+            }
+        } else {
+            cal.add(Calendar.DATE, -1);
+            for(int i = 0; i < 6; i++){
+                cal.add(Calendar.YEAR, 10 );
+                ddays.add(new Dday( (i+1)*10 +"년 후" , cal.getTime()));
+            }
         }
 
         return ddays;
