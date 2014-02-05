@@ -48,5 +48,8 @@
     <string name="plan_done_true">완료</string>
     <string name="plan_done_false">미완료</string>
     <string name="popup_plan_done_description">오늘 하루 어떠셨나요? 내일을 위해 오늘 기록을 남겨보세요.</string>
+    <string name="btn_unroll">펼치기</string>
+    <string name="btn_roll">감추기</string>
+    <string name="txt_subbucket">하위버킷</string>
 
 </resources>

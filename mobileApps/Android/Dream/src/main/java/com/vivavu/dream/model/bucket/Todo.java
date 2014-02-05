@@ -5,12 +5,13 @@ import com.vivavu.dream.util.JsonDateDeserializer;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by yuja on 14. 1. 9.
  */
-public class Todo {
+public class Todo implements Serializable{
     @JsonDeserialize(using= JsonDateDeserializer.class)
     @JsonProperty("todoDeadline")
     private Date todoDeadLine;

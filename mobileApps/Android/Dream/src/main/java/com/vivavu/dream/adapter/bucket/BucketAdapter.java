@@ -13,7 +13,6 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.BucketViewActivity;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
 
 import java.util.List;
@@ -37,7 +36,10 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
 
     @Override
     public int getCount() {
-        return buckets.size();
+        if(buckets != null){
+            return buckets.size();
+        }
+        return 0;
     }
 
     @Override

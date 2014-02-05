@@ -5,6 +5,7 @@ import com.vivavu.dream.util.JsonDateSerializer;
 import com.vivavu.dream.util.JsonDeadlineDateSerializer;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * Created by yuja on 14. 1. 9.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Bucket implements Serializable{
     @JsonDeserialize(using= JsonDateDeserializer.class)
     @JsonSerialize(using = JsonDeadlineDateSerializer.class)
@@ -127,6 +129,11 @@ public class Bucket implements Serializable{
     }
 
     public Integer getParentId() {
+        return parentId;
+    }
+
+    @JsonProperty("parentID")
+    public Integer getParentID() {
         return parentId;
     }
 
