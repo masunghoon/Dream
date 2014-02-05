@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>1090792F-2B0B-4B6A-B62A-03C7C16D1882</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Dream_iOS</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>6EFF2642-6FBF-43C4-B26B-5F9BC405E631</key>
+		<string>https://github.com/masunghoon/Dream.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>frontend/iOS/Dream_iOS.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>6EFF2642-6FBF-43C4-B26B-5F9BC405E631</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/masunghoon/Dream.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>6EFF2642-6FBF-43C4-B26B-5F9BC405E631</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>6EFF2642-6FBF-43C4-B26B-5F9BC405E631</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Dream</string>
+		</dict>
+	</array>
+</dict>
+</plist>
