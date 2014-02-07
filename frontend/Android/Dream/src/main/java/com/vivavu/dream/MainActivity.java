@@ -1,34 +1,34 @@
 package com.vivavu.dream;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.vivavu.dream.activity.BucketAddActivity;
 import com.vivavu.dream.activity.BucketViewActivity;
+import com.vivavu.dream.adapter.main.MainPagerAdapter;
+import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.Constants;
 import com.vivavu.dream.common.CustomBaseFragment;
-import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.fragment.MainContentsFragment;
 import com.vivavu.dream.fragment.MainPlanFragment;
-import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.repository.DataRepository;
 
-public class MainActivity extends ActionBarActivity implements CustomBaseFragment.OnOptionFragmentRemovedListener{
-    private DreamApp context = null;
+public class MainActivity extends BaseActionBarActivity implements CustomBaseFragment.OnOptionFragmentRemovedListener{
     private MainContentsFragment mainContentsFragment;
     private MainPlanFragment mainPlanFragment;
-
+    private MainPagerAdapter mMainPagerAdapter;
+    private ViewPager mViewPager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context = (DreamApp) getApplicationContext();
-        loadAppDefaultInfo();
+
+        /*mMainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager());
+        mViewPager = (ViewPager) findViewById(R.id.main_view_pager);
+        mViewPager.setAdapter(mMainPagerAdapter);*/
 
         if (savedInstanceState == null) {
 
@@ -47,11 +47,7 @@ public class MainActivity extends ActionBarActivity implements CustomBaseFragmen
         super.onStart();
         // Activity 와 Fragment 실행순서에 따라서 Fragment UI가 다 생성된 이후에 Activity에서
         // Fragment의 UI에 접근 가능. Activity.onCreate -> Fragment.onCreate->Activity.onStart가 수행
-        if (checkLogin() == false) {
-            goLogin();
-            return;
-        }
-        mainContentsFragment.setBuckets(DataRepository.getBucketsV2(context.getUsername()));
+
     }
 
     @Override
@@ -61,6 +57,8 @@ public class MainActivity extends ActionBarActivity implements CustomBaseFragmen
             case Code.ACT_LOGIN:
                 if (resultCode == RESULT_OK) {
                     mainContentsFragment.refreshList(DataRepository.getBucketsV2(context.getUsername()));
+                }else{
+                    finish();
                 }
 
                 break;
@@ -95,9 +93,6 @@ public class MainActivity extends ActionBarActivity implements CustomBaseFragmen
             case R.id.main_menu_refresh_bucket_list:
                 refreshFragment();
 
-                return true;
-            case R.id.main_menu_login:
-                goLogin();
                 return true;
             case R.id.main_menu_plan:
                 goPlan();
@@ -139,49 +134,7 @@ public class MainActivity extends ActionBarActivity implements CustomBaseFragmen
 
     @Override
     protected void onStop() {
-        saveAppDefaultInfo();
         super.onStop();
-    }
-
-    private boolean checkLogin() {
-        BaseInfo baseInfo = DataRepository.getBaseInfo();
-        if (baseInfo != null) {
-            context.setUser(baseInfo);
-            context.setUsername(baseInfo.getUsername());
-            context.setLogin(true);
-            return true;
-        }
-        context.setLogin(false);
-        return false;
-    }
-
-    private void loadAppDefaultInfo() {
-        if (context == null) {
-            context = (DreamApp) getApplicationContext();
-        }
-        //기존 저장된 로그인 관련 정보 불러오기
-        SharedPreferences settings = getSharedPreferences(Constants.settings, MODE_PRIVATE);
-        String email = settings.getString(Constants.email, "");
-        String token = settings.getString(Constants.token, "");
-
-        context.setEmail(email);
-        context.setToken(token);
-    }
-
-    private void saveAppDefaultInfo() {
-        if (context == null) {
-            context = (DreamApp) getApplicationContext();
-        }
-
-        // 프리퍼런스 설정
-        SharedPreferences prefs = getSharedPreferences(Constants.settings, MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        editor.putString(Constants.email, context.getEmail());
-        if (context.getToken() != null) {
-            editor.putString(Constants.token, context.getToken());   // String
-        }
-        editor.commit();
     }
 
     @Override
@@ -206,5 +159,10 @@ public class MainActivity extends ActionBarActivity implements CustomBaseFragmen
     protected void onResume() {
         //다시 활성화 될때.
         super.onResume();
+        if (context.checkLogin() == false) {
+            goLogin();
+        }else{
+            mainContentsFragment.setBuckets(DataRepository.getBucketsV2(context.getUsername()));
+        }
     }
 }

@@ -21,6 +21,9 @@ import com.vivavu.dream.common.RepeatType;
 import com.vivavu.dream.common.Tag;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
@@ -56,22 +59,28 @@ public class BucketOptionReaptFragment extends CustomBaseFragment implements Vie
     Button mBtnBucketOptionRepeatSave;
     @InjectView(R.id.btn_bucket_option_repeat_cancel)
     Button mBtnBucketOptionRepeatCancel;
+    @InjectView(R.id.layout_bucket_option_repeat_week)
+    LinearLayout mLayoutBucketOptionRepeatWeek;
 
-    private OptionRepeat optionRepeat;
+    private OptionRepeat userInputOptionRepeat;
+    private OptionRepeat originalOptionRepeat;
 
-    public BucketOptionReaptFragment(){
-        this.optionRepeat = new OptionRepeat();
+    public BucketOptionReaptFragment() {
+        this.userInputOptionRepeat = new OptionRepeat();
+        this.originalOptionRepeat = new OptionRepeat();
     }
 
-    public BucketOptionReaptFragment(OptionRepeat optionRepeat){
-        this.optionRepeat = optionRepeat;
+    public BucketOptionReaptFragment(OptionRepeat optionRepeat) {
+        this.originalOptionRepeat = optionRepeat;
+        this.userInputOptionRepeat = (OptionRepeat) optionRepeat.clone();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(optionRepeat == null){
-            optionRepeat = new OptionRepeat();
+        if (userInputOptionRepeat == null) {
+            userInputOptionRepeat = new OptionRepeat();
+            originalOptionRepeat = new OptionRepeat();
         }
     }
 
@@ -109,10 +118,10 @@ public class BucketOptionReaptFragment extends CustomBaseFragment implements Vie
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
                 String edit = charSequence.toString();
-                if(edit.length() > 0){
-                    optionRepeat.setRepeatCount(Integer.parseInt(edit));
-                }else{
-                    optionRepeat.setRepeatCount(0);
+                if (edit.length() > 0) {
+                    userInputOptionRepeat.setRepeatCount(Integer.parseInt(edit));
+                } else {
+                    userInputOptionRepeat.setRepeatCount(0);
                 }
 
             }
@@ -123,19 +132,22 @@ public class BucketOptionReaptFragment extends CustomBaseFragment implements Vie
             }
         });
 
-        ArrayAdapter<RepeatType> repeatTypeArrayAdapter = new ArrayAdapter<RepeatType>(getActivity(), android.R.layout.simple_spinner_item, RepeatType.values());
+        List<RepeatType> typeArray = new ArrayList<RepeatType>();
+        typeArray.add(RepeatType.WEEK);
+        typeArray.add(RepeatType.MNTH);
+        ArrayAdapter<RepeatType> repeatTypeArrayAdapter = new ArrayAdapter<RepeatType>(getActivity(), android.R.layout.simple_spinner_item, typeArray);
         mSpinRepeatPeriod.setAdapter(repeatTypeArrayAdapter);
         mSpinRepeatPeriod.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 RepeatType repeatType = (RepeatType) adapterView.getItemAtPosition(i);
-                BucketOptionReaptFragment.this.optionRepeat.setRepeatType(repeatType);
+                BucketOptionReaptFragment.this.userInputOptionRepeat.setRepeatType(repeatType);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-                BucketOptionReaptFragment.this.optionRepeat.setRepeatType(RepeatType.WKRP);
+                //BucketOptionReaptFragment.this.userInputOptionRepeat.setRepeatType(RepeatType.WKRP);
             }
         });
 
@@ -146,47 +158,48 @@ public class BucketOptionReaptFragment extends CustomBaseFragment implements Vie
 
     @Override
     public void onClick(View view) {
+        super.onClick(view);//배경선택시 키보드 없애기 위해 호출
         switch (view.getId()) {
             case R.id.btn_bucket_option_repeat_custom:
                 if (mLayoutBucketOptionRepeatCustom.getVisibility() == View.VISIBLE) {
                     mLayoutBucketOptionRepeatCustom.setVisibility(View.GONE);
-                    optionRepeat.setRepeatType(RepeatType.WEEK);
+                    mLayoutBucketOptionRepeatWeek.setVisibility(View.VISIBLE);
                 } else {
                     mLayoutBucketOptionRepeatCustom.setVisibility(View.VISIBLE);
-                    optionRepeat.setRepeatType(RepeatType.MNTH);
+                    mLayoutBucketOptionRepeatWeek.setVisibility(View.GONE);
                 }
 
                 break;
             case R.id.btn_bucket_option_sun:
                 mBtnBucketOptionSun.setSelected(!mBtnBucketOptionSun.isSelected());
-                optionRepeat.setSun(mBtnBucketOptionSun.isSelected());
+                userInputOptionRepeat.setSun(mBtnBucketOptionSun.isSelected());
                 break;
             case R.id.btn_bucket_option_mon:
                 mBtnBucketOptionMon.setSelected(!mBtnBucketOptionMon.isSelected());
-                optionRepeat.setMon(mBtnBucketOptionMon.isSelected());
+                userInputOptionRepeat.setMon(mBtnBucketOptionMon.isSelected());
                 break;
             case R.id.btn_bucket_option_tue:
                 mBtnBucketOptionTue.setSelected(!mBtnBucketOptionTue.isSelected());
-                optionRepeat.setTue(mBtnBucketOptionTue.isSelected());
+                userInputOptionRepeat.setTue(mBtnBucketOptionTue.isSelected());
                 break;
             case R.id.btn_bucket_option_wen:
                 mBtnBucketOptionWen.setSelected(!mBtnBucketOptionWen.isSelected());
-                optionRepeat.setWen(mBtnBucketOptionWen.isSelected());
+                userInputOptionRepeat.setWen(mBtnBucketOptionWen.isSelected());
                 break;
             case R.id.btn_bucket_option_thu:
                 mBtnBucketOptionThu.setSelected(!mBtnBucketOptionThu.isSelected());
-                optionRepeat.setThu(mBtnBucketOptionThu.isSelected());
+                userInputOptionRepeat.setThu(mBtnBucketOptionThu.isSelected());
                 break;
             case R.id.btn_bucket_option_fri:
                 mBtnBucketOptionFri.setSelected(!mBtnBucketOptionFri.isSelected());
-                optionRepeat.setFri(mBtnBucketOptionFri.isSelected());
+                userInputOptionRepeat.setFri(mBtnBucketOptionFri.isSelected());
                 break;
             case R.id.btn_bucket_option_sat:
                 mBtnBucketOptionSat.setSelected(!mBtnBucketOptionSat.isSelected());
-                optionRepeat.setSat(mBtnBucketOptionSat.isSelected());
+                userInputOptionRepeat.setSat(mBtnBucketOptionSat.isSelected());
                 break;
             case R.id.btn_bucket_option_repeat_cnt:
-                optionRepeat.setRepeatType(RepeatType.NONE);
+                userInputOptionRepeat.setRepeatType(RepeatType.NONE);
                 AlertDialog.Builder alert_confirm = new AlertDialog.Builder(getActivity());
                 alert_confirm.setMessage("삭제하시겠습니까?").setCancelable(false).setPositiveButton("확인",
                         new DialogInterface.OnClickListener() {
@@ -214,30 +227,40 @@ public class BucketOptionReaptFragment extends CustomBaseFragment implements Vie
         }
     }
 
-    public void bindData(){
-        if(optionRepeat.getRepeatType() == RepeatType.WKRP){
-            mBtnBucketOptionSun.setSelected(optionRepeat.isSun());
-            mBtnBucketOptionMon.setSelected(optionRepeat.isMon());
-            mBtnBucketOptionTue.setSelected(optionRepeat.isTue());
-            mBtnBucketOptionWen.setSelected(optionRepeat.isWen());
-            mBtnBucketOptionThu.setSelected(optionRepeat.isThu());
-            mBtnBucketOptionFri.setSelected(optionRepeat.isFri());
-            mBtnBucketOptionSat.setSelected(optionRepeat.isSat());
-
-        } else if(optionRepeat.getRepeatType() == RepeatType.WEEK){
-            mSpinRepeatPeriod.setSelection(RepeatType.WEEK.ordinal());
-            mTxtBucketOptionRepeatCnt.setText(String.valueOf(optionRepeat.getRepeatCount()));
+    public void bindData() {
+        if (userInputOptionRepeat.getRepeatType() == RepeatType.WKRP) {
+            mBtnBucketOptionSun.setSelected(userInputOptionRepeat.isSun());
+            mBtnBucketOptionMon.setSelected(userInputOptionRepeat.isMon());
+            mBtnBucketOptionTue.setSelected(userInputOptionRepeat.isTue());
+            mBtnBucketOptionWen.setSelected(userInputOptionRepeat.isWen());
+            mBtnBucketOptionThu.setSelected(userInputOptionRepeat.isThu());
+            mBtnBucketOptionFri.setSelected(userInputOptionRepeat.isFri());
+            mBtnBucketOptionSat.setSelected(userInputOptionRepeat.isSat());
+            mLayoutBucketOptionRepeatCustom.setVisibility(View.GONE);
+            mLayoutBucketOptionRepeatWeek.setVisibility(View.VISIBLE);
+        } else if (userInputOptionRepeat.getRepeatType() == RepeatType.WEEK) {
+            mSpinRepeatPeriod.setSelection(0);
+            mTxtBucketOptionRepeatCnt.setText(String.valueOf(userInputOptionRepeat.getRepeatCount()));
             mLayoutBucketOptionRepeatCustom.setVisibility(View.VISIBLE);
-        } else if(optionRepeat.getRepeatType() == RepeatType.MNTH){
-            mSpinRepeatPeriod.setSelection(RepeatType.MNTH.ordinal());
-            mTxtBucketOptionRepeatCnt.setText(String.valueOf(optionRepeat.getRepeatCount()));
+            mLayoutBucketOptionRepeatWeek.setVisibility(View.GONE);
+        } else if (userInputOptionRepeat.getRepeatType() == RepeatType.MNTH) {
+            mSpinRepeatPeriod.setSelection(1);
+            mTxtBucketOptionRepeatCnt.setText(String.valueOf(userInputOptionRepeat.getRepeatCount()));
             mLayoutBucketOptionRepeatCustom.setVisibility(View.VISIBLE);
+            mLayoutBucketOptionRepeatWeek.setVisibility(View.GONE);
         }
     }
 
     @Override
     public OptionRepeat getContents() {
-        return optionRepeat;
+        if(mLayoutBucketOptionRepeatWeek.getVisibility() == View.VISIBLE){
+            userInputOptionRepeat.setRepeatType(RepeatType.WKRP);
+        } else {
+            RepeatType repeatType = (RepeatType) mSpinRepeatPeriod.getSelectedItem();
+            userInputOptionRepeat.setRepeatType(repeatType);
+        }
+
+        return userInputOptionRepeat;
     }
 
 }

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -20,8 +19,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vivavu.dream.R;
+import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.Scope;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.Dday;
@@ -38,7 +37,7 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 13.
  */
-public class BucketAddActivity extends ActionBarActivity implements View.OnClickListener {
+public class BucketAddActivity extends BaseActionBarActivity {
     @InjectView(R.id.bucket_input_title)
     EditText mBucketInputTitle;
     @InjectView(R.id.btn_input_dday)
@@ -75,7 +74,6 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
     Button mBtnCustomDateCancel;
     private LayoutInflater layoutInflater;
     private Bucket bucket = null;
-    private DreamApp context = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,11 +82,9 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
 
-        context = (DreamApp) getApplicationContext();
         Intent data = getIntent();
 
         int bucketId = data.getIntExtra("bucketId", -1);
-        int parentId = data.getIntExtra("parentId", -1);
         Bucket parentBucket = (Bucket) data.getSerializableExtra("parentBucket");
 
         int code;
@@ -260,6 +256,7 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
 
     @Override
     public void onClick(View view) {
+        super.onClick(view);
         if (view.getId() == R.id.btn_input_dday) {
             if (mLayoutDdayOption.getVisibility() == LinearLayout.GONE) {
                 mLayoutDdayOption.setVisibility(LinearLayout.VISIBLE);

@@ -26,7 +26,10 @@
             <EditText
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/bucket_option_note" />
+                android:id="@+id/bucket_option_note"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+            />
 
         </LinearLayout>
 

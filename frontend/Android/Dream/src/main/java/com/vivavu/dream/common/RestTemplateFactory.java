@@ -5,6 +5,7 @@ import com.vivavu.dream.model.user.User;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJacksonHttpMessageConverter;
+import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -24,6 +25,7 @@ public class RestTemplateFactory {
             //om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);//이부분은 json에 있는데 객체에 해당 대상이 없으면 그냥 넘기는 옵션
 
             restTemplate.getMessageConverters().add(converter);
+            restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
 
         }
         return restTemplate;

@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.vivavu.dream.MainActivity;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.model.BaseInfo;
@@ -77,6 +78,11 @@ public class LeftMenuDrawerFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 Toast.makeText(getActivity(), "로그아웃", Toast.LENGTH_SHORT ).show();
+                if(getActivity() instanceof MainActivity){
+                    if(context != null){
+                        context.logout();
+                    }
+                }
             }
         });
         return rootView;
@@ -85,12 +91,11 @@ public class LeftMenuDrawerFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        context = (DreamApp) getActivity().getApplicationContext();
         bindData();
     }
 
     private void bindData(){
-        context = (DreamApp) getActivity().getApplicationContext();
-
         if(!context.isLogin()){
             BaseInfo baseInfo = DataRepository.getBaseInfo();
             if (baseInfo != null) {

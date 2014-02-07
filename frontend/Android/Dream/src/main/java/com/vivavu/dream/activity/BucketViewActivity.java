@@ -4,7 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vivavu.dream.R;
+import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.common.CustomBaseFragment;
 import com.vivavu.dream.common.RepeatType;
@@ -30,7 +31,6 @@ import com.vivavu.dream.fragment.bucket.BucketOptionReaptFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
 import com.vivavu.dream.repository.DataRepository;
-import com.vivavu.dream.util.DateUtils;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 10.
  */
-public class BucketViewActivity extends ActionBarActivity implements Button.OnClickListener, CustomBaseFragment.OnOptionFragmentRemovedListener {
+public class BucketViewActivity extends BaseActionBarActivity implements CustomBaseFragment.OnOptionFragmentRemovedListener {
     @InjectView(R.id.bucket_btn_done)
     Button mBucketBtnDone;
     @InjectView(R.id.bucket_item_title)
@@ -91,6 +91,10 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
     Button mBtnSubBucketUnroll;
     @InjectView(R.id.btn_sub_bucket_roll)
     Button mBtnSubBucketRoll;
+    @InjectView(R.id.layout_bucket_option_list)
+    LinearLayout mLayoutBucketOptionList;
+    @InjectView(R.id.layout_bucket_item_view)
+    LinearLayout mLayoutBucketItemView;
     private Bucket bucket;
 
     private MainContentsFragment mainContentsFragment;
@@ -99,6 +103,9 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bucket_item_view);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
         ButterKnife.inject(this);
         Integer bucketId = getIntent().getIntExtra("bucketId", -1);
 
@@ -119,7 +126,7 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
         switch (requestCode) {
             case Code.ACT_MOD_BUCKET_DEFAULT_CARD:
                 //데이터 새로고침
-                bucket = DataRepository.getBucket(bucket.getId());
+                bucket = DataRepository.getBucketV2(bucket.getId());
                 bindData();
                 break;
         }
@@ -134,8 +141,10 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        Intent intent;
         switch (id) {
+            case android.R.id.home:
+                Toast.makeText(this, "뒤로 눌림", Toast.LENGTH_SHORT).show();
+                return true;
             case R.id.bucket_view_menu_save:
                 getOptionData();
                 if (DataRepository.updateBucketInfo(bucket) != null) {
@@ -155,7 +164,10 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
 
     @Override
     public void onClick(View view) {
+        super.onClick(view);
         switch (view.getId()) {
+            case R.id.layout_bucket_item_view:
+                return ;
             case R.id.bucket_item_title:
                 modDefaultBucketInfo();
                 break;
@@ -226,7 +238,7 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
                 Toast.makeText(this, "공유하기", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.btn_bucket_option_plan:
-                goAddBucket(bucket.getId());
+                goAddBucket();
                 break;
             case R.id.btn_bucket_option_repeat:
                 //Todo: 임시로 addOptionRepeat()을 위해 bucket에 값을 넣음, 초기에 option카드를 그릴지 말지 결정하는 다른 알고리즘 필요
@@ -251,6 +263,7 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
     }
 
     private void bindEventListener() {
+        //mLayoutBucketItemView.setOnClickListener(this);
         mBucketBtnDone.setOnClickListener(this);
         mBucketItemTitle.setOnClickListener(this);
         mBucketDefaultCardBtnDday.setOnClickListener(this);
@@ -380,12 +393,11 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
         }
     }
 
-    private void goAddBucket(Integer parentId) {
+    private void goAddBucket() {
         Intent intent;
         intent = new Intent();
         intent.setClass(this, BucketAddActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        intent.putExtra("parentId", parentId);
         intent.putExtra("parentBucket", bucket);
         startActivity(intent);
     }

@@ -16,7 +16,9 @@
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
         <activity android:name=".activity.BucketViewActivity"
-            android:label="View Bucket">
+            android:label="View Bucket"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"
+            >
 
         </activity>
         <activity android:name=".activity.BucketAddActivity"

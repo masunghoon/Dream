@@ -6,7 +6,6 @@ import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -15,7 +14,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.vivavu.dream.common.DreamApp;
+import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
@@ -24,8 +23,7 @@ import com.vivavu.dream.repository.DataRepository;
  * Activity which displays a login screen to the user, offering registration as
  * well.
  */
-public class LoginActivity extends ActionBarActivity {
-    private DreamApp context = null;
+public class LoginActivity extends BaseActionBarActivity {
     private SecureToken token = null;
     /**
      * The default email to populate the email field with.
@@ -58,7 +56,6 @@ public class LoginActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setResult(RESULT_CANCELED);
-        context = (DreamApp) getApplicationContext();
 
         setContentView(R.layout.activity_login);
 
@@ -226,6 +223,7 @@ public class LoginActivity extends ActionBarActivity {
             context.setUser(token.getUser());
             context.setUsername(token.getUser().getUsername());
             context.setToken(token.getToken());
+            context.saveAppDefaultInfo();
 
             return true;
         }
@@ -261,19 +259,14 @@ public class LoginActivity extends ActionBarActivity {
         }
     }
 
-    public DreamApp getContext() {
-        return context;
+    @Override
+    public void onBackPressed() {
+        if(context != null && context.isLogin() == true){
+            super.onBackPressed();
+        } else {
+            setResult(RESULT_CANCELED);
+            finish();
+        }
     }
 
-    public void setContext(DreamApp context) {
-        this.context = context;
-    }
-
-    public SecureToken getToken() {
-        return token;
-    }
-
-    public void setToken(SecureToken token) {
-        this.token = token;
-    }
 }
