@@ -47,9 +47,6 @@
 	// Do any additional setup after loading the view.
 //    params = [[NSMutableDictionary alloc] init];
 
-    NSLog(@"%@",params);
-    NSLog(@"%@",bucket);
-
     if([saveType isEqualToString:@"Modify"]){
         [inputBucketTitle setText:[bucket objectForKey:@"title"]];
         if([[bucket objectForKey:@"scope"] isEqualToString:@"DECADE"]){

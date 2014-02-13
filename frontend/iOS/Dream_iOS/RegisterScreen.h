@@ -7,7 +7,18 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <FacebookSDK/FacebookSDK.h>
 
-@interface RegisterScreen : UIViewController
+@interface RegisterScreen : UIViewController <FBLoginViewDelegate>{
+    IBOutlet UITextField *fldEmail;
+    IBOutlet UITextField *fldPassword;
+    IBOutlet UITextField *fldPasswordCfm;
+}
+
+@property  (weak, nonatomic) IBOutlet UIButton *FBLoginBtn;
+
+- (void)sessionStateChanged:(FBSession *)session state:(FBSessionState) state error:(NSError *)error;
+- (void)userLoggedIn;
+- (void)userLoggedOut;
 
 @end
