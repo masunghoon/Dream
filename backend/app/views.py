@@ -429,7 +429,12 @@ def activate_user(user_id):
         return jsonify({'error':'User not found'}),401
     else:
         if u.active == 0:
-            u.active = 1
+            try:
+                u.active = 1
+                db.session.commit()
+            except:
+                return jsonify({'error':'Something went wrong'}),500
+
             return jsonify({'status':'User Activated'}),200
         else:
             return jsonify({'status':'User aleady activated'}),200
