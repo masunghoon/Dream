@@ -7,6 +7,6 @@
     <string name="txt_btn_range_5">50대</string>
     <string name="txt_btn_range_6">60대</string>
     <string name="txt_btn_range_in_my_life">in my life</string>
-    <string name="txt_btn_range_custom">custom</string><string name="bucket_custom_date_set">custom time set</string>
+    <string name="txt_btn_range_custom">custom</string><string name="bucket_custom_date_set">Set</string>
 
 </resources>

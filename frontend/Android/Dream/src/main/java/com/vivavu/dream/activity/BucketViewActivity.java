@@ -81,6 +81,16 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
     LinearLayout mFragmentBucketOptionRepeat;
     @InjectView(R.id.layout_subbucket_list)
     LinearLayout mLayoutSubbucketList;
+    @InjectView(R.id.layout_bucket_default_card_title_area)
+    LinearLayout mLayoutBucketDefaultCardTitleArea;
+    @InjectView(R.id.layout_bucket_default_card_dday_area)
+    LinearLayout mLayoutBucketDefaultCardDdayArea;
+    @InjectView(R.id.txt_bucket_view_subbucket)
+    TextView mTxtBucketViewSubbucket;
+    @InjectView(R.id.btn_sub_bucket_unroll)
+    Button mBtnSubBucketUnroll;
+    @InjectView(R.id.btn_sub_bucket_roll)
+    Button mBtnSubBucketRoll;
     private Bucket bucket;
 
     private MainContentsFragment mainContentsFragment;
@@ -147,9 +157,16 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.bucket_item_title:
-                Intent intent = new Intent(this, BucketAddActivity.class);
-                intent.putExtra("bucketId", (Integer) bucket.getId());
-                startActivityForResult(intent, Code.ACT_MOD_BUCKET_DEFAULT_CARD);
+                modDefaultBucketInfo();
+                break;
+            case R.id.bucket_default_card_btn_dday:
+                modDefaultBucketInfo();
+                break;
+            case R.id.bucket_item_remain:
+                modDefaultBucketInfo();
+                break;
+            case R.id.bucket_item_scope:
+                modDefaultBucketInfo();
                 break;
             case R.id.btn_bucket_option_note:
                 mLayoutBucketOptionNote.setVisibility(View.VISIBLE);
@@ -216,13 +233,30 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
                 bucket.setRptType(RepeatType.WKRP.getCode());
                 addOptionRepeat();
                 break;
+            case R.id.btn_sub_bucket_unroll:
+                //mLayoutSubbucketList.setLayoutParams(new ViewGroup.LayoutParams(-1, 400));
+                mLayoutSubbucketList.setVisibility(View.VISIBLE);
+                break;
+            case R.id.btn_sub_bucket_roll:
+                mLayoutSubbucketList.setVisibility(View.GONE);
+                break;
 
         }
+    }
+
+    private void modDefaultBucketInfo() {
+        Intent intent = new Intent(this, BucketAddActivity.class);
+        intent.putExtra("bucketId", (Integer) bucket.getId());
+        startActivityForResult(intent, Code.ACT_MOD_BUCKET_DEFAULT_CARD);
     }
 
     private void bindEventListener() {
         mBucketBtnDone.setOnClickListener(this);
         mBucketItemTitle.setOnClickListener(this);
+        mBucketDefaultCardBtnDday.setOnClickListener(this);
+        mBucketItemRemain.setOnClickListener(this);
+        mBucketItemScope.setOnClickListener(this);
+
         mBtnBucketOptionNote.setOnClickListener(this);
         mBucketOptionNote.addTextChangedListener(textWatcherInput);
         mBtnBucketOptionPublic.setOnClickListener(this);
@@ -230,6 +264,9 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
         mBtnBucketOptionDel.setOnClickListener(this);
         mBtnBucketOptionPlan.setOnClickListener(this);
         mBtnBucketOptionRepeat.setOnClickListener(this);
+
+        mBtnSubBucketUnroll.setOnClickListener(this);
+        mBtnSubBucketRoll.setOnClickListener(this);
     }
 
     private void bindData() {
@@ -241,7 +278,7 @@ public class BucketViewActivity extends ActionBarActivity implements Button.OnCl
 
         mBucketItemScope.setText(bucket.getRange());
 
-        mBucketItemRemain.setText("remain " + DateUtils.getRemainDay(bucket.getDeadline()).toString() + " Days");
+        mBucketItemRemain.setText(bucket.getRemainDays());
 
         if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
             mBucketItemProgressbar.setVisibility(ProgressBar.GONE);

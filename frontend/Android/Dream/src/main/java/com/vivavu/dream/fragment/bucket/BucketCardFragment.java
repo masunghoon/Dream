@@ -27,7 +27,6 @@ import com.vivavu.dream.common.Tag;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
 import com.vivavu.dream.repository.DataRepository;
-import com.vivavu.dream.util.DateUtils;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -136,7 +135,7 @@ public class BucketCardFragment extends CustomBaseFragment implements View.OnCli
 
         mBucketItemScope.setText(bucket.getRange());
 
-        mBucketItemRemain.setText("remain " + DateUtils.getRemainDay(bucket.getDeadline()).toString() + " Days");
+        mBucketItemRemain.setText(bucket.getRemainDays());
 
         if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
             mBucketItemProgressbar.setVisibility(ProgressBar.GONE);

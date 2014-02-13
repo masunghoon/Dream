@@ -13,8 +13,6 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.BucketViewActivity;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.repository.DataRepository;
-import com.vivavu.dream.util.DateUtils;
 
 import java.util.List;
 
@@ -37,7 +35,10 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
 
     @Override
     public int getCount() {
-        return buckets.size();
+        if(buckets != null){
+            return buckets.size();
+        }
+        return 0;
     }
 
     @Override
@@ -75,7 +76,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         TextView scope = (TextView) view.findViewById(R.id.bucket_item_scope);
         scope.setText(item.getRange());
         TextView remain = (TextView) view.findViewById(R.id.bucket_item_remain);
-        remain.setText("remain "+DateUtils.getRemainDay(item.getDeadline()).toString() + " Days" );
+        remain.setText(item.getRemainDays());
 
         ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.bucket_item_progressbar);
         if(item.getTodos() == null || item.getTodos().size() < 1){

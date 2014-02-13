@@ -20,6 +20,7 @@ import com.vivavu.dream.model.bucket.Plan;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -82,7 +83,7 @@ public class PlanAdapter extends BaseAdapter implements View.OnClickListener {
         planAdapterViewHolder.mBucketBtnDone.setTag(item.getId());
 
         planAdapterViewHolder.mBucketItemScope.setText(item.getRange());
-        planAdapterViewHolder.mBucketItemRemain.setText("remain " + DateUtils.getRemainDay(item.getDeadline()).toString() + " Days");
+        planAdapterViewHolder.mBucketItemRemain.setText(item.getRemainDays());
 
         if (item.getTodos() == null || item.getTodos().size() < 1) {
             planAdapterViewHolder.mBucketItemProgressbar.setVisibility(ProgressBar.GONE);
@@ -150,6 +151,7 @@ public class PlanAdapter extends BaseAdapter implements View.OnClickListener {
     }
 
     public void setPlans(List<Plan> plans) {
+        Collections.reverse(plans);
         this.plans = plans;
     }
 

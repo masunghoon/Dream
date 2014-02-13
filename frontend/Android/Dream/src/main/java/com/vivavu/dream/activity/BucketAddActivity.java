@@ -29,7 +29,6 @@ import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -72,6 +71,8 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
     Button mBtnRange5;
     @InjectView(R.id.btn_range_6)
     Button mBtnRange6;
+    @InjectView(R.id.btn_custom_date_cancel)
+    Button mBtnCustomDateCancel;
     private LayoutInflater layoutInflater;
     private Bucket bucket = null;
     private DreamApp context = null;
@@ -101,7 +102,7 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
             actionBar.setTitle("Add Bucket");
         }
 
-        if(parentBucket != null){
+        if (parentBucket != null) {
             bucket.setLevel(parentBucket.getLevel() + 1);
             bucket.setParentId(parentBucket.getId());
             bucket.setScope(Scope.PLAN.getValue());
@@ -119,7 +120,7 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
         mBtnInputDday.setOnClickListener(this);
 
         addEventListener();
-        List<Dday> list = DateUtils.getUserDdays(DateUtils.getDateFromString(context.getUser().getBirthday(), "yyyyMMdd", Calendar.getInstance().getTime()));
+        List<Dday> list = DateUtils.getUserDdays(DateUtils.getDateFromString(context.getUser().getBirthday(), "yyyyMMdd", null));
         makeDdaysButtonUi(list);
 
         switch (code) {
@@ -168,7 +169,7 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
                             startActivity(intent);
                         }
                     }
-                }else {
+                } else {
                     Toast.makeText(this, "필수입력 항목이 입력되지 않았음", Toast.LENGTH_SHORT).show();
                 }
 
@@ -194,9 +195,10 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
 
         //커스텀 기한선택
         mBtnCustomDateSet.setOnClickListener(this);
+        //mCustomDate.set
+        mBtnCustomDateCancel.setOnClickListener(this);
 
         mBucketInputTitle.addTextChangedListener(textWatcherInput);
-
 
 
     }
@@ -208,7 +210,7 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
             mTextInputDday.setText(dday.getRange());
         }
         if (dday.getDeadline() != null) {
-            mTextInputRemain.setText("remain " + DateUtils.getRemainDay(dday.getDeadline()).toString() + " Days");
+            mTextInputRemain.setText(DateUtils.getRemainDayInString(dday.getDeadline()));
         } else {
             mTextInputRemain.setText("");
         }
@@ -218,7 +220,7 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
 
     private void bindData() {
         mTextInputDday.setText(bucket.getRange());
-        mTextInputRemain.setText("remain " + DateUtils.getRemainDay(bucket.getDeadline()).toString() + " Days");
+        mTextInputRemain.setText(bucket.getRemainDays());
         mBucketInputTitle.setText(bucket.getTitle());
     }
 
@@ -237,13 +239,20 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
 
     private void makeDdaysButtonUi(List<Dday> ddays) {
 
-        if( ddays.size() == 6){
-            mBtnRange1.setTag( ddays.get(0));
-            mBtnRange2.setTag( ddays.get(1));
-            mBtnRange3.setTag( ddays.get(2));
-            mBtnRange4.setTag( ddays.get(3));
-            mBtnRange5.setTag( ddays.get(4));
+        if (ddays.size() == 6) {
+            mBtnRange1.setTag(ddays.get(0));
+            mBtnRange2.setTag(ddays.get(1));
+            mBtnRange3.setTag(ddays.get(2));
+            mBtnRange4.setTag(ddays.get(3));
+            mBtnRange5.setTag(ddays.get(4));
             mBtnRange6.setTag(ddays.get(5));
+
+            mBtnRange1.setText(ddays.get(0).getRange());
+            mBtnRange2.setText(ddays.get(1).getRange());
+            mBtnRange3.setText(ddays.get(2).getRange());
+            mBtnRange4.setText(ddays.get(3).getRange());
+            mBtnRange5.setText(ddays.get(4).getRange());
+            mBtnRange6.setText(ddays.get(5).getRange());
         }
 
         return;
@@ -252,10 +261,12 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.btn_input_dday) {
-            if(mLayoutDdayOption.getVisibility() == LinearLayout.GONE){
+            if (mLayoutDdayOption.getVisibility() == LinearLayout.GONE) {
                 mLayoutDdayOption.setVisibility(LinearLayout.VISIBLE);
-            }else{
+                mLayoutBucketAddCustomDate.setVisibility(View.GONE);
+            } else {
                 mLayoutDdayOption.setVisibility(LinearLayout.GONE);
+                mLayoutBucketAddCustomDate.setVisibility(View.GONE);
             }
         } else if (view.getTag() != null && view.getTag() instanceof Dday) {
             Dday dday = (Dday) view.getTag();
@@ -276,6 +287,10 @@ public class BucketAddActivity extends ActionBarActivity implements View.OnClick
             Dday dday = new Dday("custom", selectedDate);
 
             updateUiData(dday);
+        } else if(view.getId() == R.id.btn_custom_date_cancel){
+            mLayoutBucketAddCustomDate.setVisibility(View.GONE);
+            mLayoutDdayOption.setVisibility(LinearLayout.VISIBLE);
+
         }
     }
 

@@ -1,10 +1,12 @@
 package com.vivavu.dream.model.bucket;
 
+import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.JsonDateDeserializer;
 import com.vivavu.dream.util.JsonDateSerializer;
 import com.vivavu.dream.util.JsonDeadlineDateSerializer;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -16,6 +18,7 @@ import java.util.List;
 /**
  * Created by yuja on 14. 1. 9.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Bucket implements Serializable{
     @JsonDeserialize(using= JsonDateDeserializer.class)
     @JsonSerialize(using = JsonDeadlineDateSerializer.class)
@@ -130,6 +133,11 @@ public class Bucket implements Serializable{
         return parentId;
     }
 
+    @JsonProperty("parentID")
+    public Integer getParentID() {
+        return parentId;
+    }
+
     public void setParentId(Integer parentId) {
         this.parentId = parentId;
     }
@@ -223,6 +231,11 @@ public class Bucket implements Serializable{
 
     public void setSubBuckets(List<Bucket> subBuckets) {
         this.subBuckets = subBuckets;
+    }
+
+    @JsonIgnore
+    public String getRemainDays(){
+        return DateUtils.getRemainDayInString(getDeadline());
     }
 
     @Override
