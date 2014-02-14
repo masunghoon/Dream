@@ -1,13 +1,15 @@
 package com.vivavu.dream.model.user;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by yuja on 14. 1. 8.
  */
 public class UserWrapped {
-    @JsonProperty("user")
+    @SerializedName("user")
     private User user;
+
+    private String token;
 
     public User getUser() {
         return user;

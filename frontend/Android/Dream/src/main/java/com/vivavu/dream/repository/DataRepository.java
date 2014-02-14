@@ -13,7 +13,6 @@ import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.BucketWrapped;
 import com.vivavu.dream.model.bucket.Plan;
 import com.vivavu.dream.model.user.User;
-import com.vivavu.dream.model.user.UserWrapped;
 
 import org.springframework.http.HttpAuthentication;
 import org.springframework.http.HttpBasicAuthentication;
@@ -44,7 +43,7 @@ public class DataRepository {
 
     private static HttpHeaders getBasicAuthHeader(){
 
-        if(context.getTokenType() !=null && context.getTokenType().length() < 1){
+        if(context.getTokenType() !=null &&  !"facebook".equals(context.getTokenType())){
             return getBasicAuthHeader(context.getToken(), "unused");
         }
         else{
@@ -62,15 +61,15 @@ public class DataRepository {
         return httpHeaders;
     }
 
-    public static User registUser(LoginInfo loginInfo){
+    public static SecureToken registUser(LoginInfo loginInfo){
         loginInfo.setCommand("register");
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
 
         HttpEntity request = new HttpEntity<LoginInfo>(loginInfo);
 
         try{
-            ResponseEntity<UserWrapped> result = restTemplate.exchange(Constants.apiUsers, HttpMethod.POST, request, UserWrapped.class);
-            return result.getBody().getUser();
+            ResponseEntity<SecureToken> result = restTemplate.exchange(Constants.apiUsers, HttpMethod.POST, request, SecureToken.class);
+            return result.getBody();
         }catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
@@ -99,7 +98,7 @@ public class DataRepository {
         HttpEntity request = new HttpEntity<String>(requestHeaders);
 
         try{
-            ResponseEntity<BaseInfo> result = RestTemplateFactory.getInstance().exchange(Constants.apiBaseInfo, HttpMethod.GET, request, BaseInfo.class);
+            ResponseEntity<BaseInfo> result = restTemplate.exchange(Constants.apiBaseInfo, HttpMethod.GET, request, BaseInfo.class);
             return  result.getBody();
         }catch (RestClientException e) {
             Log.e("dream", e.toString());
@@ -108,9 +107,9 @@ public class DataRepository {
     }
 
     public static List<Bucket>  getBuckets() {
-        return getBucketsV2(context.getUsername());
+        return getBuckets(context.getUser().getId());
     }
-    public static List<Bucket> getBuckets(String username) {
+    public static List<Bucket> getBuckets(Integer username) {
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
 
         HttpHeaders requestHeaders = getBasicAuthHeader();
@@ -121,26 +120,6 @@ public class DataRepository {
         ResponseEntity<Bucket[]> result = null;
         try {
             result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.GET, request, Bucket[].class, username);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Bucket[] buckets = result.getBody();
-
-        return new ArrayList<Bucket>(Arrays.asList(buckets));
-    }
-
-    public static List<Bucket> getBucketsV2(String username) {
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        //Users users = restTemplate.getForObject(Constants.apiUsers, Users.class);
-        ResponseEntity<Bucket[]> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketsV2, HttpMethod.GET, request, Bucket[].class, username);
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
@@ -168,37 +147,6 @@ public class DataRepository {
         Bucket bucket = result.getBody();
 
         return bucket;
-    }
-
-    public static Bucket getBucketV2(Integer id){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-        //HttpEntity request = new HttpEntity<String>( new HttpHeaders());
-
-        ResponseEntity<Bucket> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketInfoV2, HttpMethod.GET, request, Bucket.class, id);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Bucket buckets = result.getBody();
-
-/*
-        ResponseEntity<Bucket> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketInfoV2, HttpMethod.GET, request, Bucket.class, id);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Bucket bucket = result.getBody();
-*/
-
-        return buckets;
     }
 
     public static Bucket postBucketDefault(Bucket bucket, Object... variable){
@@ -253,22 +201,22 @@ public class DataRepository {
         return ;
     }
 
-    public static User getUserInfo(String username){
+    public static User getUserInfo(Integer userId){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
 
         HttpHeaders requestHeaders = getBasicAuthHeader();
 
         HttpEntity request = new HttpEntity<String>(requestHeaders);
-        //HttpEntity request = new HttpEntity<String>( new HttpHeaders());
 
-        ResponseEntity<UserWrapped> result = null;
+        ResponseEntity<User> result = null;
+
         try {
-            result = restTemplate.exchange(Constants.apiUserInfo, HttpMethod.GET, request, UserWrapped.class, username);
+            result = restTemplate.exchange(Constants.apiUserInfo, HttpMethod.GET, request, User.class, userId);
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
 
-        User user = result.getBody().getUser();
+        User user = result.getBody();
 
         return user;
     }

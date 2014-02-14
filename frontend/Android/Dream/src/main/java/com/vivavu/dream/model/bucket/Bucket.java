@@ -1,15 +1,7 @@
 package com.vivavu.dream.model.bucket;
 
+import com.google.gson.annotations.SerializedName;
 import com.vivavu.dream.util.DateUtils;
-import com.vivavu.dream.util.JsonDateDeserializer;
-import com.vivavu.dream.util.JsonDateSerializer;
-import com.vivavu.dream.util.JsonDeadlineDateSerializer;
-
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -18,50 +10,45 @@ import java.util.List;
 /**
  * Created by yuja on 14. 1. 9.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Bucket implements Serializable{
-    @JsonDeserialize(using= JsonDateDeserializer.class)
-    @JsonSerialize(using = JsonDeadlineDateSerializer.class)
-    @JsonProperty("deadline")
+    @SerializedName("deadline")
     private Date deadline;
-    @JsonProperty("description")
+    @SerializedName("description")
     private String description;
-    @JsonProperty("id")
+    @SerializedName("id")
     private Integer id;
-    @JsonProperty("is_live")
+    @SerializedName("is_live")
     private Integer isLive;
-    @JsonProperty("is_private")
+    @SerializedName("is_private")
     private Integer isPrivate;
-    @JsonProperty("level")
+    @SerializedName("level")
     private Integer level = 0;
-    @JsonProperty("parent_id")
+    @SerializedName("parent_id")
     private Integer parentId;
-    @JsonProperty("range")
+    @SerializedName("range")
     private String range;
 
-    @JsonDeserialize(using= JsonDateDeserializer.class)
-    @JsonSerialize(using = JsonDateSerializer.class)
-    @JsonProperty("reg_date")
+    @SerializedName("reg_date")
     private Date regDate;
 
-    @JsonProperty("rptType")
+    @SerializedName("rptType")
     private String rptType;
-    @JsonProperty("rptCndt")
+    @SerializedName("rptCndt")
     private String rptCndt;
 
-    @JsonProperty("scope")
+    @SerializedName("scope")
     private String scope;
-    @JsonProperty("title")
+    @SerializedName("title")
     private String title;
-    @JsonProperty("user_id")
+    @SerializedName("user_id")
     private Integer userId;
-    @JsonProperty("todos")
+    @SerializedName("todos")
     private List<Todo> todos;
 
-    @JsonProperty("subBuckets")
+    @SerializedName("subBuckets")
     private List<Bucket> subBuckets;
 
-    @JsonProperty("uri")
+    @SerializedName("uri")
     private String uri;
 
     public Bucket(){
@@ -133,7 +120,6 @@ public class Bucket implements Serializable{
         return parentId;
     }
 
-    @JsonProperty("parentID")
     public Integer getParentID() {
         return parentId;
     }
@@ -206,7 +192,6 @@ public class Bucket implements Serializable{
         this.rptCndt = rptCndt;
     }
 
-    @JsonIgnore
     public int getProgress(){
         int total = getTodos().size();
         int count = 0;
@@ -233,7 +218,6 @@ public class Bucket implements Serializable{
         this.subBuckets = subBuckets;
     }
 
-    @JsonIgnore
     public String getRemainDays(){
         return DateUtils.getRemainDayInString(getDeadline());
     }

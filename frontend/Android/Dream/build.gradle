@@ -53,14 +53,18 @@ android {
 dependencies {
     compile 'com.android.support:appcompat-v7:+'
     compile 'com.android.support:support-v4:19.0.0'
-    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.13'
-    compile 'org.codehaus.jackson:jackson-core-asl:1.9.13'
+
+    compile 'com.google.code.gson:gson:2.2.4'
+    /*compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.13'
+    compile 'org.codehaus.jackson:jackson-core-asl:1.9.13'*/
+
     compile 'com.jakewharton:butterknife:4.0.1'
-    compile 'com.github.johnkil.android-progressfragment:progressfragment:1.4.0'
     compile 'org.springframework.android:spring-android-core:1.0.1.RELEASE@jar'
     compile 'org.springframework.android:spring-android-auth:1.0.1.RELEASE@jar'
     compile 'org.springframework.android:spring-android-rest-template:1.0.1.RELEASE@jar'
-    
+
+
+    compile 'com.github.johnkil.android-progressfragment:progressfragment:1.4.0'
     compile project(':Libraries:facebook')
     compile project(':Libraries:viewpagerindicator')
 }

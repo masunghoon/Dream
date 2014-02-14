@@ -1,9 +1,6 @@
 package com.vivavu.dream.model.bucket;
 
-import com.vivavu.dream.util.JsonDateDeserializer;
-
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -12,31 +9,30 @@ import java.util.Date;
  * Created by yuja on 14. 1. 9.
  */
 public class Todo implements Serializable{
-    @JsonDeserialize(using= JsonDateDeserializer.class)
-    @JsonProperty("todoDeadline")
+    @SerializedName("todoDeadline")
     private Date todoDeadLine;
-    @JsonProperty("todoID")
+    @SerializedName("todoID")
     private Integer todoId;
-    @JsonProperty("todoIsLive")
+    @SerializedName("todoIsLive")
     private Integer todoIsLive;
-    @JsonProperty("todoIsPrivate")
+    @SerializedName("todoIsPrivate")
     private Integer todoIsPrivate;
-    @JsonProperty("todoParent_id")
+    @SerializedName("todoParent_id")
     private Integer todoParentId;
-    @JsonProperty("todoRange")
+    @SerializedName("todoRange")
     private String todoRange;
-    @JsonDeserialize(using= JsonDateDeserializer.class)
-    @JsonProperty("todoRegDate")
+
+    @SerializedName("todoRegDate")
     private Date todoRegDate;
-    @JsonProperty("todoScope")
+    @SerializedName("todoScope")
     private String todoScope;
-    @JsonProperty("todoTitle")
+    @SerializedName("todoTitle")
     private String todoTitle;
 
-    @JsonProperty("todoRptCndt")
+    @SerializedName("todoRptCndt")
     private String todoRptCndt;
 
-    @JsonProperty("todoRptType")
+    @SerializedName("todoRptType")
     private String todoRptType;
 
     public Date getTodoDeadLine() {

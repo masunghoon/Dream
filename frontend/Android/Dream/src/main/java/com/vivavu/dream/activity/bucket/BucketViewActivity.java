@@ -113,7 +113,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements CustomB
 
         bucket = null;
         if (bucketId > 0) {
-            bucket = DataRepository.getBucketV2(bucketId);
+            bucket = DataRepository.getBucket(bucketId);
             bindData();
         }
         Log.d("dream", bucket.toString());
@@ -126,7 +126,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements CustomB
         switch (requestCode) {
             case Code.ACT_MOD_BUCKET_DEFAULT_CARD:
                 //데이터 새로고침
-                bucket = DataRepository.getBucketV2(bucket.getId());
+                bucket = DataRepository.getBucket(bucket.getId());
                 bindData();
                 break;
         }

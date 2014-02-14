@@ -96,7 +96,8 @@ public class LeftMenuDrawerFragment extends Fragment {
     private void bindData(){
         //todo: 로그인 체크하는 것은 한곳에서만 수행할것
         if(context.isLogin()){
-            User user = DataRepository.getUserInfo(context.getUsername());
+            User user = DataRepository.getUserInfo(context.getUser().getId());
+
             mMainLeftMenuTxtName.setText(user.getUsername());
         }
     }

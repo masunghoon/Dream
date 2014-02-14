@@ -1,6 +1,6 @@
 package com.vivavu.dream.model.user;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import java.util.List;
  * Created by yuja on 14. 1. 8.
  */
 public class Users {
-    @JsonProperty("users")
+    @SerializedName("users")
     private List<User> users;
 
     public List<User> getUsers() {

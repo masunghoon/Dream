@@ -99,7 +99,7 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
     }
 
     private void refreshFragment() {
-        mainContentsFragment.refreshList(DataRepository.getBucketsV2(context.getUsername()));
+        mainContentsFragment.refreshList(DataRepository.getBuckets(context.getUser().getId()));
         mainPlanFragment.refreshList(DataRepository.getPlanList(context.getUsername()));
     }
 
@@ -114,7 +114,7 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.content_frame, mainContentsFragment)
                 .commit();
-        mainContentsFragment.refreshList(DataRepository.getBucketsV2(context.getUsername()));
+        mainContentsFragment.refreshList(DataRepository.getBuckets(context.getUser().getId()));
     }
 
     private void goAddBucket() {
@@ -149,7 +149,7 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
         if (context.checkLogin() == false) {
             goLogin();
         }else{
-            mainContentsFragment.setBuckets(DataRepository.getBucketsV2(context.getUsername()));
+            mainContentsFragment.setBuckets(DataRepository.getBuckets(context.getUser().getId()));
         }
     }
 

@@ -12,7 +12,7 @@ import android.widget.ScrollView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.fragment.CustomProgressFragment;
 import com.vivavu.dream.model.LoginInfo;
-import com.vivavu.dream.model.user.User;
+import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
 
 import butterknife.ButterKnife;
@@ -125,13 +125,15 @@ public class UserRegisterFragment extends CustomProgressFragment {
                 return false;
             }
 
-            User userInfo = DataRepository.registUser(user);
+            SecureToken userInfo = DataRepository.registUser(user);
             if (userInfo == null) {
                 return false;
             }
 
-            context.setUser(userInfo);
-            context.setUsername(userInfo.getUsername());
+            context.setUser(userInfo.getUser());
+            context.setUsername(userInfo.getUser().getUsername());
+            context.setToken(userInfo.getToken());
+            context.setTokenType("unused");
             context.saveAppDefaultInfo();
 
             return true;

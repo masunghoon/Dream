@@ -1,12 +1,12 @@
 package com.vivavu.dream.model.bucket;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by yuja on 14. 1. 15.
  */
 public class BucketWrapped {
-    @JsonProperty("bucket")
+    @SerializedName("bucket")
     private Bucket bucket;
 
     public Bucket getBucket() {

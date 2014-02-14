@@ -139,7 +139,10 @@ public class IntroActivity extends BaseActionBarActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
+        Session activeSession = Session.getActiveSession();
+        if(activeSession != null){
+            activeSession.onActivityResult(this, requestCode, resultCode, data);
+        }
 
         switch (requestCode) {
             case Code.ACT_LOGIN:
@@ -153,8 +156,10 @@ public class IntroActivity extends BaseActionBarActivity {
                     context.setTokenType("facebook");
 
                     checkAppExit();
-
                 }
+                return;
+            case Code.ACT_USER_REGISTER:
+                checkAppExit();
                 return;
         }
     }

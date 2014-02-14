@@ -1,9 +1,6 @@
 package com.vivavu.dream.model.bucket;
 
-import com.vivavu.dream.util.JsonPlanDateDeserializer;
-
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
 
@@ -12,14 +9,13 @@ import java.util.Date;
  */
 public class Plan extends Bucket implements Comparable<Plan> {
 
-    @JsonProperty("bucket_id")
+    @SerializedName("bucket_id")
     private Integer bucketId;
 
-    @JsonProperty("isDone")
+    @SerializedName("isDone")
     private Boolean isDone;
 
-    @JsonDeserialize(using= JsonPlanDateDeserializer.class)
-    @JsonProperty("date")
+    @SerializedName("date")
     private Date date;
 
     public Integer getBucketId() {

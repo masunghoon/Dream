@@ -1,11 +1,6 @@
 package com.vivavu.dream.model.user;
 
-import com.vivavu.dream.util.JsonDateDeserializer;
-import com.vivavu.dream.util.JsonDateSerializer;
-
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
 
@@ -13,26 +8,24 @@ import java.util.Date;
  * Created by yuja on 14. 1. 7.
  */
 public class User{
-    @JsonProperty("about_me")
+    @SerializedName("about_me")
     private String aboutMe;
-    @JsonProperty("birthday")
+    @SerializedName("birthday")
     private String birthday;
-    @JsonProperty("email")
+    @SerializedName("email")
     private String email;
-    @JsonProperty("id")
+    @SerializedName("id")
     private Integer id;
-    @JsonProperty("is_following")
+    @SerializedName("is_following")
     private Boolean isFollowing;
 
-    @JsonSerialize(using= JsonDateSerializer.class)
-    @JsonDeserialize(using= JsonDateDeserializer.class)
-    @JsonProperty("last_seen")
+    @SerializedName("last_seen")
     private Date lastSeen;
-    @JsonProperty("pic")
+    @SerializedName("pic")
     private String pic;
-    @JsonProperty("uri")
+    @SerializedName("uri")
     private String uri;
-    @JsonProperty("username")
+    @SerializedName("username")
     private String username;
 
     public String getAboutMe() {
