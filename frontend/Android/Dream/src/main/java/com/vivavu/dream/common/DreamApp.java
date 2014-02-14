@@ -1,10 +1,8 @@
 package com.vivavu.dream.common;
 
 import android.app.Application;
-import android.content.Intent;
 import android.content.SharedPreferences;
 
-import com.vivavu.dream.MainActivity;
 import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.user.User;
 import com.vivavu.dream.repository.DataRepository;
@@ -18,6 +16,8 @@ public class DreamApp extends Application {
 
     private User user  = null;
     private String token = null;
+
+    private String tokenType = null;
     private String username = null;
     private String email = null;
     private String password = null;
@@ -41,13 +41,10 @@ public class DreamApp extends Application {
         setLogin(false);
         setUser(null);
         setToken(null);
+        setTokenType(null);
         saveAppDefaultInfo();
 
-        Intent intent = new Intent();
-        intent.setClass(this, MainActivity.class);
-        // activity 외부에서 activity 실행시 FLAG_ACTIVITY_NEW_TASK 를 넣어주어야한다.
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+
     }
 
     public boolean checkLogin() {
@@ -71,9 +68,11 @@ public class DreamApp extends Application {
         SharedPreferences settings = getSharedPreferences(Constants.settings, MODE_PRIVATE);
         String email = settings.getString(Constants.email, "");
         String token = settings.getString(Constants.token, "");
+        String tokenType = settings.getString(Constants.tokenType, "");
 
         setEmail(email);
         setToken(token);
+        setTokenType(tokenType);
     }
 
     public void saveAppDefaultInfo() {
@@ -84,6 +83,7 @@ public class DreamApp extends Application {
 
         editor.putString(Constants.email, getEmail());
         editor.putString(Constants.token, getToken());   // String
+        editor.putString(Constants.tokenType, getTokenType());   // String
 
         editor.commit();
     }
@@ -150,4 +150,14 @@ public class DreamApp extends Application {
     public void setUsername(String username) {
         this.username = username;
     }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
+
 }

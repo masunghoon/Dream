@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
+    <string name="app_id">478874588891268</string>
     <string name="app_name">DreamProject</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="main_menu_add_bucket">추가</string>
@@ -10,6 +10,7 @@
     <string name="main_btn_list">버킷리스트</string>
     <string name="lb_login_email">이메일</string>
     <string name="lb_login_password">비밀번호</string>
+    <string name="lb_login_password_dup">비밀번호 확인</string>
     <string name="bucket_item_like">응원</string>
     <string name="bucket_item_reply">댓글</string>
     <string name="bucket_item_scope">기간</string>
@@ -52,5 +53,12 @@
     <string name="btn_roll">감추기</string>
     <string name="txt_subbucket">하위버킷</string>
     <string name="bucket_custom_date_cancel">cancel</string>
+    <string name="with_facebook">with facebook</string>
+    <string name="action_register">register</string>
+    <string name="empty"></string>
+    <string name="title_activity_intro">IntroActivity</string>
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
 
 </resources>

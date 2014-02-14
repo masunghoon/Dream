@@ -11,7 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.vivavu.dream.R;
-import com.vivavu.dream.activity.BucketViewActivity;
+import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.model.bucket.Bucket;
 
 import java.util.List;

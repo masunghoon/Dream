@@ -6,6 +6,7 @@ import com.vivavu.dream.common.Constants;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
 import com.vivavu.dream.model.BaseInfo;
+import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.model.Status;
 import com.vivavu.dream.model.bucket.Bucket;
@@ -42,7 +43,14 @@ public class DataRepository {
     }
 
     private static HttpHeaders getBasicAuthHeader(){
-        return getBasicAuthHeader(context.getToken(), "unused");
+
+        if(context.getTokenType() !=null && context.getTokenType().length() < 1){
+            return getBasicAuthHeader(context.getToken(), "unused");
+        }
+        else{
+            return getBasicAuthHeader(context.getToken(), "facebook");
+        }
+
     }
     private static HttpHeaders getBasicAuthHeader(String username, String password){
         HttpAuthentication httpAuthentication = new HttpBasicAuthentication(username, password);
@@ -52,6 +60,22 @@ public class DataRepository {
         httpHeaders.setAccept(Collections.singletonList(new MediaType("application", "json")));
 
         return httpHeaders;
+    }
+
+    public static User registUser(LoginInfo loginInfo){
+        loginInfo.setCommand("register");
+        RestTemplate restTemplate = RestTemplateFactory.getInstance();
+
+        HttpEntity request = new HttpEntity<LoginInfo>(loginInfo);
+
+        try{
+            ResponseEntity<UserWrapped> result = restTemplate.exchange(Constants.apiUsers, HttpMethod.POST, request, UserWrapped.class);
+            return result.getBody().getUser();
+        }catch (RestClientException e) {
+            Log.e("dream", e.toString());
+        }
+
+        return null;
     }
 
     public static SecureToken getToken(String email, String password){

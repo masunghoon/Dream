@@ -1,4 +1,4 @@
-package com.vivavu.dream;
+package com.vivavu.dream.activity.main;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,14 +6,15 @@ import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.vivavu.dream.activity.BucketAddActivity;
-import com.vivavu.dream.activity.BucketViewActivity;
+import com.vivavu.dream.R;
+import com.vivavu.dream.activity.bucket.BucketAddActivity;
+import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.adapter.main.MainPagerAdapter;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.CustomBaseFragment;
-import com.vivavu.dream.fragment.MainContentsFragment;
-import com.vivavu.dream.fragment.MainPlanFragment;
+import com.vivavu.dream.fragment.CustomBaseFragment;
+import com.vivavu.dream.fragment.main.MainContentsFragment;
+import com.vivavu.dream.fragment.main.MainPlanFragment;
 import com.vivavu.dream.repository.DataRepository;
 
 public class MainActivity extends BaseActionBarActivity implements CustomBaseFragment.OnOptionFragmentRemovedListener{
@@ -54,14 +55,6 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         switch (requestCode) {
-            case Code.ACT_LOGIN:
-                if (resultCode == RESULT_OK) {
-                    mainContentsFragment.refreshList(DataRepository.getBucketsV2(context.getUsername()));
-                }else{
-                    finish();
-                }
-
-                break;
             case Code.ACT_ADD_BUCKET:
                 int bucketId = data.getIntExtra("bucketId", -1);
                 if (bucketId > 0) {
@@ -142,12 +135,6 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
 
     }
 
-    public void goLogin(){
-        Intent intent = new Intent();
-        intent.setClass(this, LoginActivity.class);
-        startActivityForResult(intent, Code.ACT_LOGIN);
-    }
-
     public void goBucketView(Integer bucketId){
         Intent intent = new Intent();
         intent.setClass(this, BucketViewActivity.class);
@@ -164,5 +151,10 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
         }else{
             mainContentsFragment.setBuckets(DataRepository.getBucketsV2(context.getUsername()));
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        exit();
     }
 }

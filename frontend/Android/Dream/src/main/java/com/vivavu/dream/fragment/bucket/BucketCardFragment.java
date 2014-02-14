@@ -19,9 +19,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vivavu.dream.R;
-import com.vivavu.dream.activity.BucketAddActivity;
+import com.vivavu.dream.activity.bucket.BucketAddActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.CustomBaseFragment;
+import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.common.RepeatType;
 import com.vivavu.dream.common.Tag;
 import com.vivavu.dream.model.bucket.Bucket;
@@ -234,13 +234,13 @@ public class BucketCardFragment extends CustomBaseFragment implements View.OnCli
 
     private void addOptionRepeat(){
         //getChildFragmentManager()는 fragment안에 fragment를 넣기 위함
-        BucketOptionReaptFragment bucketOptionReaptFragment = (BucketOptionReaptFragment) getChildFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
+        BucketOptionRepeatFragment bucketOptionReaptFragment = (BucketOptionRepeatFragment) getChildFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
         if(bucketOptionReaptFragment == null){
             if(bucket.getRptType() != null) {
                 OptionRepeat optionRepeat = new OptionRepeat();
                 optionRepeat.setRepeatType(RepeatType.fromCode(bucket.getRptType()));
                 optionRepeat.setOptionStat(bucket.getRptCndt());
-                bucketOptionReaptFragment = new BucketOptionReaptFragment(optionRepeat);
+                bucketOptionReaptFragment = new BucketOptionRepeatFragment(optionRepeat);
                 getChildFragmentManager().beginTransaction()
                         .add(mFragmentBucketOptionRepeat.getId(), bucketOptionReaptFragment, Tag.BUCKET_OPTION_FRAGMENT_REPEAT)
                         .commit();

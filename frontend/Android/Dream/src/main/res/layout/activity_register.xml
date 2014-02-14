@@ -1,6 +1,8 @@
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.vivavu.dream.activity.login.LoginActivity">
+    tools:context="com.vivavu.dream.fragment.login.UserRegisterFragment"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
 
     <!-- Login progress -->
     <LinearLayout android:id="@+id/login_status"
@@ -26,7 +28,7 @@
 
     <!-- Login form -->
     <ScrollView
-        android:id="@+id/login_form"
+        android:id="@+id/register_form"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <LinearLayout
@@ -86,18 +88,42 @@
                         android:imeActionId="@+id/login"
                         android:imeOptions="actionUnspecified" />
                 </TableRow>
+                <TableRow
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:text="@string/lb_login_password_dup"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1" />
+
+                    <EditText
+                        android:id="@+id/password_dup"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/prompt_password"
+                        android:inputType="textPassword"
+                        android:imeActionLabel="@string/action_sign_in_short"
+                        android:imeActionId="@+id/login"
+                        android:imeOptions="actionUnspecified" />
+                </TableRow>
             </TableLayout>
 
             <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
 
-                <Button android:id="@+id/sign_in_button"
+                <Button android:id="@+id/regist_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="@string/action_sign_in_short"
+                    android:text="@string/action_register"
                     android:paddingLeft="32dp"
                     android:paddingRight="32dp"
                     android:layout_gravity="right" />
@@ -105,5 +131,4 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
-</merge>
+</LinearLayout>

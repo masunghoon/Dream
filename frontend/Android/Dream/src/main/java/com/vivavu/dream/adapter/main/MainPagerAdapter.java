@@ -5,8 +5,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import com.vivavu.dream.fragment.MainContentsFragment;
-import com.vivavu.dream.fragment.MainPlanFragment;
+import com.vivavu.dream.fragment.main.MainContentsFragment;
+import com.vivavu.dream.fragment.main.MainPlanFragment;
 
 /**
  * Created by yuja on 14. 2. 5.

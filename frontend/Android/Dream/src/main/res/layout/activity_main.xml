@@ -5,7 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.vivavu.dream.MainActivity"
+    tools:context="com.vivavu.dream.activity.main.MainActivity"
     tools:ignore="MergeRootFrame"
 >
 
@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:name="com.vivavu.dream.fragment.LeftMenuDrawerFragment"
+        android:name="com.vivavu.dream.fragment.main.LeftMenuDrawerFragment"
         tools:layout="@layout/fragment_main_left_menu"></fragment>
 
 

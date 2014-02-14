@@ -1,8 +1,9 @@
-package com.vivavu.dream;
+package com.vivavu.dream.activity.login;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,8 +14,11 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
+import com.vivavu.dream.common.Code;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
@@ -89,7 +93,11 @@ public class LoginActivity extends BaseActionBarActivity {
                 attemptLogin();
             }
         });
+
+
+
     }
+
 
 
     @Override
@@ -200,6 +208,19 @@ public class LoginActivity extends BaseActionBarActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case Code.ACT_USER_REGISTER:
+                if(requestCode == RESULT_OK){
+                    mEmailView.setText(context.getEmail());
+                    Toast.makeText(this, "가입완료. 로그인 해주세요.", Toast.LENGTH_SHORT).show();
+                }
+                return;
+        }
+    }
+
     /**
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
@@ -236,7 +257,7 @@ public class LoginActivity extends BaseActionBarActivity {
             if (success) {
                 context.setLogin(true);
                 setResult(RESULT_OK);
-                finish();
+                goMain();
             } else {
                 this.cancel(false);
                 context.setLogin(false);
