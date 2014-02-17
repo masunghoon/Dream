@@ -2,11 +2,15 @@ package com.vivavu.dream.repository;
 
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.vivavu.dream.common.Constants;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
 import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.LoginInfo;
+import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.model.Status;
 import com.vivavu.dream.model.bucket.Bucket;
@@ -19,11 +23,13 @@ import org.springframework.http.HttpBasicAuthentication;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,55 +67,75 @@ public class DataRepository {
         return httpHeaders;
     }
 
-    public static SecureToken registUser(LoginInfo loginInfo){
+    public static ResponseBodyWrapped<SecureToken> registUser(LoginInfo loginInfo){
         loginInfo.setCommand("register");
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
 
         HttpEntity request = new HttpEntity<LoginInfo>(loginInfo);
-
+        ResponseEntity<String> result = null;
         try{
-            ResponseEntity<SecureToken> result = restTemplate.exchange(Constants.apiUsers, HttpMethod.POST, request, SecureToken.class);
-            return result.getBody();
+            result = restTemplate.exchange(Constants.apiUsers, HttpMethod.POST, request, String.class);
         }catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
 
-        return null;
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+        Type type = new TypeToken<ResponseBodyWrapped<SecureToken>>(){}.getType();
+        ResponseBodyWrapped<SecureToken> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
+
+        return responseBodyWrapped;
     }
 
-    public static SecureToken getToken(String email, String password){
+    public static ResponseBodyWrapped<SecureToken> getToken(String email, String password){
 
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader(email, password);
         HttpEntity request = new HttpEntity<String>(requestHeaders);
+        ResponseEntity<String> result = null;
         try{
-            ResponseEntity<SecureToken> result = restTemplate.exchange(Constants.apiToken, HttpMethod.GET, request, SecureToken.class);
-            return result.getBody();
+            result = restTemplate.exchange(Constants.apiToken, HttpMethod.GET, request, String.class);
         }catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
 
-        return null;
+        if(result.getStatusCode() == HttpStatus.OK){
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+            Type type = new TypeToken<ResponseBodyWrapped<SecureToken>>(){}.getType();
+            ResponseBodyWrapped<SecureToken> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
+            return responseBodyWrapped;
+        }else if (result.getStatusCode() == HttpStatus.UNAUTHORIZED){
+            return new ResponseBodyWrapped<SecureToken>("error", "사용자 정보 확인 필요", null);
+        }
+        return new ResponseBodyWrapped<SecureToken>();
     }
 
-    public static BaseInfo getBaseInfo(){
+    public static ResponseBodyWrapped<BaseInfo> getBaseInfo(){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader();
         HttpEntity request = new HttpEntity<String>(requestHeaders);
 
+        ResponseEntity<String> result = null;
         try{
-            ResponseEntity<BaseInfo> result = restTemplate.exchange(Constants.apiBaseInfo, HttpMethod.GET, request, BaseInfo.class);
-            return  result.getBody();
+            result = restTemplate.exchange(Constants.apiBaseInfo, HttpMethod.GET, request, String.class);
         }catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
-        return null;
+        ResponseBodyWrapped<BaseInfo> responseBodyWrapped = null;
+        if(result.getStatusCode() != HttpStatus.UNAUTHORIZED ){
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+            Type type = new TypeToken<ResponseBodyWrapped<BaseInfo>>(){}.getType();
+            responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
+            //GsonBuilder
+            return responseBodyWrapped;
+        }
+
+        return new ResponseBodyWrapped<BaseInfo>();
     }
 
     public static List<Bucket>  getBuckets() {
         return getBuckets(context.getUser().getId());
     }
-    public static List<Bucket> getBuckets(Integer username) {
+    public static List<Bucket> getBuckets(Integer userId) {
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
 
         HttpHeaders requestHeaders = getBasicAuthHeader();
@@ -117,16 +143,20 @@ public class DataRepository {
         HttpEntity request = new HttpEntity<String>(requestHeaders);
 
         //Users users = restTemplate.getForObject(Constants.apiUsers, Users.class);
-        ResponseEntity<Bucket[]> result = null;
+        ResponseEntity<String> result = null;
         try {
-            result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.GET, request, Bucket[].class, username);
+            result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.GET, request, String.class, userId);
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
 
-        Bucket[] buckets = result.getBody();
+        if(result != null){
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+            Type type = new TypeToken<ResponseBodyWrapped<ArrayList<Bucket>>>(){}.getType();
+            //ResponseBodyWrapped<ResponseBodyWrapped> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
+        }
 
-        return new ArrayList<Bucket>(Arrays.asList(buckets));
+        return new ArrayList<Bucket>();
     }
 
     public static Bucket getBucket(Integer id){
@@ -203,22 +233,22 @@ public class DataRepository {
 
     public static User getUserInfo(Integer userId){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
         HttpHeaders requestHeaders = getBasicAuthHeader();
-
         HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        ResponseEntity<User> result = null;
+        ResponseEntity<String> result = null;
 
         try {
-            result = restTemplate.exchange(Constants.apiUserInfo, HttpMethod.GET, request, User.class, userId);
+            result = restTemplate.exchange(Constants.apiUserInfo, HttpMethod.GET, request, String.class, userId);
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
 
-        User user = result.getBody();
+        Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+        Type type = new TypeToken<ResponseBodyWrapped<User>>(){}.getType();
+        ResponseBodyWrapped<User> user = gson.fromJson((String) result.getBody(), type);
 
-        return user;
+
+        return user.getData();
     }
 
     public static List<Plan> getPlanList(Object... variable){

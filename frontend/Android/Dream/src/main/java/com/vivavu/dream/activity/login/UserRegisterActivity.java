@@ -1,8 +1,8 @@
 package com.vivavu.dream.activity.login;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,11 +10,17 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.facebook.widget.LoginButton;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.model.LoginInfo;
+import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.util.ValidationUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -39,6 +45,12 @@ public class UserRegisterActivity extends BaseActionBarActivity {
     Button mRegistButton;
     @InjectView(R.id.register_form)
     ScrollView mRegisterForm;
+    @InjectView(R.id.txt_response_info)
+    TextView mTxtResponseInfo;
+    @InjectView(R.id.txt_regist_agreement)
+    TextView mTxtRegistAgreement;
+    @InjectView(R.id.authButton)
+    LoginButton mAuthButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +59,12 @@ public class UserRegisterActivity extends BaseActionBarActivity {
         ButterKnife.inject(this);
 
         mRegistButton.setOnClickListener(this);
+        List<String> readPermissions = new ArrayList<String>();
+        readPermissions.add("basic_info");
+        readPermissions.add("email");
+        readPermissions.add("user_birthday");
+
+        mAuthButton.setReadPermissions(readPermissions);
     }
 
     @Override
@@ -55,6 +73,12 @@ public class UserRegisterActivity extends BaseActionBarActivity {
         if (view == mRegistButton) {
             attemptRegist();
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
     }
 
     private void attemptRegist() {
@@ -67,89 +91,65 @@ public class UserRegisterActivity extends BaseActionBarActivity {
         String mPasswordValue = mPassword.getText().toString();
         String mPasswordDupValue = mPasswordDup.getText().toString();
 
-        boolean cancel = false;
-        View focusView = null;
+        // Check for a valid email address.
+        if (!ValidationUtils.isValidEmail(mEmail)) {
+            mEmail.requestFocus();
+            return;
+        }
 
         // Check for a valid password.
-        if (TextUtils.isEmpty(mPasswordValue)) {
-            mPassword.setError(getString(R.string.error_field_required));
-            focusView = mPassword;
-            cancel = true;
-        } else if (mPasswordValue.length() < 4) {
-            mPassword.setError(getString(R.string.error_invalid_password));
-            focusView = mPassword;
-            cancel = true;
-        } else if (!mPasswordValue.equals(mPasswordDupValue)) {
-            mPasswordDup.setError(getString(R.string.error_invalid_password_dup));
-            focusView = mPasswordDup;
-            cancel = true;
+        if (!ValidationUtils.isValidPassword(mPassword)) {
+            mPassword.requestFocus();
+            return;
         }
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(mEmailValue)) {
-            mEmail.setError(getString(R.string.error_field_required));
-            focusView = mEmail;
-            cancel = true;
-        } else if (!mEmailValue.contains("@")) {
-            mEmail.setError(getString(R.string.error_invalid_email));
-            focusView = mEmail;
-            cancel = true;
-        }
-
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView.requestFocus();
-        } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             //mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
-            UserRegisterTask mAuthTask = new UserRegisterTask();
+        UserRegisterTask mAuthTask = new UserRegisterTask();
 
-            LoginInfo user = new LoginInfo();
-            user.setEmail(mEmailValue);
-            user.setPassword(mPasswordValue);
+        LoginInfo user = new LoginInfo();
+        user.setEmail(mEmailValue);
+        user.setPassword(mPasswordValue);
 
-            mAuthTask.execute(user);
-        }
+        mAuthTask.execute(user);
     }
 
-    public class UserRegisterTask extends AsyncTask<LoginInfo, Void, Boolean> {
+    public class UserRegisterTask extends AsyncTask<LoginInfo, Void, ResponseBodyWrapped<SecureToken>> {
 
         @Override
-        protected Boolean doInBackground(LoginInfo... params) {
+        protected ResponseBodyWrapped<SecureToken> doInBackground(LoginInfo... params) {
             LoginInfo user = null;
             if (params.length > 0) {
                 user = params[0];
             } else {
-                return false;
+                return null;
             }
 
-            SecureToken userInfo = DataRepository.registUser(user);
-            if (userInfo == null) {
-                return false;
+            ResponseBodyWrapped<SecureToken> userInfo = DataRepository.registUser(user);
+            if (userInfo == null ) {
+                return null;
+            } else {
+                return userInfo;
             }
-
-            context.setUser(userInfo.getUser());
-            context.setUsername(userInfo.getUser().getUsername());
-            context.setToken(userInfo.getToken());
-            context.setTokenType("unused");
-            context.saveAppDefaultInfo();
-
-            return true;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
-            if (success) {
-                context.setLogin(false);
+        protected void onPostExecute(final ResponseBodyWrapped<SecureToken> success) {
+            if (success.isSuccess()) {
+                context.setLogin(true);
+                context.setUser(success.getData().getUser());
+                context.setUsername(success.getData().getUser().getUsername());
+                context.setToken(success.getData().getToken());
+                context.setTokenType("unused");
+                context.saveAppDefaultInfo();
+
                 setResult(RESULT_OK);
                 finish();
             } else {
                 this.cancel(false);
                 context.setLogin(false);
-                mPassword.setError(getString(R.string.error_incorrect_password));
-                mPassword.requestFocus();
+                mTxtResponseInfo.setText(success.getDescription());
             }
         }
 

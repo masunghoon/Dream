@@ -6,10 +6,15 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 
+import com.facebook.Session;
 import com.vivavu.dream.activity.StartActivity;
 import com.vivavu.dream.activity.intro.IntroActivity;
 import com.vivavu.dream.activity.login.LoginActivity;
 import com.vivavu.dream.activity.main.MainActivity;
+import com.vivavu.dream.facebook.callback.CustomFacebookStatusCallback;
+import com.vivavu.dream.model.BaseInfo;
+import com.vivavu.dream.model.ResponseBodyWrapped;
+import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.AndroidUtils;
 
 /**
@@ -71,7 +76,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         if(isAppExit){
             finish();
         }else{
-            if(getContext().checkLogin()){
+            if(checkLogin()){
                 goMain();
             }else{
                 goIntro();
@@ -79,8 +84,32 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         }
     }
 
+    public boolean checkLogin(){
+        if(context.isLogin() == false){
+            if(context.hasValidToken()){
+            ResponseBodyWrapped<BaseInfo> response = DataRepository.getBaseInfo();
+                if(response.isSuccess()){
+                    BaseInfo baseInfo = response.getData();
+                    context.setUser(baseInfo);
+                    context.setUsername(baseInfo.getUsername());
+                    context.setLogin(true);
+                    return true;
+                }
+            }
+            context.setLogin(false);
+            return false;
+        }
+        return true;
+    }
+
     public void logout(){
         getContext().logout();
+
+        Session session = Session.getActiveSession();
+        if(session != null){
+            //todo: close만 할것인지 clear 시켜서 토큰정보도 안남게 할 것인지.
+            session.closeAndClearTokenInformation();
+        }
 
         Intent intent = new Intent();
         intent.setClass(this, StartActivity.class);
@@ -101,13 +130,25 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode){
+            case Session.DEFAULT_AUTHORIZE_ACTIVITY_CODE:
+                Session activeSession = Session.getActiveSession();
+                if(activeSession != null){
+                    activeSession.onActivityResult(this, requestCode, resultCode, data);
+                    activeSession.addCallback(new CustomFacebookStatusCallback(this));
+                }
+
+                return;
+        }
+
     }
 
     public class CheckLoginTesk extends AsyncTask<Void, Void, Void>{
 
         @Override
         protected Void doInBackground(Void... voids) {
-            getContext().checkLogin();
+            checkLogin();
             return null;
         }
     }

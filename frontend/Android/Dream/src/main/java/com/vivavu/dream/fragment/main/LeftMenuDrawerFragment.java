@@ -14,8 +14,6 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.main.MainActivity;
 import com.vivavu.dream.common.DreamApp;
-import com.vivavu.dream.model.user.User;
-import com.vivavu.dream.repository.DataRepository;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -96,9 +94,7 @@ public class LeftMenuDrawerFragment extends Fragment {
     private void bindData(){
         //todo: 로그인 체크하는 것은 한곳에서만 수행할것
         if(context.isLogin()){
-            User user = DataRepository.getUserInfo(context.getUser().getId());
-
-            mMainLeftMenuTxtName.setText(user.getUsername());
+            mMainLeftMenuTxtName.setText(context.getUser().getUsername());
         }
     }
 

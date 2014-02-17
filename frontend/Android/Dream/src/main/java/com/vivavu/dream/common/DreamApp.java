@@ -3,7 +3,7 @@ package com.vivavu.dream.common;
 import android.app.Application;
 import android.content.SharedPreferences;
 
-import com.vivavu.dream.model.BaseInfo;
+import com.vivavu.dream.handler.RestTemplateResponseErrorHandler;
 import com.vivavu.dream.model.user.User;
 import com.vivavu.dream.repository.DataRepository;
 
@@ -29,6 +29,7 @@ public class DreamApp extends Application {
         super.onCreate();
         loadAppDefaultInfo();
         DataRepository.setContext(this);
+        RestTemplateResponseErrorHandler.setContext(this);
     }
 
     @Override
@@ -45,21 +46,6 @@ public class DreamApp extends Application {
         saveAppDefaultInfo();
 
 
-    }
-
-    public boolean checkLogin() {
-        if(isLogin() == false){
-            BaseInfo baseInfo = DataRepository.getBaseInfo();
-            if (baseInfo != null) {
-                setUser(baseInfo);
-                setUsername(baseInfo.getUsername());
-                setLogin(true);
-                return true;
-            }
-            setLogin(false);
-            return false;
-        }
-        return true;
     }
 
     public void loadAppDefaultInfo() {
@@ -88,6 +74,18 @@ public class DreamApp extends Application {
         editor.commit();
     }
 
+    public void setToken(String token, String tokenType){
+        this.token = token;
+        this.tokenType = tokenType;
+        saveAppDefaultInfo();
+    }
+
+    public boolean hasValidToken(){
+        if(this.token != null && this.token.length() > 0){
+            return true;
+        }
+        return false;
+    }
     public static String getLogTag() {
         return LOG_TAG;
     }

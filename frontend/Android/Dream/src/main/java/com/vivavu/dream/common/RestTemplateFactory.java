@@ -1,12 +1,12 @@
 package com.vivavu.dream.common;
 
+import com.vivavu.dream.handler.RestTemplateResponseErrorHandler;
 import com.vivavu.dream.model.user.User;
 
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJacksonHttpMessageConverter;
-import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -31,7 +31,7 @@ public class RestTemplateFactory {
 
             GsonHttpMessageConverter gsonHttpMessageConverter = new GsonHttpMessageConverter();
             restTemplate.getMessageConverters().add(gsonHttpMessageConverter);
-            restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
+            restTemplate.setErrorHandler(new RestTemplateResponseErrorHandler());
 
         }
         return restTemplate;

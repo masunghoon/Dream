@@ -146,7 +146,7 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
     protected void onResume() {
         //다시 활성화 될때.
         super.onResume();
-        if (context.checkLogin() == false) {
+        if (checkLogin() == false) {
             goLogin();
         }else{
             mainContentsFragment.setBuckets(DataRepository.getBuckets(context.getUser().getId()));

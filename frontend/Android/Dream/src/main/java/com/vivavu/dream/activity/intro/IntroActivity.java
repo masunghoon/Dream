@@ -15,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.facebook.Session;
 import com.facebook.widget.LoginButton;
 import com.viewpagerindicator.CirclePageIndicator;
 import com.vivavu.dream.R;
@@ -91,27 +90,7 @@ public class IntroActivity extends BaseActionBarActivity {
         readPermissions.add("user_birthday");
 
         mAuthButton.setReadPermissions(readPermissions);
-/*
-        Session.openActiveSession(this, true, new Session.StatusCallback() {
-            @Override
-            public void call(Session session, SessionState state, Exception exception) {
-                if(session.isOpened()){
-                    // make request to the /me API
-                    Request.newMeRequest(session, new Request.GraphUserCallback() {
 
-                        // callback after Graph API response with user object
-                        @Override
-                        public void onCompleted(GraphUser user, Response response) {
-                            if (user != null) {
-                                Toast.makeText(IntroActivity.this, String.format("Hello %s!", user.getName()), Toast.LENGTH_LONG ).show();
-                                context.setToken(Session.getActiveSession().getAccessToken());
-                                context.setTokenType("facebook");
-                            }
-                        }
-                    }).executeAsync();
-                }
-            }
-        });*/
         Log.d("dream", "intro 시작시작");
     }
 
@@ -139,23 +118,11 @@ public class IntroActivity extends BaseActionBarActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Session activeSession = Session.getActiveSession();
-        if(activeSession != null){
-            activeSession.onActivityResult(this, requestCode, resultCode, data);
-        }
 
         switch (requestCode) {
             case Code.ACT_LOGIN:
                 if (resultCode == RESULT_OK) {
                     goMain();
-                }
-                return;
-            case Session.DEFAULT_AUTHORIZE_ACTIVITY_CODE:
-                if(resultCode == RESULT_OK){
-                    context.setToken(Session.getActiveSession().getAccessToken());
-                    context.setTokenType("facebook");
-
-                    checkAppExit();
                 }
                 return;
             case Code.ACT_USER_REGISTER:

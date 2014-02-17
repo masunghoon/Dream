@@ -2,7 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.vivavu.dream.fragment.login.UserRegisterFragment"
     android:layout_height="match_parent"
-    android:layout_width="match_parent">
+    android:layout_width="match_parent"
+    android:orientation="vertical">
 
     <!-- Login progress -->
     <LinearLayout android:id="@+id/login_status"
@@ -30,7 +31,9 @@
     <ScrollView
         android:id="@+id/register_form"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        >
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -90,7 +93,9 @@
                 </TableRow>
                 <TableRow
                     android:layout_width="fill_parent"
-                    android:layout_height="fill_parent">
+                    android:layout_height="fill_parent"
+                    android:visibility="gone"
+                    >
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -119,6 +124,17 @@
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text=""
+                    android:id="@+id/txt_response_info"
+                    android:editable="false"
+                    android:enabled="true"
+                    android:focusable="false"
+                    android:textColor="#ff0000" />
+
                 <Button android:id="@+id/regist_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -126,9 +142,25 @@
                     android:text="@string/action_register"
                     android:paddingLeft="32dp"
                     android:paddingRight="32dp"
-                    android:layout_gravity="right" />
+                    android:layout_gravity="center" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="@string/regist_agreement"
+                    android:id="@+id/txt_regist_agreement" />
 
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
+
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        layout="@layout/include_facebook_login" />
+
+
 </LinearLayout>

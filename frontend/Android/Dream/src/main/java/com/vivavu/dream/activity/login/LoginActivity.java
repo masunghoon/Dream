@@ -7,28 +7,37 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.facebook.widget.LoginButton;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
-import com.vivavu.dream.common.Code;
 import com.vivavu.dream.model.LoginInfo;
+import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.util.ValidationUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 /**
  * Activity which displays a login screen to the user, offering registration as
  * well.
  */
 public class LoginActivity extends BaseActionBarActivity {
-    private SecureToken token = null;
+    @InjectView(R.id.authButton)
+    LoginButton mAuthButton;
+    @InjectView(R.id.txt_response_info)
+    TextView mTxtResponseInfo;
     /**
      * The default email to populate the email field with.
      */
@@ -62,6 +71,7 @@ public class LoginActivity extends BaseActionBarActivity {
         setResult(RESULT_CANCELED);
 
         setContentView(R.layout.activity_login);
+        ButterKnife.inject(this);
 
         // Set up the login form.
         mEmail = getIntent().getStringExtra(EXTRA_EMAIL);
@@ -94,10 +104,13 @@ public class LoginActivity extends BaseActionBarActivity {
             }
         });
 
+        List<String> readPermissions = new ArrayList<String>();
+        readPermissions.add("basic_info");
+        readPermissions.add("email");
+        readPermissions.add("user_birthday");
 
-
+        mAuthButton.setReadPermissions(readPermissions);
     }
-
 
 
     @Override
@@ -125,47 +138,29 @@ public class LoginActivity extends BaseActionBarActivity {
         mEmail = mEmailView.getText().toString();
         mPassword = mPasswordView.getText().toString();
 
-        boolean cancel = false;
-        View focusView = null;
+        // Check for a valid email address.
+        if (!ValidationUtils.isValidEmail(mEmailView)) {
+            mEmailView.requestFocus();
+            return;
+        }
 
         // Check for a valid password.
-        if (TextUtils.isEmpty(mPassword)) {
-            mPasswordView.setError(getString(R.string.error_field_required));
-            focusView = mPasswordView;
-            cancel = true;
-        } else if (mPassword.length() < 4) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
-            cancel = true;
+        if (!ValidationUtils.isValidPassword(mPasswordView)) {
+            mPasswordView.requestFocus();
+            return;
         }
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(mEmail)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!mEmail.contains("@")) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel = true;
-        }
 
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView.requestFocus();
-        } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
-            mAuthTask = new UserLoginTask();
+        // Show a progress spinner, and kick off a background task to
+        // perform the user login attempt.
+        mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
+        mAuthTask = new UserLoginTask();
 
-            LoginInfo user = new LoginInfo();
-            user.setEmail(mEmail);
-            user.setPassword(mPassword);
+        LoginInfo user = new LoginInfo();
+        user.setEmail(mEmail);
+        user.setPassword(mPassword);
 
-            mAuthTask.execute(user);
-        }
+        mAuthTask.execute(user);
     }
 
     /**
@@ -211,58 +206,54 @@ public class LoginActivity extends BaseActionBarActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode){
-            case Code.ACT_USER_REGISTER:
-                if(requestCode == RESULT_OK){
-                    mEmailView.setText(context.getEmail());
-                    Toast.makeText(this, "가입완료. 로그인 해주세요.", Toast.LENGTH_SHORT).show();
-                }
-                return;
-        }
+
     }
 
     /**
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<LoginInfo, Void, Boolean> {
+    public class UserLoginTask extends AsyncTask<LoginInfo, Void, ResponseBodyWrapped<SecureToken>> {
 
         @Override
-        protected Boolean doInBackground(LoginInfo... params) {
+        protected ResponseBodyWrapped<SecureToken> doInBackground(LoginInfo... params) {
             LoginInfo user = null;
-            if(params.length > 0){
+            if (params.length > 0) {
                 user = params[0];
-            } else{
-                return  false;
+            } else {
+                return new ResponseBodyWrapped<SecureToken>("error", "unknown", new SecureToken());
             }
 
-            token = DataRepository.getToken(user.getEmail(), user.getPassword());
-            if(token == null){
-                return false;
+
+            ResponseBodyWrapped<SecureToken> userInfo = DataRepository.getToken(user.getEmail(), user.getPassword());
+
+            if (userInfo == null) {
+                return null;
+            } else {
+                return userInfo;
             }
 
-            context.setUser(token.getUser());
-            context.setUsername(token.getUser().getUsername());
-            context.setToken(token.getToken());
-            context.saveAppDefaultInfo();
-
-            return true;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final ResponseBodyWrapped<SecureToken> success) {
             mAuthTask = null;
             showProgress(false);
 
-            if (success) {
+            if (success != null && success.isSuccess()) {
                 context.setLogin(true);
+                context.setUser(success.getData().getUser());
+                context.setUsername(success.getData().getUser().getUsername());
+                context.setToken(success.getData().getToken());
+                context.setTokenType("unused");
+                context.saveAppDefaultInfo();
+
                 setResult(RESULT_OK);
                 goMain();
             } else {
                 this.cancel(false);
                 context.setLogin(false);
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+                mTxtResponseInfo.setText(success.getDescription());
             }
         }
 
@@ -282,7 +273,7 @@ public class LoginActivity extends BaseActionBarActivity {
 
     @Override
     public void onBackPressed() {
-        if(context != null && context.isLogin() == true){
+        if (context != null && context.isLogin() == true) {
             super.onBackPressed();
         } else {
             setResult(RESULT_CANCELED);

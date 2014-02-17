@@ -8,15 +8,20 @@ import com.google.gson.annotations.SerializedName;
 public class ResponseBodyWrapped<T> {
     @SerializedName("status")
     private String status;
-    @SerializedName("reason")
-    private String reason;
+    @SerializedName("description")
+    private String description;
 
     @SerializedName("data")
     private T data;
 
-    public ResponseBodyWrapped(String status, String reason, T data) {
+    public ResponseBodyWrapped(){
+        this.status="error";
+        this.description="unknown";
+        this.data = null;
+    }
+    public ResponseBodyWrapped(String status, String description, T data) {
         this.status = status;
-        this.reason = reason;
+        this.description = description;
         this.data = data;
     }
 
@@ -28,12 +33,12 @@ public class ResponseBodyWrapped<T> {
         this.status = status;
     }
 
-    public String getReason() {
-        return reason;
+    public String getDescription() {
+        return description;
     }
 
-    public void setReason(String reason) {
-        this.reason = reason;
+    public void setDescription(String reason) {
+        this.description = reason;
     }
 
     public T getData() {
@@ -42,5 +47,9 @@ public class ResponseBodyWrapped<T> {
 
     public void setData(T data) {
         this.data = data;
+    }
+
+    public boolean isSuccess(){
+        return "success".equals(status);
     }
 }

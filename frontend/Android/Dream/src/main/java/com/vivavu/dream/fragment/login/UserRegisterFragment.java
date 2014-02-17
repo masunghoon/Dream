@@ -12,6 +12,7 @@ import android.widget.ScrollView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.fragment.CustomProgressFragment;
 import com.vivavu.dream.model.LoginInfo;
+import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
 
@@ -125,16 +126,16 @@ public class UserRegisterFragment extends CustomProgressFragment {
                 return false;
             }
 
-            SecureToken userInfo = DataRepository.registUser(user);
-            if (userInfo == null) {
+            ResponseBodyWrapped<SecureToken> userInfo = DataRepository.registUser(user);
+            if (userInfo == null || !userInfo.isSuccess()) {
                 return false;
+            } else {
+                context.setUser(userInfo.getData().getUser());
+                context.setUsername(userInfo.getData().getUser().getUsername());
+                context.setToken(userInfo.getData().getToken());
+                context.setTokenType("unused");
+                context.saveAppDefaultInfo();
             }
-
-            context.setUser(userInfo.getUser());
-            context.setUsername(userInfo.getUser().getUsername());
-            context.setToken(userInfo.getToken());
-            context.setTokenType("unused");
-            context.saveAppDefaultInfo();
 
             return true;
         }
