@@ -8,20 +8,22 @@ from flask.ext.restful import Resource, reqparse, fields, marshal
 from werkzeug import check_password_hash, generate_password_hash
 from flask.ext.httpauth import HTTPBasicAuth
 from rauth.service import OAuth2Service
+from hashlib import md5
 
 auth = HTTPBasicAuth()
 
 from guess_language import guessLanguage
 
-from app import app, db,  babel, api
-from forms import LoginForm, OidLoginForm, EditForm, PostForm, SearchForm, RegisterForm
+from app import app, db, babel, api, decryption
+from forms import LoginForm, EditForm, PostForm, SearchForm, RegisterForm
 from models import User, Post, Bucket, Plan, ROLE_USER, ROLE_ADMIN
-from emails import follower_notification, send_awaiting_confirm_mail
+from emails import follower_notification, send_awaiting_confirm_mail, send_reset_password_mail
 from translate import microsoft_translate
 
-from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT, FB_CLIENT_ID, FB_CLIENT_SECRET
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT, FB_CLIENT_ID, FB_CLIENT_SECRET, SECRET_KEY
 
 from datetime import datetime
+import random
 
 now = datetime.utcnow()
 
@@ -350,20 +352,24 @@ def uri_redirect(id):
 @auth.login_required
 def get_auth_token():
     token = g.user.generate_auth_token()
-    return jsonify({'user':{'id': g.user.id,
-                            'username': g.user.username,
-                            'email': g.user.email,
-                            'birthday': g.user.birthday,},
-                    'token': token.decode('ascii')})
+    return jsonify({'status':'success',
+                    'data':{'user':{'id': g.user.id,
+                                    'username': g.user.username,
+                                    'email': g.user.email,
+                                    'birthday': g.user.birthday,
+                                    'confirmed_at':g.user.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
+                            'token': token.decode('ascii')}})
 
 
 @app.route('/api/resource')
 @auth.login_required
 def get_resource():
-    return jsonify({'id': g.user.id,
-            'username': g.user.username,
-            'email': g.user.email,
-            'birthday': g.user.birthday,})
+    return jsonify({'status':'success',
+                    'data':{'id': g.user.id,
+                            'username': g.user.username,
+                            'email': g.user.email,
+                            'birthday': g.user.birthday,
+                            'confirmed_at': g.user.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None }})
 
 
 @auth.verify_password
@@ -376,15 +382,20 @@ def verify_password(username_or_token, password):
             fb_user = resp.json()
             # user = User.query.filter_by(email=fb_user.get('email')).first()
             birthday = fb_user['birthday'][6:10] + fb_user['birthday'][0:2] + fb_user['birthday'][3:5]
-            user = User.get_or_create(fb_user['email'], fb_user['username'], fb_user['id'], birthday)
+            user = User.get_or_create(fb_user['email'], fb_user['name'], fb_user['id'], birthday)
         else:
             return False
     else:
         user = User.verify_auth_token(username_or_token)
+
     if not user:
         # try to authenticate with username/password
         user = User.query.filter_by(email = username_or_token).first()
-        if not user or not user.verify_password(password):
+        if not user:
+            return False
+        if user.password == None:
+            return False
+        if not user.verify_password(password):
             return False
     g.user = user
     return True
@@ -402,7 +413,7 @@ def authorized():
     # check to make sure the user authorized the request
     if not 'code' in request.args:
         return jsonify({'status':'error',
-                        'reason':'Authentication failed'})
+                        'description':'Authentication failed'})
 
     # make a request for the access token credentials using code
     redirect_uri = url_for('authorized', _external=True)
@@ -418,28 +429,42 @@ def authorized():
     return jsonify({'user':{'id':u.id,
                             'username':u.username,
                             'email':u.email,
-                            'birthday':u.birthday,},
+                            'birthday':u.birthday,
+                            'confirmed_at':u.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
                     'access_token':auth.access_token})
 
 
-@app.route('/activate_user/<user_id>')
-def activate_user(user_id):
-    u = User.query.filter_by(id=user_id).first()
+@app.route('/activate_user/<key>')
+def activate_user(key):
+    # unsigned_user_id = decryption(user_id.replace('_','/'))
+    u = User.query.filter_by(key=key).first()
     if not u:
-        return jsonify({'error':'User not found'}),401
+        return jsonify({'status':'error',
+                        'description':'key Error'}),401
     else:
-        if u.active == 0:
+        if u.confirmed_at == None or u.confirmed_at == "":
             try:
-                u.active = 1
+                u.confirmed_at = datetime.now()
+                u.key = None
                 db.session.commit()
             except:
-                return jsonify({'error':'Something went wrong'}),500
+                return jsonify({'status':'error',
+                                'description':'Something went wrong'}),500
 
-            return jsonify({'status':'User Activated'}),200
+            return jsonify({'status':'success',
+                            'description':'User Activated'}),200
         else:
-            return jsonify({'status':'User aleady activated'}),200
+            return jsonify({'status':'warning',
+                            'description':'Already activated user'}),200
 
 
+@app.route('/reset_passwd/<key>', methods=['GET'])
+def reset_passwd(key):
+    u = User.query.filter_by(key=key).first()
+    if not u:
+        return render_template('500.html'), 500
+
+    return render_template('reset_passwd.html',title='RESET PASSWORD',key=key)
 
 
 ##### RESTful API with Flask-restful  ##################################
@@ -569,8 +594,9 @@ class UserListAPI(Resource):
     def get(self):
         # data = []
         u = User.query.all()
-        return map(lambda t:marshal(t, user_fields), u)
-
+        # return map(lambda t:marshal(t, user_fields), u)
+        return jsonify({'status':'success',
+                        'data':map(lambda t:marshal(t, user_fields), u)}), 200
 
     def post(self):
         if request.json:
@@ -578,27 +604,32 @@ class UserListAPI(Resource):
         elif request.form:
             params = request.form
         else:
-            return {'error':'Request Failed!'}, 400
+            return {'status':'error',
+                    'description':'Request Failed!'}, 400
 
         # Check Requirements <Email, Password>
         if not 'email' in params:
-            return {'error':'Email Address input error!'}, 400
+            return {'status':'error',
+                    'description':'Email Address input error!'}, 400
         elif not 'password' in params:
-            return {'error':'Password Missing'}, 400
+            return {'status':'error',
+                    'description':'Password Missing'}, 400
 
         # Check email address is unique
         if User.email_exists(params['email']):
-            return {'error':'Already registered Email address'}, 400
+            return {'status':'error',
+                    'description':'Already registered Email address'}, 400
 
         # Make username based on email address when it was not submitted.
-        if not 'username' in params or params['username'] == "":
+        if not 'username' in params or params['username'] == "" or params['username'] == None:
             username = params['email'].split('@')[0]
             username = User.make_valid_username(username)
-            username = User.make_unique_username(username)
+            # username = User.make_unique_username(username)
         else:
             username = params['username']
             if User.username_exists(username):
-                return {'error':'Username already exists.'}, 400
+                return {'status':'error',
+                        'description':'Username already exists.'}, 400
 
         # Check User Birthday
         if not 'birthday' in params or params['birthday']=="":
@@ -614,23 +645,27 @@ class UserListAPI(Resource):
         # Password Hashing
         u.hash_password(params['password'])
 
+        u.key = md5('ACTIVATION'+str(int(random.random()*10000))).hexdigest()
+
         # Database Insert/Commit
         try:
             db.session.add(u)
             db.session.commit()
         except:
-            return {'error':'Something went wrong.'}, 500
+            return {'status':'error',
+                    'description':'Something went wrong.'}, 500
 
         send_awaiting_confirm_mail(u)
-        # return marshal(u, user_fields), 201
         g.user = u
         token = g.user.generate_auth_token()
 
-        return jsonify({'user':{'id': g.user.id,
-                                'username': g.user.username,
-                                'email': g.user.email,
-                                'birthday': g.user.birthday,},
-                        'token': token.decode('ascii')})
+        return jsonify({'status':'success',
+                        'data':{'user':{'id': g.user.id,
+                                        'username': g.user.username,
+                                        'email': g.user.email,
+                                        'birthday': g.user.birthday,
+                                        'confirmed_at':g.user.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
+                                'token': token.decode('ascii')}})
 
 
 class UserAPI(Resource):
@@ -642,8 +677,9 @@ class UserAPI(Resource):
     #get specific User's Profile
     def get(self, id):
         u = User.query.filter_by(id=id).first()
-        return marshal(u, user_fields), 200
-
+        # return marshal(u, user_fields), 200
+        return {'status':'success',
+                        'data':marshal(u, user_fields)}, 200
     #modify My User Profile
     def put(self, id):
         if request.json:
@@ -651,7 +687,7 @@ class UserAPI(Resource):
         elif request.form:
             params = request.form
         else:
-            return {'error':'Request Failed!'}, 400
+            return {'status':'error','description':'Request Failed'}, 400
 
         u = User.query.filter_by(id=id).first()
         if u != g.user:
@@ -659,8 +695,6 @@ class UserAPI(Resource):
 
         for key in params:
             value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja kk
-            print key
-            print value
 
             # Nobody can change id, email, fb_id, last_seen
             if key in ['id', 'email', 'fb_id', 'last_seen']:
@@ -840,7 +874,7 @@ class BucketAPI(Resource):
         elif request.form:
             params = request.form
         else:
-            return {'error':'Request Failed!'}, 500
+            return {'status':'error','description':'Request Failed'}, 500
 
         b = Bucket.query.filter_by(id=id).first()
         if b.user_id != g.user.id:
@@ -1085,7 +1119,9 @@ class UserBucketAPI(Resource):
                                     'sub_buckets':[]
                                 })
 
-        return data, 200
+        return jsonify({'status':'success',
+                        'description':'a',
+                        'data':data}), 200
         # return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
 
     def post(self, id):
@@ -1098,7 +1134,7 @@ class UserBucketAPI(Resource):
         elif request.form:
             params = request.form
         else:
-            return {'error':'Request Failed!'}
+            return {'status':'error','description':'Request Failed'}
 
         # Replace blank value to None(null) in params
         for key in params:
@@ -1156,21 +1192,91 @@ class VerificationAPI(Resource):
 
     def post(self):
         if request.json:
-            print "1"
             params = request.json
         elif request.form:
-            print "2"
             params = request.form
         else:
-            print "3"
-            return {'error':'Request Failed!'}, 400
+            return {'status':'error',
+                    'description':'Request Failed'}, 400
 
         try:
             if User.email_exists(params['email']):
-                return {'error':'Email aleady exists'}, 400
+                return {'status':'error',
+                        'description':'Email already exists'}, 400
             else:
-                return {'success':'Available Email Address'}, 200
+                return {'status':'success',
+                        'description':'Available Email Address'}, 200
         except:
-            return {'error':'Something went wrong'}, 500
+            return {'status':'error',
+                    'description':'Something went wrong'}, 500
 
 api.add_resource(VerificationAPI, '/api/valid_email', endpoint='verifyEmail')
+
+
+class ResetPassword(Resource):
+    def __init__(self):
+        super(ResetPassword, self).__init__()
+
+    def get(self,string):
+        u = User.query.filter_by(email = string).first()
+        u.key = md5('RESET_PASSWORD'+str(int(random.random()*10000))).hexdigest()
+
+        db.session.commit()
+        send_reset_password_mail(u)
+
+        return {'status':'success',
+                'description':'Reset Password Mail Sent'}, 200
+
+
+
+    def post(self,string):
+        u = User.query.filter_by(email = string).first()
+        if not u:
+            return {'status':'error',
+                    'description':'Invalid User Email'}, 400
+        u.key = md5('RESET_PASSWORD'+str(int(random.random()*10000))).hexdigest()
+
+        db.session.commit()
+        send_reset_password_mail(u)
+
+        return {'status':'success',
+                'description':'Reset Password Mail Sent'}, 200
+
+
+    def put(self,string):
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
+        else:
+            return {'status':'error',
+                    'description':'Request Failed'}, 400
+
+        u = User.query.filter_by(key = string).first()
+        if not u:
+            return {'status':'error',
+                    'description':'Invalid Key'}, 400
+
+        # if
+        if 'password' not in params:
+            return {'status':'error',
+                    'description':'Password Missing'}, 400
+
+        try:
+            u.hash_password(params['password'])
+            u.key = None
+            db.session.commit()
+        except:
+            return {'status':'error',
+                    'description':'Something went wrong'}, 500
+
+
+        return {'status':'success',
+                'description':'Password successfully reset'}, 200
+
+
+api.add_resource(ResetPassword, '/api/reset_password/<string>', endpoint='resetPassword')
+
+
+
+

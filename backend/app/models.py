@@ -35,9 +35,9 @@ class Role(db.Model, RoleMixin):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(64), unique = True)
     email = db.Column(db.String(120), index = True, unique = True)
     password = db.Column(db.String(128))
+    username = db.Column(db.String(64))
     posts = db.relationship('Post', backref = 'author', lazy = 'dynamic')
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.now())
@@ -46,6 +46,7 @@ class User(db.Model, UserMixin):
     fb_id = db.Column(db.String(128))
     active = db.Column(db.Boolean(), default=0)
     confirmed_at = db.Column(db.DateTime())
+    key = db.Column(db.String(128))
     followed = db.relationship('User',
         secondary = followers, 
         primaryjoin = (followers.c.follower_id == id), 

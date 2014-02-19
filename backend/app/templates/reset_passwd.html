@@ -1,0 +1,72 @@
+<!doctype html>
+{#<html manifest="/static/js/html5study/tracker.appcache">#}
+<html>
+    <head>
+        {% if title %}
+            <title>{{title}} - DreamProject</title>
+        {% else %}
+            <title>Dream Project</title>
+        {% endif %}
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+		<link rel="stylesheet" href="{{ url_for('.static', filename = 'css/app.css') }}">
+		<link rel="stylesheet" href="{{ url_for('.static', filename = 'css/bootstrap-datetimepicker.css') }}">
+
+		{% block stylesheet %}{% endblock %}
+        <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+        <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+        <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
+
+        {% if g.locale != 'en' %}
+        {% endif %}
+        <script> // MicroSoft Translation
+            function translate(sourceLang, destLang, sourceId, destId, loadingId) {
+                $(destId).hide();
+                $(loadingId).show();
+                $.post('/translate', {
+                    text: $(sourceId).text(),
+                    sourceLang: sourceLang,
+                    destLang: destLang
+                }).done(function(translated) {
+                    $(destId).text(translated['text'])
+                    $(loadingId).hide();
+                    $(destId).show();
+                }).fail(function() {
+                    $(destId).text("{{ _('Error: Could not contact server.') }}");
+                    $(loadingId).hide();
+                    $(destId).show();
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <div class="col-lg-6">
+            <div class="input-group">
+                <input type="password" class="form-control" id="newPasswd">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" id="resetPasswdBtn">Reset PW!!</button>
+                </span>
+            </div><!-- /input-group -->
+        </div><!-- /.col-lg-6 -->
+    </body>
+    <script>
+        $(document).ready(function(){
+            $("#resetPasswdBtn").click(resetPassword);
+        });
+
+        var resetPassword = function(){
+            var newPasswd = $("#newPasswd").val();
+            $.ajax({
+                type:'PUT',
+                url:'http://masunghoon.iptime.org:5001/api/reset_password/{{ key }}',
+                data:{password:newPasswd},
+                success:function(){
+                    alert("Success");
+                },
+                error:function(msg){
+                    alert(msg);
+                }
+            });
+        }
+    </script>
+</html>
