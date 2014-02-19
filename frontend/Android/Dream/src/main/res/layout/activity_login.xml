@@ -1,6 +1,6 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.vivavu.dream.LoginActivity">
+    tools:context="com.vivavu.dream.activity.login.LoginActivity">
 
     <!-- Login progress -->
     <LinearLayout android:id="@+id/login_status"
@@ -49,7 +49,6 @@
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:text="@string/lb_login_email"
-                        android:id="@+id/textView"
                         android:layout_gravity="center_vertical"
                         android:layout_weight="1" />
 
@@ -72,7 +71,6 @@
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:text="@string/lb_login_password"
-                        android:id="@+id/textView2"
                         android:layout_gravity="center_vertical"
                         android:layout_weight="1" />
 
@@ -95,16 +93,17 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
 
-            <Button android:id="@+id/sign_in_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/action_sign_in_register"
-                android:paddingLeft="32dp"
-                android:paddingRight="32dp"
-                android:layout_gravity="right" />
+                <Button android:id="@+id/sign_in_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/action_sign_in_short"
+                    android:paddingLeft="32dp"
+                    android:paddingRight="32dp"
+                    android:layout_gravity="right" />
 
-        </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
+
 </merge>

@@ -5,7 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.vivavu.dream.MainActivity"
+    tools:context="com.vivavu.dream.activity.main.MainActivity"
     tools:ignore="MergeRootFrame"
 >
 
@@ -15,12 +15,25 @@
     android:layout_height="match_parent">
 
 </FrameLayout>
+    <!--<android.support.v4.view.ViewPager
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/main_view_pager"
+        >
+        <android.support.v4.view.PagerTitleStrip
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            >
+
+        </android.support.v4.view.PagerTitleStrip>
+        </android.support.v4.view.ViewPager>-->
     <fragment
         android:id="@+id/main_left_menu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:name="com.vivavu.dream.fragment.LeftMenuDrawerFragment"
+        android:name="com.vivavu.dream.fragment.main.LeftMenuDrawerFragment"
         tools:layout="@layout/fragment_main_left_menu"></fragment>
 
 

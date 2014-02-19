@@ -1,7 +1,9 @@
 package com.vivavu.dream.common;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 
+import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.user.User;
 import com.vivavu.dream.repository.DataRepository;
 
@@ -14,6 +16,8 @@ public class DreamApp extends Application {
 
     private User user  = null;
     private String token = null;
+
+    private String tokenType = null;
     private String username = null;
     private String email = null;
     private String password = null;
@@ -23,12 +27,65 @@ public class DreamApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        loadAppDefaultInfo();
         DataRepository.setContext(this);
     }
 
     @Override
     public void onTerminate() {
+        saveAppDefaultInfo();
         super.onTerminate();
+    }
+
+    public void logout(){
+        setLogin(false);
+        setUser(null);
+        setToken(null);
+        setTokenType(null);
+        saveAppDefaultInfo();
+
+
+    }
+
+    public boolean checkLogin() {
+        if(isLogin() == false){
+            BaseInfo baseInfo = DataRepository.getBaseInfo();
+            if (baseInfo != null) {
+                setUser(baseInfo);
+                setUsername(baseInfo.getUsername());
+                setLogin(true);
+                return true;
+            }
+            setLogin(false);
+            return false;
+        }
+        return true;
+    }
+
+    public void loadAppDefaultInfo() {
+
+        //기존 저장된 로그인 관련 정보 불러오기
+        SharedPreferences settings = getSharedPreferences(Constants.settings, MODE_PRIVATE);
+        String email = settings.getString(Constants.email, "");
+        String token = settings.getString(Constants.token, "");
+        String tokenType = settings.getString(Constants.tokenType, "");
+
+        setEmail(email);
+        setToken(token);
+        setTokenType(tokenType);
+    }
+
+    public void saveAppDefaultInfo() {
+
+        // 프리퍼런스 설정
+        SharedPreferences prefs = getSharedPreferences(Constants.settings, MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putString(Constants.email, getEmail());
+        editor.putString(Constants.token, getToken());   // String
+        editor.putString(Constants.tokenType, getTokenType());   // String
+
+        editor.commit();
     }
 
     public static String getLogTag() {
@@ -93,4 +150,14 @@ public class DreamApp extends Application {
     public void setUsername(String username) {
         this.username = username;
     }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
+
 }

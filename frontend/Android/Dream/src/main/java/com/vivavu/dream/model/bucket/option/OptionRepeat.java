@@ -1,11 +1,13 @@
 package com.vivavu.dream.model.bucket.option;
 
+import android.util.Log;
+
 import com.vivavu.dream.common.RepeatType;
 
 /**
  * Created by yuja on 14. 1. 24.
  */
-public class OptionRepeat {
+public class OptionRepeat implements Cloneable {
     private RepeatType repeatType = RepeatType.WKRP;
     private boolean sun;
     private boolean mon;
@@ -137,6 +139,39 @@ public class OptionRepeat {
         } else {
             mon=tue=wen=thu=fri=sat=sun=false;
         }
+    }
+
+    @Override
+    public Object clone() {
+        Object o = null;
+        try{
+            o = super.clone();
+        } catch (CloneNotSupportedException e) {
+            Log.e("dream", e.getMessage());
+        }
+        return o;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OptionRepeat)) return false;
+
+        OptionRepeat that = (OptionRepeat) o;
+
+        if (period != that.period) return false;
+        if (repeatCount != that.repeatCount) return false;
+        if (repeatType != that.repeatType) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = repeatType.hashCode();
+        result = 31 * result + repeatCount;
+        result = 31 * result + period;
+        return result;
     }
 
     @Override

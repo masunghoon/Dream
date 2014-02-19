@@ -5,35 +5,53 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".common.DreamApp"
+        android:name="com.vivavu.dream.common.DreamApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"></meta-data>
+        <activity android:name="com.facebook.LoginActivity">
+
+        </activity>
         <activity
-            android:name="com.vivavu.dream.LoginActivity"
+            android:name="com.vivavu.dream.activity.login.UserRegisterActivity"
+            android:label="register" >
+        </activity>
+        <activity
+            android:name="com.vivavu.dream.activity.login.LoginActivity"
             android:label="@string/title_activity_login"
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
-        <activity android:name=".activity.BucketViewActivity"
-            android:label="View Bucket">
-
-        </activity>
-        <activity android:name=".activity.BucketAddActivity"
-            android:label="Add Bucket">
-
+        <activity
+            android:name="com.vivavu.dream.activity.bucket.BucketViewActivity"
+            android:label="View Bucket"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan" >
         </activity>
         <activity
-            android:name="com.vivavu.dream.MainActivity"
+            android:name="com.vivavu.dream.activity.bucket.BucketAddActivity"
+            android:label="Add Bucket" >
+        </activity>
+        <activity
+            android:name="com.vivavu.dream.activity.main.MainActivity"
             android:label="@string/title_activity_main"
-            android:uiOptions="splitActionBarWhenNarrow"
-            >
-            <meta-data android:name="android.support.UI_OPTIONS" android:value="splitActionBarWhenNarrow" />
+            android:uiOptions="splitActionBarWhenNarrow" >
+            <meta-data
+                android:name="android.support.UI_OPTIONS"
+                android:value="splitActionBarWhenNarrow" />
+        </activity>
+        <activity
+            android:name="com.vivavu.dream.activity.StartActivity"
+            android:label="@string/title_activity_main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
+        </activity>
+        <activity
+            android:name="com.vivavu.dream.activity.intro.IntroActivity"
+            android:label="@string/title_activity_intro" >
         </activity>
     </application>
 

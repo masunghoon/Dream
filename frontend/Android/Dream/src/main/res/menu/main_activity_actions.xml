@@ -13,11 +13,11 @@
         android:icon="@drawable/glyphicons_081_refresh"
         myapp:showAsAction="ifRoom"
         />
-    <item android:id="@+id/main_menu_login"
+    <!--<item android:id="@+id/main_menu_login"
         android:title="@string/main_menu_login"
         android:icon="@drawable/glyphicons_386_log_in"
         myapp:showAsAction="ifRoom"
-        />
+        />-->
     <item android:id="@+id/main_menu_life"
         android:title="@string/main_menu_life"
         myapp:showAsAction="always"
