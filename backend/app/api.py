@@ -1,4 +1,4 @@
-__author__ = 'massinet'
+__author__ = 'masunghoon'
 
 # Libraries
 import random, datetime

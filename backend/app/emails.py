@@ -1,6 +1,6 @@
 from flask import render_template, url_for
 from flask.ext.mail import Message
-from app import mail, security, encryption
+from app import mail
 from decorators import async
 from config import ADMINS
 

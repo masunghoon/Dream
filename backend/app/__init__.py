@@ -1,4 +1,3 @@
-import os
 import sys
 
 from sqlalchemy import create_engine
@@ -13,8 +12,6 @@ from flask.ext.security import Security, SQLAlchemyUserDatastore
 from sqlalchemy.ext.declarative import declarative_base
 
 from werkzeug.contrib.fixers import ProxyFix
-from Crypto.Cipher import AES
-import base64
 
 sys.path.append('../..')
 
@@ -32,7 +29,6 @@ api = Api(app)
 
 
 # DB
-# db = SQLAlchemy(app)
 db.metadata.bind = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
 engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'],
@@ -45,12 +41,18 @@ lm.login_message = ''
 lm.init_app(app)
 lm.login_view = 'login'
 
-# oid = OpenID(app, os.path.join(basedir, 'tmp'))
-
 # Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-
 security = Security(app, user_datastore)
+
+# moment.js
+app.jinja_env.globals['momentjs'] = momentjs
+
+# Mailing
+mail = Mail(app)
+
+# I18n and L10n
+babel = Babel(app)
 
 # Debugging
 if not app.debug:
@@ -62,7 +64,7 @@ if not app.debug:
     mail_handler = SMTPHandler((MAIL_SERVER, MAIL_PORT), 'no-reply@' + MAIL_SERVER, ADMINS, 'dream failure', credentials)
     mail_handler.setLevel(logging.ERROR)
     app.logger.addHandler(mail_handler)
-    
+
     from logging.handlers import RotatingFileHandler
     file_handler = RotatingFileHandler('tmp/dream.log', 'a', 1 * 1024 * 1024, 10)
     file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
@@ -70,29 +72,6 @@ if not app.debug:
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.info('dream startup')
-
-# momentjs
-app.jinja_env.globals['momentjs'] = momentjs
-
-# Mailing
-mail = Mail(app)
-
-# I18n and L10n
-babel = Babel(app)
-
-# Encryption & Decryption
-def encryption(clear_text):
-    enc_secret = AES.new(SECRET_KEY[:32])
-    tag_string = (str(clear_text) + (AES.block_size - len(str(clear_text)) % AES.block_size) * "\0")
-    cipher_text = base64.b64encode(enc_secret.encrypt(tag_string))
-    return cipher_text
-
-def decryption(cipher_text):
-    dec_secret = AES.new(SECRET_KEY[:32])
-    raw_decrypted = dec_secret.decrypt(base64.b64decode(cipher_text))
-    clear_val = raw_decrypted.rstrip("\0")
-    return clear_val
-
 
 
 from app import models

@@ -21,7 +21,6 @@ manager.add_command('shell', Shell(make_context=lambda: {
 @manager.command
 def syncdb():
     from app import models
-    from social.apps.flask_app import models
     db.create_all()
     Base.metadata.create_all(bind=engine)
 
