@@ -7,14 +7,14 @@
         {% else %}
             <title>Dream Project</title>
         {% endif %}
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 		<link rel="stylesheet" href="{{ url_for('.static', filename = 'css/app.css') }}">
 		<link rel="stylesheet" href="{{ url_for('.static', filename = 'css/bootstrap-datetimepicker.css') }}">
 
 		{% block stylesheet %}{% endblock %}
         <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
         <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script src="{{ url_for('.static', filename = 'js/moment.min.js') }}"></script>
 
         {% if g.locale != 'en' %}
@@ -40,22 +40,42 @@
         </script>
     </head>
     <body>
-        <div class="col-lg-6">
-            <div class="input-group">
-                <input type="password" class="form-control" id="newPasswd">
-                <span class="input-group-btn">
-                    <button class="btn btn-default" type="button" id="resetPasswdBtn">Reset PW!!</button>
-                </span>
-            </div><!-- /input-group -->
+        <div class="col-sm-6 col-sm-offset-3">
+            <h2>Reset Password <small>- Dream proj.</small></h2>
+            <div class="form-group has-feedback" id="newPasswdFormGroup">
+                <label class="control-label" for="inputSuccess2" id="resetPasswdLabel">Input new password here</label>
+                <input type="password" class="form-control" id="resetPasswdInput">
+                <span class="glyphicon glyphicon-lock form-control-feedback" id="resetPasswdGlyphicon"></span>
+            </div>
+            <button type="button" class="btn btn-default disabled" id="resetPasswdBtn">Reset Password</button>
+
         </div><!-- /.col-lg-6 -->
     </body>
     <script>
         $(document).ready(function(){
             $("#resetPasswdBtn").click(resetPassword);
+            $("#resetPasswdInput").keyup(passwordValidation);
+            $("#resetPasswdInput").focusin(passwordValidation);
         });
 
+        var passwordValidation = function(){
+            var newPasswd = $("#resetPasswdInput").val();
+
+            if(newPasswd.length < 6){
+                $("#newPasswdFormGroup").attr('class','form-group has-error has-feedback');
+                $("#resetPasswdLabel").html('New password needs more than 6 characters.');
+                $("#resetPasswdGlyphicon").attr('class','glyphicon glyphicon-remove form-control-feedback');
+                $("#resetPasswdBtn").attr('class','btn btn-default disabled');
+            } else {
+                $("#newPasswdFormGroup").attr('class','form-group has-success has-feedback');
+                $("#resetPasswdLabel").html('Qualified.');
+                $("#resetPasswdGlyphicon").attr('class','glyphicon glyphicon-ok form-control-feedback');
+                $("#resetPasswdBtn").attr('class','btn btn-success');
+            }
+        }
+
         var resetPassword = function(){
-            var newPasswd = $("#newPasswd").val();
+            var newPasswd = $("#resetPasswdInput").val();
             $.ajax({
                 type:'PUT',
                 url:'http://masunghoon.iptime.org:5001/api/reset_password/{{ key }}',
