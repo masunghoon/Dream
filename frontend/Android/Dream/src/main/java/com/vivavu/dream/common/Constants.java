@@ -15,6 +15,7 @@ public class Constants {
     static public String apiUsers = baseUrl+"api/users";
     static public String apiUserInfo = baseUrl+"api/user/{userId}";
 
+    static public String apiResetPassword = baseUrl+"api/reset_password/{email}";
     static public String apiPostBucket = baseUrl+"api/buckets/";
     static public String apiBuckets = baseUrl+"api/buckets/user/{userId}";
 

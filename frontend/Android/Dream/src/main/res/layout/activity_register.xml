@@ -156,11 +156,20 @@
         </LinearLayout>
     </ScrollView>
 
-    <include
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        layout="@layout/include_facebook_login" />
+        android:id="@+id/facebook_container"
+        >
+
+        <fragment
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:name="com.vivavu.dream.facebook.fragment.FacebookLoginFragment"
+            android:id="@+id/fragment"
+            tools:layout="@layout/include_facebook_login" />
+    </LinearLayout>
 
 
 </LinearLayout>

@@ -14,17 +14,14 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.facebook.widget.LoginButton;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
+import com.vivavu.dream.common.Code;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.ValidationUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -34,14 +31,14 @@ import butterknife.InjectView;
  * well.
  */
 public class LoginActivity extends BaseActionBarActivity {
-    @InjectView(R.id.authButton)
-    LoginButton mAuthButton;
     @InjectView(R.id.txt_response_info)
     TextView mTxtResponseInfo;
     /**
      * The default email to populate the email field with.
      */
     public static final String EXTRA_EMAIL = "com.example.android.authenticatordemo.extra.EMAIL";
+    @InjectView(R.id.txt_forgot_password)
+    TextView mTxtForgotPassword;
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -103,13 +100,14 @@ public class LoginActivity extends BaseActionBarActivity {
                 attemptLogin();
             }
         });
-
-        List<String> readPermissions = new ArrayList<String>();
-        readPermissions.add("basic_info");
-        readPermissions.add("email");
-        readPermissions.add("user_birthday");
-
-        mAuthButton.setReadPermissions(readPermissions);
+        mTxtForgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setClass(LoginActivity.this, ResetPasswordActivity.class);
+                startActivityForResult(intent, Code.ACT_RESET_PASSWORD);
+            }
+        });
     }
 
 
@@ -227,12 +225,7 @@ public class LoginActivity extends BaseActionBarActivity {
 
             ResponseBodyWrapped<SecureToken> userInfo = DataRepository.getToken(user.getEmail(), user.getPassword());
 
-            if (userInfo == null) {
-                return null;
-            } else {
-                return userInfo;
-            }
-
+            return userInfo;
         }
 
         @Override
@@ -249,7 +242,7 @@ public class LoginActivity extends BaseActionBarActivity {
                 context.saveAppDefaultInfo();
 
                 setResult(RESULT_OK);
-                goMain();
+                finish();
             } else {
                 this.cancel(false);
                 context.setLogin(false);

@@ -13,17 +13,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.facebook.widget.LoginButton;
 import com.viewpagerindicator.CirclePageIndicator;
 import com.vivavu.dream.R;
+import com.vivavu.dream.activity.login.LoginActivity;
+import com.vivavu.dream.activity.login.PrivacyActivity;
+import com.vivavu.dream.activity.login.UserAgreementActivity;
 import com.vivavu.dream.activity.login.UserRegisterActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import butterknife.ButterKnife;
@@ -49,12 +50,16 @@ public class IntroActivity extends BaseActionBarActivity {
     Button mSignInButton;
     @InjectView(R.id.register_button)
     Button mRegisterButton;
-    @InjectView(R.id.authButton)
-    LoginButton mAuthButton;
     @InjectView(R.id.pager)
     ViewPager mPager;
     @InjectView(R.id.intro_viewpager_indicator)
     CirclePageIndicator mIntroViewpagerIndicator;
+    @InjectView(R.id.facebook_container)
+    LinearLayout mFacebookContainer;
+    @InjectView(R.id.btn_user_agreement)
+    Button mBtnUserAgreement;
+    @InjectView(R.id.btn_private)
+    Button mBtnPrivate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,15 +88,31 @@ public class IntroActivity extends BaseActionBarActivity {
                 goLogin();
             }
         });
+        mBtnUserAgreement.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goUserAgreement();
+            }
+        });
+        mBtnPrivate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goPrivacy();
+            }
+        });
 
-        List<String> readPermissions = new ArrayList<String>();
-        readPermissions.add("basic_info");
-        readPermissions.add("email");
-        readPermissions.add("user_birthday");
+    }
 
-        mAuthButton.setReadPermissions(readPermissions);
+    private void goPrivacy() {
+        Intent intent = new Intent();
+        intent.setClass(this, PrivacyActivity.class);
+        startActivity(intent);
+    }
 
-        Log.d("dream", "intro 시작시작");
+    private void goUserAgreement() {
+        Intent intent = new Intent();
+        intent.setClass(this, UserAgreementActivity.class);
+        startActivity(intent);
     }
 
 
@@ -122,11 +143,15 @@ public class IntroActivity extends BaseActionBarActivity {
         switch (requestCode) {
             case Code.ACT_LOGIN:
                 if (resultCode == RESULT_OK) {
-                    goMain();
+                    setResult(RESULT_OK);
+                    finish();
                 }
                 return;
             case Code.ACT_USER_REGISTER:
-                checkAppExit();
+                if (resultCode == RESULT_OK) {
+                    setResult(RESULT_OK);
+                    finish();
+                }
                 return;
         }
     }
@@ -140,6 +165,18 @@ public class IntroActivity extends BaseActionBarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    public void goLogin() {
+        Intent intent = new Intent();
+        intent.setClass(this, LoginActivity.class);
+        startActivityForResult(intent, Code.ACT_LOGIN);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d("test", "introActivity start!!!");
     }
 
     /**

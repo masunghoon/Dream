@@ -40,7 +40,7 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 10.
  */
-public class BucketViewActivity extends BaseActionBarActivity implements CustomBaseFragment.OnOptionFragmentRemovedListener {
+public class BucketViewActivity extends BaseActionBarActivity implements BucketOptionRepeatFragment.OnOptionFragmentRemovedListener {
     @InjectView(R.id.bucket_btn_done)
     Button mBucketBtnDone;
     @InjectView(R.id.bucket_item_title)

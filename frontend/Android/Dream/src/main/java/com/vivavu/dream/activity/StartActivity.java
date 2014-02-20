@@ -23,13 +23,6 @@ public class StartActivity extends BaseActionBarActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         switch (requestCode) {
-            case Code.ACT_LOGIN:
-                if (resultCode == RESULT_OK) {
-                    goMain();
-                }else{
-                    finish();
-                }
-                return;
             case Code.ACT_MAIN:
                 checkAppExit();
             case Code.ACT_INTRO:

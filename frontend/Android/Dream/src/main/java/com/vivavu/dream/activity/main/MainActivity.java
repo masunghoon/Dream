@@ -12,12 +12,11 @@ import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.adapter.main.MainPagerAdapter;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.fragment.main.MainContentsFragment;
 import com.vivavu.dream.fragment.main.MainPlanFragment;
 import com.vivavu.dream.repository.DataRepository;
 
-public class MainActivity extends BaseActionBarActivity implements CustomBaseFragment.OnOptionFragmentRemovedListener{
+public class MainActivity extends BaseActionBarActivity {
     private MainContentsFragment mainContentsFragment;
     private MainPlanFragment mainPlanFragment;
     private MainPagerAdapter mMainPagerAdapter;
@@ -26,10 +25,6 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /*mMainPagerAdapter = new MainPagerAdapter(this, getSupportFragmentManager());
-        mViewPager = (ViewPager) findViewById(R.id.main_view_pager);
-        mViewPager.setAdapter(mMainPagerAdapter);*/
 
         if (savedInstanceState == null) {
 
@@ -130,11 +125,6 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
         super.onStop();
     }
 
-    @Override
-    public void onOptionFragmentRemoved(String tag) {
-
-    }
-
     public void goBucketView(Integer bucketId){
         Intent intent = new Intent();
         intent.setClass(this, BucketViewActivity.class);
@@ -147,7 +137,7 @@ public class MainActivity extends BaseActionBarActivity implements CustomBaseFra
         //다시 활성화 될때.
         super.onResume();
         if (checkLogin() == false) {
-            goLogin();
+            //goLogin();
         }else{
             mainContentsFragment.setBuckets(DataRepository.getBuckets(context.getUser().getId()));
         }

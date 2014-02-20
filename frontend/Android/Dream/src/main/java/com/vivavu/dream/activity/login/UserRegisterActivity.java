@@ -10,7 +10,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.facebook.widget.LoginButton;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.model.LoginInfo;
@@ -18,9 +17,6 @@ import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.ValidationUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -49,8 +45,6 @@ public class UserRegisterActivity extends BaseActionBarActivity {
     TextView mTxtResponseInfo;
     @InjectView(R.id.txt_regist_agreement)
     TextView mTxtRegistAgreement;
-    @InjectView(R.id.authButton)
-    LoginButton mAuthButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,12 +53,7 @@ public class UserRegisterActivity extends BaseActionBarActivity {
         ButterKnife.inject(this);
 
         mRegistButton.setOnClickListener(this);
-        List<String> readPermissions = new ArrayList<String>();
-        readPermissions.add("basic_info");
-        readPermissions.add("email");
-        readPermissions.add("user_birthday");
 
-        mAuthButton.setReadPermissions(readPermissions);
     }
 
     @Override

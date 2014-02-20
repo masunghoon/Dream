@@ -1,5 +1,6 @@
 package com.vivavu.dream.fragment.bucket;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -64,6 +65,7 @@ public class BucketOptionRepeatFragment extends CustomBaseFragment implements Vi
 
     private OptionRepeat userInputOptionRepeat;
     private OptionRepeat originalOptionRepeat;
+    private OnOptionFragmentRemovedListener mListener;
 
     public BucketOptionRepeatFragment() {
         this.userInputOptionRepeat = new OptionRepeat();
@@ -154,6 +156,16 @@ public class BucketOptionRepeatFragment extends CustomBaseFragment implements Vi
         bindData();
 
         return rootView;
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try{
+            mListener = (OnOptionFragmentRemovedListener) activity;
+        }catch (ClassCastException e){
+            throw new ClassCastException(activity.toString() + " must implement OnOptionFragmentRemovedListener");
+        }
     }
 
     @Override
@@ -263,4 +275,7 @@ public class BucketOptionRepeatFragment extends CustomBaseFragment implements Vi
         return userInputOptionRepeat;
     }
 
+    public interface OnOptionFragmentRemovedListener{
+        public void onOptionFragmentRemoved(String tag);
+    }
 }

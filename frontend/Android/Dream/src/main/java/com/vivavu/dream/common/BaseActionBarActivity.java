@@ -9,13 +9,12 @@ import android.view.View;
 import com.facebook.Session;
 import com.vivavu.dream.activity.StartActivity;
 import com.vivavu.dream.activity.intro.IntroActivity;
-import com.vivavu.dream.activity.login.LoginActivity;
 import com.vivavu.dream.activity.main.MainActivity;
-import com.vivavu.dream.facebook.callback.CustomFacebookStatusCallback;
 import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.AndroidUtils;
+import com.vivavu.dream.util.FacebookUtils;
 
 /**
  * Created by yuja on 14. 2. 6.
@@ -49,13 +48,6 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         view.setOnClickListener(this);//root view에 click listener를 달아 두어 다른곳을 선책하면 키보드가 없어지도록 함
     }
 
-    public void goLogin(){
-        Intent intent = new Intent();
-        intent.setClass(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        startActivityForResult(intent, Code.ACT_LOGIN);
-    }
-
     public void goIntro(){
         Intent intent = new Intent();
         intent.setClass(this, IntroActivity.class);
@@ -65,10 +57,34 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     public void goMain(){
         Intent intent = new Intent();
         intent.setClass(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivityForResult(intent, Code.ACT_MAIN);
     }
 
+    public void goHome(){
+        /*
+        Intent intent = new Intent();
+        intent.setClass(this, StartActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        */
+
+        Intent intent = new Intent();
+        intent.setAction("android.intent.action.MAIN");
+        intent.addCategory("android.intent.category.HOME");
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                | Intent.FLAG_ACTIVITY_FORWARD_RESULT
+                | Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP
+                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        startActivity(intent);
+    }
+
+    public void goStartActivity(){
+        Intent intent = new Intent();
+        intent.setClass(this, StartActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
     public void checkAppExit() {
         Intent intent = getIntent();
         boolean isAppExit = intent.getBooleanExtra("isAppExit", false);
@@ -76,16 +92,20 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         if(isAppExit){
             finish();
         }else{
-            if(checkLogin()){
-                goMain();
-            }else{
-                goIntro();
-            }
+            branch();
+        }
+    }
+
+    public void branch(){
+        if(checkLogin()){
+            goMain();
+        }else{
+            goIntro();
         }
     }
 
     public boolean checkLogin(){
-        if(context.isLogin() == false){
+        if(context.isLogin() == false || FacebookUtils.isOpen()){
             if(context.hasValidToken()){
             ResponseBodyWrapped<BaseInfo> response = DataRepository.getBaseInfo();
                 if(response.isSuccess()){
@@ -94,6 +114,9 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
                     context.setUsername(baseInfo.getUsername());
                     context.setLogin(true);
                     return true;
+                }else{
+                    //로그인 에러시에 강제로 로그아웃 시켜서 무한루프에 안들어가도록 함
+                    logout();
                 }
             }
             context.setLogin(false);
@@ -106,7 +129,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         getContext().logout();
 
         Session session = Session.getActiveSession();
-        if(session != null){
+        if(session != null && !session.isClosed()){
             //todo: close만 할것인지 clear 시켜서 토큰정보도 안남게 할 것인지.
             session.closeAndClearTokenInformation();
         }
@@ -131,7 +154,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        switch (requestCode){
+        /*switch (requestCode){
             case Session.DEFAULT_AUTHORIZE_ACTIVITY_CODE:
                 Session activeSession = Session.getActiveSession();
                 if(activeSession != null){
@@ -140,7 +163,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
                 }
 
                 return;
-        }
+        }*/
 
     }
 

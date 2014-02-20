@@ -96,6 +96,7 @@ public class DataRepository {
             result = restTemplate.exchange(Constants.apiToken, HttpMethod.GET, request, String.class);
         }catch (RestClientException e) {
             Log.e("dream", e.toString());
+            return new ResponseBodyWrapped<SecureToken>("error", "오류가 발생하였습니다. 다시 시도해주시기 바랍니다.", null);
         }
 
         if(result.getStatusCode() == HttpStatus.OK){
@@ -121,7 +122,7 @@ public class DataRepository {
             Log.e("dream", e.toString());
         }
         ResponseBodyWrapped<BaseInfo> responseBodyWrapped = null;
-        if(result.getStatusCode() != HttpStatus.UNAUTHORIZED ){
+        if(result.getStatusCode() == HttpStatus.OK || result.getStatusCode()== HttpStatus.NO_CONTENT){
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             Type type = new TypeToken<ResponseBodyWrapped<BaseInfo>>(){}.getType();
             responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
@@ -253,9 +254,7 @@ public class DataRepository {
 
     public static List<Plan> getPlanList(Object... variable){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
         HttpHeaders requestHeaders = getBasicAuthHeader();
-
         HttpEntity request = new HttpEntity<String>(requestHeaders);
 
         ResponseEntity<Plan[]> result = null;
@@ -291,6 +290,28 @@ public class DataRepository {
 
         return result.getBody();
 
+    }
+
+    public static ResponseBodyWrapped<LoginInfo> resetPassword(String email){
+        RestTemplate restTemplate = RestTemplateFactory.getInstance();
+        HttpHeaders requestHeaders = getBasicAuthHeader();
+        HttpEntity request = new HttpEntity<String>(requestHeaders);
+        ResponseEntity<String> result = null;
+
+        try {
+            result = restTemplate.exchange(Constants.apiResetPassword, HttpMethod.POST, request, String.class, email);
+        } catch (RestClientException e) {
+            Log.e("dream", e.toString());
+        }
+
+        if(result.getStatusCode() == HttpStatus.OK){
+            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+            Type type = new TypeToken<ResponseBodyWrapped<LoginInfo>>(){}.getType();
+            ResponseBodyWrapped<LoginInfo> user = gson.fromJson((String) result.getBody(), type);
+            return user;
+        }
+
+        return new ResponseBodyWrapped<LoginInfo>();
     }
     public static DreamApp getContext() {
         return context;
