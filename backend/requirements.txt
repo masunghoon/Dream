@@ -31,6 +31,6 @@ sqlalchemy-migrate==0.7.2
 passlib
 itsdangerous
 rauth
-
+pycrypto
 #Flask-OpenID==1.1.1
 #psycopg2

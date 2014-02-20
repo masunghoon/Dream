@@ -53,9 +53,11 @@
     [manager GET:uri
       parameters:nil
          success:^(AFHTTPRequestOperation *operation, id responseObject){
+             NSLog(@"Success");
              completionBlock(responseObject);
          }
          failure:^(AFHTTPRequestOperation *operation, NSError *error){
+             NSLog(@"Failure");
              completionBlock([NSDictionary dictionaryWithObject:[error localizedDescription] forKey:@"error"]);
          }
     ];

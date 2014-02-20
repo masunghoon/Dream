@@ -1,6 +1,6 @@
 from flask import render_template, url_for
 from flask.ext.mail import Message
-from app import mail, security
+from app import mail
 from decorators import async
 from config import ADMINS
 
@@ -26,10 +26,16 @@ def follower_notification(followed, follower):
 
 def send_awaiting_confirm_mail(user):
     # Send the awaiting for confirmation mail to the user.
-    print user.email
-    print user.id
     subject = "We're waiting for your confirmation!!"
     msg = Message(subject=subject, sender=ADMINS[0], recipients=[user.email])
-    confirmation_url = url_for('activate_user', user_id=user.id, _external=True)
+    confirmation_url = url_for('activate_user', key=user.key, _external=True)
     msg.body = "Dear %s, click here to confirm: %s" % (user.username, confirmation_url)
+    send_async_email(msg)
+
+
+def send_reset_password_mail(user):
+    subject = "Reset Password!!"
+    msg = Message(subject=subject, sender=ADMINS[0], recipients=[user.email])
+    url = url_for('reset_passwd', key=user.key, _external=True)
+    msg.body = 'Dear %s, Reset your password via: %s' % (user.username, url)
     send_async_email(msg)

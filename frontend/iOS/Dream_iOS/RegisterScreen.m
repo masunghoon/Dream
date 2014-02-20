@@ -156,7 +156,7 @@
 - (IBAction)fldEmailEditFinished:(UITextField *)sender{
     NSMutableDictionary *params = [NSMutableDictionary dictionaryWithObjectsAndKeys:fldEmail.text, @"email", nil];
     //TODO: API Call to check Email Address is Valid
-    [[API sharedInstance] postToURI:@"api/valid_email"
+    [[API sharedInstance] postToURI:[NSString stringWithFormat:@"api/valid_email/%@",fldEmail.text]
                           withParams:params
                         onCompletion:^(NSDictionary *json){
                             if(![json objectForKey:@"error"]){
