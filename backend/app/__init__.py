@@ -27,12 +27,9 @@ from app.momentjs import momentjs
 # RESTful API
 api = Api(app)
 
-
 # DB
 db.metadata.bind = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-
-engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'],
-                       convert_unicode=True)
+engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'], convert_unicode=True)
 Base = declarative_base()
 
 # Login Manager

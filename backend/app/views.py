@@ -1,9 +1,10 @@
-from flask import render_template, redirect, flash, url_for, request, g, session, jsonify, abort
+from flask import render_template, redirect, flash, url_for, request, g, session, jsonify, abort, send_from_directory
 from flask.ext.login import login_required, logout_user, login_user, current_user
 from flask.ext.babel import gettext
 from flask.ext.sqlalchemy import get_debug_queries
-from werkzeug import check_password_hash, generate_password_hash
 from flask.ext.httpauth import HTTPBasicAuth
+from flask.ext.uploads import UploadSet, IMAGES, configure_uploads
+from werkzeug import check_password_hash, generate_password_hash, utils
 from rauth.service import OAuth2Service
 
 auth = HTTPBasicAuth()
@@ -12,7 +13,7 @@ from guess_language import guessLanguage
 
 from app import app, db, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm, RegisterForm
-from models import User, Post, Bucket
+from models import User, Post, Bucket, File
 from emails import follower_notification
 from translate import microsoft_translate
 
@@ -21,6 +22,7 @@ from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY
 from datetime import datetime
 
 import api
+
 
 now = datetime.utcnow()
 
@@ -53,10 +55,7 @@ def index(page=1):
         flash('Your post is now live!')
         return redirect(url_for('index'))
     posts = g.user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
-    return render_template("index.html",
-                           title='Home',
-                           form=form,
-                           posts=posts)
+    return render_template("index.html", title='Home', form=form, posts=posts)
 
 
 @app.route('/delete/<int:id>')
@@ -87,9 +86,7 @@ def register():
         db.session.add(u)
         db.session.commit()
         return redirect(url_for('index'))
-    return render_template('register.html',
-                           title='Register',
-                           form=form)
+    return render_template('register.html', title='Register', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -119,16 +116,13 @@ def login():
             db.session.commit()
             flash('You were logged in')
             return redirect(url_for('index'))
-    return render_template('login.html',
-                           title='Login',
-                           form=form)
+    return render_template('login.html', title='Login', form=form)
 
 
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('index'))
-
 
 
 @app.route('/userprofile/<username>')
@@ -140,9 +134,7 @@ def userprofile(username, page=1):
         flash(gettext('User %(username)s not found.', username=username))
         return redirect(url_for('index'))
     posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
-    return render_template('user.html',
-                           user=user,
-                           posts=posts)
+    return render_template('user.html', user=user, posts=posts)
 
 
 @app.route('/edit', methods=['GET', 'POST'])
@@ -159,8 +151,7 @@ def edit():
     else:
         form.username.data = g.user.username
         form.about_me.data = g.user.about_me
-    return render_template('edit.html',
-                           form=form)
+    return render_template('edit.html', form=form)
 
 
 @app.route('/follow/<username>')
@@ -203,7 +194,6 @@ def unfollow(username):
 
 
 ##### SEARCHING #############################################
-
 @app.route('/search', methods=['POST'])
 @auth.login_required
 def search():
@@ -216,13 +206,10 @@ def search():
 @auth.login_required
 def search_results(query):
     results = Post.query.whoosh_search(query, MAX_SEARCH_RESULTS).all()
-    return render_template('search_results.html',
-                           query=query,
-                           results=results)
+    return render_template('search_results.html', query=query, results=results)
 
 
 ##### TRANSLATION #############################################
-
 @app.route('/translate', methods=['POST'])
 @auth.login_required
 def translate():
@@ -254,7 +241,6 @@ def after_request(response):
 
 
 ##### ERROR HANDLING ########################################
-
 @app.errorhandler(404)
 def internal_error(error):
     return render_template('404.html'), 404
@@ -274,8 +260,7 @@ def show_buckets(username=None):
         user = g.user
     else:
         user = User.query.filter_by(username=username).first()
-    return render_template('bucketlist.html',
-                           user=user)
+    return render_template('bucketlist.html', user=user)
 
 
 @app.route('/user/<string:username>/bucket/<int:id>')
@@ -301,9 +286,7 @@ def uri_redirect(id):
     return render_template('html5study/' + id + '.html')
 
 
-##### for RESTful API #######################################
-
-### Authentication ###
+##### Authentication #######################################
 @app.route('/api/token')
 @auth.login_required
 def get_auth_token():
@@ -422,3 +405,30 @@ def reset_passwd(key):
 
     return render_template('reset_passwd.html',title='RESET PASSWORD',key=key)
 
+
+##### FILE UPLOADS ############################################
+photos = UploadSet('photos',IMAGES)
+configure_uploads(app, photos)
+
+@app.route('/upload', methods=['GET','POST'])
+@auth.login_required
+def upload():
+    if request.method == 'POST' and 'photo' in request.files:
+        filename = photos.save(request.files['photo'])
+        extension = filename.split('.')[1]
+        f = File(filename=filename, user_id=g.user.id, extension=extension, type='photo')
+        db.session.add(f)
+        db.session.commit()
+        # flash("Photo saved.")
+        return redirect(url_for('show', id=f.id))
+
+    return render_template('upload_file.html')
+
+
+@app.route('/photo/<id>')
+def show(id):
+    f = File.query.filter_by(id = id).first()
+    if f is None:
+        abort(404)
+    url = photos.url(f.name)
+    return render_template('show.html', url=url, photo=f)
