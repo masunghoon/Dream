@@ -6,15 +6,53 @@ import random, datetime
 from flask import request, g
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse, fields, marshal
+from flask.ext.uploads import UploadSet, IMAGES, configure_uploads
 
 from hashlib import md5
-
+from rauth.service import OAuth2Service
 # Source
-from app import db, api
-from models import User, Bucket, Plan, ROLE_ADMIN, ROLE_USER
+from app import db, api, app
+from models import User, Bucket, Plan, File, ROLE_ADMIN, ROLE_USER
 from emails import send_awaiting_confirm_mail, send_reset_password_mail
+from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
 auth = HTTPBasicAuth()
+
+graph_url = 'https://graph.facebook.com/'
+facebook = OAuth2Service(name='facebook',
+                         authorize_url='https://www.facebook.com/dialog/oauth',
+                         access_token_url=graph_url+'oauth/access_token',
+                         client_id=FB_CLIENT_ID,
+                         client_secret=FB_CLIENT_SECRET,
+                         base_url=graph_url);
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    if password == "facebook":
+        auth = facebook.get_session(token=username_or_token)
+        resp = auth.get('/me')
+        if resp.status_code == 200:
+            fb_user = resp.json()
+            # user = User.query.filter_by(email=fb_user.get('email')).first()
+            birthday = fb_user['birthday'][6:10] + fb_user['birthday'][0:2] + fb_user['birthday'][3:5]
+            user = User.get_or_create(fb_user['email'], fb_user['name'], fb_user['id'], birthday)
+        else:
+            return False
+    else:
+        user = User.verify_auth_token(username_or_token)
+
+    if not user:
+        # try to authenticate with username/password
+        user = User.query.filter_by(email = username_or_token).first()
+        if not user:
+            return False
+        if user.password == None:
+            return False
+        if not user.verify_password(password):
+            return False
+    g.user = user
+    return True
 
 ##### RESTful API with Flask-restful  ##################################
 
@@ -609,3 +647,41 @@ class ResetPassword(Resource):
 
 
 api.add_resource(ResetPassword, '/api/reset_password/<string>', endpoint='resetPassword')
+
+
+class UploadFiles(Resource):
+    decorators = [auth.login_required]
+    def __init__(self):
+        super(UploadFiles, self).__init__()
+
+    def post(self):
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) - 1]
+        else:
+            return {'status':'error',
+                    'description':'No attached Files'}, 400
+
+        f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+        try:
+            db.session.add(f)
+            db.session.commit()
+        except:
+            return {'status':'error',
+                    'description':'Something went wrong'}, 500
+
+        return {'status':'success',
+                'description':'Upload Succeeded',
+                'data':{'id':f.id,
+                        'url':upload_files.url(f.name)}}
+
+
+api.add_resource(UploadFiles, '/api/uploads', endpoint='uploadFiles')
