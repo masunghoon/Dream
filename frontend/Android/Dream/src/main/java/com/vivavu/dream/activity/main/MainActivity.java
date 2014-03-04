@@ -2,40 +2,89 @@ package com.vivavu.dream.activity.main;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.BucketAddActivity;
 import com.vivavu.dream.activity.bucket.BucketViewActivity;
-import com.vivavu.dream.adapter.main.MainPagerAdapter;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.fragment.main.MainContentsFragment;
-import com.vivavu.dream.fragment.main.MainPlanFragment;
-import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.fragment.main.MainBucketListFragment;
+import com.vivavu.dream.fragment.main.NoticeDialog;
+import com.vivavu.dream.util.AndroidUtils;
+import com.vivavu.dream.view.ButtonIncludeCount;
+import com.vivavu.dream.view.CustomPopupWindow;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 public class MainActivity extends BaseActionBarActivity {
-    private MainContentsFragment mainContentsFragment;
-    private MainPlanFragment mainPlanFragment;
-    private MainPagerAdapter mMainPagerAdapter;
-    private ViewPager mViewPager;
+    @InjectView(R.id.btn_add_bucket)
+    Button mBtnAddBucket;
+    @InjectView(R.id.actionbar_main_title)
+    TextView mActionbarMainTitle;
+    @InjectView(R.id.actionbar_main_notice)
+    Button mActionbarMainNotice;
+    @InjectView(R.id.actionbar_main_today)
+    ButtonIncludeCount mActionbarMainToday;
+
+    NoticeDialog mNoticeDialog;
+    View noticeView;
+    CustomPopupWindow mPopupNotice;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //actionbar setting
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setCustomView(R.layout.actionbar_main);
+
+        ButterKnife.inject(this);
+
         if (savedInstanceState == null) {
 
-            mainContentsFragment = new MainContentsFragment();
-            mainPlanFragment = new MainPlanFragment();
-
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.content_frame, mainContentsFragment)
+                    .add(R.id.content_frame, new MainBucketListFragment())
                     .commit();
         }
 
+        noticeView = getLayoutInflater().inflate(R.layout.actionbar_notice, null);
+        mPopupNotice = AndroidUtils.makePopupWindow(noticeView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+
+        mBtnAddBucket.setOnClickListener(this);
+        mActionbarMainNotice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if(mPopupNotice != null && !mPopupNotice.isShowing() && mActionbarMainNotice.isSelected()){
+                    mPopupNotice.showAsDropDown(mActionbarMainNotice);
+                }else{
+                    mPopupNotice.hide();
+                }
+            }
+        });
+
+
+        mActionbarMainToday.getButton().setText("Today");
+        mActionbarMainToday.getTextView().setText("1");
+        mActionbarMainToday.getButton().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "클릭클릭클릭", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -63,7 +112,8 @@ public class MainActivity extends BaseActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main_activity_actions, menu);
+        //actionbar에서 모든걸 처리
+        //getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -79,37 +129,25 @@ public class MainActivity extends BaseActionBarActivity {
                 goAddBucket();
                 return true;
             case R.id.main_menu_refresh_bucket_list:
-                refreshFragment();
 
                 return true;
             case R.id.main_menu_plan:
-                goPlan();
                 return true;
             case R.id.main_menu_life:
-                goLife();
                 return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private void refreshFragment() {
-        mainContentsFragment.refreshList(DataRepository.getBuckets(context.getUser().getId()));
-        mainPlanFragment.refreshList(DataRepository.getPlanList(context.getUsername()));
-    }
-
-    private void goPlan() {
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.content_frame, mainPlanFragment)
-                .commit();
-        mainPlanFragment.refreshList(DataRepository.getPlanList(context.getUsername()));
-    }
-
-    private void goLife(){
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.content_frame, mainContentsFragment)
-                .commit();
-        mainContentsFragment.refreshList(DataRepository.getBuckets(context.getUser().getId()));
+    @Override
+    public void onClick(View view) {
+        super.onClick(view);
+        switch (view.getId()) {
+            case R.id.btn_add_bucket:
+                goAddBucket();
+                break;
+        }
     }
 
     private void goAddBucket() {
@@ -125,7 +163,7 @@ public class MainActivity extends BaseActionBarActivity {
         super.onStop();
     }
 
-    public void goBucketView(Integer bucketId){
+    public void goBucketView(Integer bucketId) {
         Intent intent = new Intent();
         intent.setClass(this, BucketViewActivity.class);
         intent.putExtra("bucketId", bucketId);
@@ -138,8 +176,8 @@ public class MainActivity extends BaseActionBarActivity {
         super.onResume();
         if (checkLogin() == false) {
             //goLogin();
-        }else{
-            mainContentsFragment.setBuckets(DataRepository.getBuckets(context.getUser().getId()));
+        } else {
+
         }
     }
 

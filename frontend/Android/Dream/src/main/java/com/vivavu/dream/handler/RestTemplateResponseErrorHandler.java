@@ -28,6 +28,10 @@ public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
         HttpStatus statusCode = response.getStatusCode();
         MediaType contentType = response.getHeaders().getContentType();
         Charset charset = contentType != null ? contentType.getCharSet() : null;
+        if(contentType != null && contentType == MediaType.APPLICATION_JSON){
+
+        }
+
         byte[] body = getResponseBody(response);
         /*switch (statusCode.series()) {
             case CLIENT_ERROR:

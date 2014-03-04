@@ -70,5 +70,11 @@
     <string name="not_valid_email">올바르지 않은 이메일 형식입니다.</string>
     <string name="user_agreement_contents">이용약관 블라블라</string>
     <string name="privacy">개인정보보호방침</string>
+    <string name="actionbar_main_title">꿈틀</string>
+    <string name="actionbar_main_today">Today</string>
+    <string name="actionbar_main_notice">알림</string>
+    <string name="bucket_status_achievement">달성</string>
+    <string name="bucket_status_seal">봉인</string>
+    <string name="bucket_status_delete">삭제</string>
 
 </resources>

@@ -57,13 +57,13 @@ public class MainContentsFragment extends CustomBaseFragment {
 
     public void refreshList(List<Bucket> buckets){
         if(context != null){
-            bucketAdapter.setBuckets(buckets);
+            bucketAdapter.setmBucketList(buckets);
             bucketAdapter.notifyDataSetChanged();
         }
     }
 
     public List<Bucket> getBuckets() {
-        return bucketAdapter.getBuckets();
+        return bucketAdapter.getmBucketList();
     }
 
     public void setBuckets(List<Bucket> buckets) {

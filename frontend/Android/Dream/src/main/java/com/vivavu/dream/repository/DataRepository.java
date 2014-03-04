@@ -122,7 +122,7 @@ public class DataRepository {
             Log.e("dream", e.toString());
         }
         ResponseBodyWrapped<BaseInfo> responseBodyWrapped = null;
-        if(result.getStatusCode() == HttpStatus.OK || result.getStatusCode()== HttpStatus.NO_CONTENT){
+        if(result != null && result.getStatusCode() == HttpStatus.OK || result.getStatusCode()== HttpStatus.NO_CONTENT){
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             Type type = new TypeToken<ResponseBodyWrapped<BaseInfo>>(){}.getType();
             responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
@@ -304,15 +304,22 @@ public class DataRepository {
             Log.e("dream", e.toString());
         }
 
+
         if(result.getStatusCode() == HttpStatus.OK){
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             Type type = new TypeToken<ResponseBodyWrapped<LoginInfo>>(){}.getType();
+
             ResponseBodyWrapped<LoginInfo> user = gson.fromJson((String) result.getBody(), type);
+            /*TypeToken.get(user.getClass());
+            ResponseBodyWrapped<LoginInfo> usr = RestTemplateUtils.responseToJson(result,type );*/
             return user;
         }
 
+
+
         return new ResponseBodyWrapped<LoginInfo>();
     }
+
     public static DreamApp getContext() {
         return context;
     }

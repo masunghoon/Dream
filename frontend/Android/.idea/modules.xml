@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Android.iml" filepath="$PROJECT_DIR$/Android.iml" />
       <module fileurl="file://$PROJECT_DIR$/Dream/Dream.iml" filepath="$PROJECT_DIR$/Dream/Dream.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Libraries/bookshelf/bookshelf.iml" filepath="$PROJECT_DIR$/Libraries/bookshelf/bookshelf.iml" />
       <module fileurl="file://$PROJECT_DIR$/Libraries/facebook/facebook.iml" filepath="$PROJECT_DIR$/Libraries/facebook/facebook.iml" />
       <module fileurl="file://$PROJECT_DIR$/Libraries/viewpagerindicator/viewpagerindicator.iml" filepath="$PROJECT_DIR$/Libraries/viewpagerindicator/viewpagerindicator.iml" />
     </modules>
