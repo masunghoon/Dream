@@ -89,8 +89,8 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/login_old', methods=['GET', 'POST'])
+def login_old():
     if g.user is not None and g.user.is_authenticated():
         return redirect(url_for('index'))
     form = LoginForm()
@@ -116,7 +116,7 @@ def login():
             db.session.commit()
             flash('You were logged in')
             return redirect(url_for('index'))
-    return render_template('login.html', title='Login', form=form)
+    return render_template('login_old.html', title='Login', form=form)
 
 
 @app.route('/logout')
@@ -271,11 +271,6 @@ def bucketdetail(username, id):
     return render_template('bucketdetail.html', bucket=bkt)
 
 
-@app.route('/test')
-def test_template():
-    return render_template('test.html')
-
-
 @app.route('/html5study')
 def html5_study():
     return render_template('html5study/studyMain.html')
@@ -287,6 +282,14 @@ def uri_redirect(id):
 
 
 ##### Authentication #######################################
+@app.route('/login_new')
+def login_new():
+    return render_template('login.html', title='Login')
+
+@app.route('/register_new')
+def register_new():
+    return render_template('register_new.html', title='Register')
+
 @app.route('/api/token')
 @auth.login_required
 def get_auth_token():
@@ -340,15 +343,17 @@ def verify_password(username_or_token, password):
     return True
 
 
-@app.route('/login/facebook')
-def login():
+@app.route('/api/login/facebook', methods=['GET'])
+def login_fb():
     redirect_uri = url_for('authorized', _external=True)
     params = {'redirect_uri': redirect_uri, 'scope': 'email, user_birthday'}
+    print params
     return redirect(facebook.get_authorize_url(**params))
 
 
 @app.route('/facebook/authorized')
 def authorized():
+    print 1
     # check to make sure the user authorized the request
     if not 'code' in request.args:
         return jsonify({'status':'error',
@@ -368,8 +373,8 @@ def authorized():
     return jsonify({'user':{'id':u.id,
                             'username':u.username,
                             'email':u.email,
-                            'birthday':u.birthday,
-                            'confirmed_at':u.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
+                            'birthday':u.birthday},
+                            # 'confirmed_at':u.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
                     'access_token':auth.access_token})
 
 
@@ -432,3 +437,62 @@ def show(id):
         abort(404)
     url = photos.url(f.name)
     return render_template('show.html', url=url, photo=f)
+
+
+
+@app.route('/api/test/<user_id>', methods=['GET'])
+def test_api(user_id):
+    b = Bucket.query.filter_by(user_id=user_id, scope='DECADE').all()
+    result = [{'range':'NONE','buckets':[]}]
+
+    for i in b:
+        resultRange = len(result)
+        for j in range(resultRange):
+
+            if i.range == result[j]['range']:
+                print i.range
+                print result[j]['range']
+                result[j]['buckets'].append({
+                    'id': i.id,
+                    'user_id': i.user_id,
+                    'title': i.title,
+                    'description': i.description,
+                    'level': i.level,
+                    'status': i.status,
+                    'private': i.private,
+                    'parent_id': i.parent_id,
+                    'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'deadline': i.deadline.strftime("%Y-%m-%d"),
+                    'scope': i.scope,
+                    'range': i.range,
+                    'rep_type': i.rpt_type,
+                    'rpt_cndt': i.rpt_cndt,
+                    })
+                break
+
+            if j+1 == resultRange:
+                print 1
+                result.append({'range':i.range,'buckets':[
+                    {'id': i.id,
+                    'user_id': i.user_id,
+                    'title': i.title,
+                    'description': i.description,
+                    'level': i.level,
+                    'status': i.status,
+                    'private': i.private,
+                    'parent_id': i.parent_id,
+                    'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'deadline': i.deadline.strftime("%Y-%m-%d"),
+                    'scope': i.scope,
+                    'range': i.range,
+                    'rep_type': i.rpt_type,
+                    'rpt_cndt': i.rpt_cndt}]
+                    })
+
+    return jsonify({'status':'success',
+                    'description':'normal',
+                    'data':result})
+
+
+
+
