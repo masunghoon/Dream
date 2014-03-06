@@ -16,6 +16,9 @@ from models import User, Bucket, Plan, File, ROLE_ADMIN, ROLE_USER
 from emails import send_awaiting_confirm_mail, send_reset_password_mail
 from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
+
+##### AUTHENTICATION #######################################
+
 auth = HTTPBasicAuth()
 
 graph_url = 'https://graph.facebook.com/'
@@ -54,96 +57,95 @@ def verify_password(username_or_token, password):
     g.user = user
     return True
 
-##### RESTful API with Flask-restful  ##################################
-
-plan_fields = {
-    'id': fields.Integer,
-    'date': fields.String,
-    'bucket_id': fields.Integer,
-    'user_id': fields.Integer,
-    'status': fields.Integer,
-    'title': fields.String,
-    'status': fields.Integer,
-    'private': fields.Integer,
-    'deadline': fields.String,
-    'scope': fields.String,
-    'range': fields.String,
-    'rep_type': fields.String,
-    'rpt_cndt': fields.String,
-    'parent_id': fields.Integer,
-}
 
 
-class PlanListAPI(Resource):
-    decorators = [auth.login_required]
 
+class VerificationAPI(Resource):
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(PlanListAPI, self).__init__()
+        super(VerificationAPI, self).__init__()
 
-    def get(self,username):
-
-        data = []
-        u = User.query.filter_by(username = username).first()
-        if u is None:
+    def get(self,emailAddr):
+        try:
+            if User.email_exists(emailAddr):
+                return {'status':'success',
+                        'code':'0',
+                        'description':'Email already exists'}, 200
+            else:
+                return {'status':'success',
+                        'code':'1',
+                        'description':'Available Email Address'}, 200
+        except:
             return {'status':'error',
-                    'description':'User does not Exists'}, 400
+                    'description':'Something went wrong'}, 500
 
-        for p, b in db.session.query(Plan, Bucket).filter(Plan.bucket_id == Bucket.id,Plan.user_id == g.user.id).order_by(Plan.date.desc(), Bucket.deadline.desc()).all():
-            data.append({
-                'id': p.id,
-                'date': p.date,
-                'bucket_id': p.bucket_id,
-                'user_id': p.user_id,
-                'status': p.status,
-                'title': b.title,
-                'status': b.status,
-                'private': b.private,
-                'deadline': b.deadline,
-                'scope': b.scope,
-                'range': b.range,
-                'rep_type': b.rep_type,
-                'rpt_cndt': b.rpt_cndt,
-                'parent_id': b.parent_id
-            })
-
-        return map(lambda t: marshal(t, plan_fields), data), 200
+api.add_resource(VerificationAPI, '/api/valid_email/<emailAddr>', endpoint='verifyEmail')
 
 
-class PlanAPI(Resource):
-    decorators = [auth.login_required]
-
+class ResetPassword(Resource):
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(PlanAPI, self).__init__()
+        super(ResetPassword, self).__init__()
 
-    def put(self, id):
+    # def get(self,string):
+    #     u = User.query.filter_by(email = string).first()
+    #     u.key = md5('RESET_PASSWORD'+str(int(random.random()*10000))).hexdigest()
+    #
+    #     db.session.commit()
+    #     send_reset_password_mail(u)
+    #
+    #     return {'status':'success',
+    #             'description':'Reset Password Mail Sent'}, 200
+
+
+
+    def post(self,string):
+        u = User.query.filter_by(email = string).first()
+        if not u:
+            return {'status':'error',
+                    'description':'Invalid User Email'}, 400
+        u.key = md5('RESET_PASSWORD'+str(int(random.random()*10000))).hexdigest()
+
+        db.session.commit()
+        send_reset_password_mail(u)
+
+        return {'status':'success',
+                'description':'Reset Password Mail Sent'}, 200
+
+
+    def put(self,string):
         if request.json:
             params = request.json
         elif request.form:
             params = request.form
         else:
-            return {'status':'Request Failed!'}
+            return {'status':'error',
+                    'description':'Request Failed'}, 400
 
-        p = Plan.query.filter_by(id=id).first()
-        if p.user_id != g.user.id:
-            return {'status':'Unauthorized'}, 401
+        u = User.query.filter_by(key = string).first()
+        if not u:
+            return {'status':'error',
+                    'description':'Invalid Key'}, 400
+
+        # if
+        if 'password' not in params:
+            return {'status':'error',
+                    'description':'Password Missing'}, 400
 
         try:
-            for item in params:
-                if item:
-                    setattr(p, item, params.get(item))
+            u.hash_password(params['password'])
+            u.key = None
             db.session.commit()
         except:
-            return {'status':'failed'}, 401
-
-        return {'status':'succeed'}, 200
-
-api.add_resource(PlanListAPI, '/api/plans/<username>', endpoint='plans')
-api.add_resource(PlanAPI, '/api/plan/<id>', endpoint='plan')
+            return {'status':'error',
+                    'description':'Something went wrong'}, 500
 
 
-##### Revision RESTful API with Flask-restful  ##################################
+        return {'status':'success',
+                'description':'Password successfully reset'}, 200
+
+api.add_resource(ResetPassword, '/api/reset_password/<string>', endpoint='resetPassword')
+
+
+##### USER / USERLIST ##################################
 
 user_fields = {
     'id': fields.Integer,
@@ -157,21 +159,84 @@ user_fields = {
     'uri': fields.Url('user'),
 }
 
-bucket_fields = {
-    'id': fields.Integer,
-    'user_id': fields.Integer,
-    'title': fields.String,
-    'description': fields.String,
-    'level': fields.String,
-    'status': fields.Integer,
-    'private': fields.Integer,
-    'reg_dt': fields.String,
-    'deadline': fields.String,
-    'scope': fields.String,
-    'range': fields.String,
-    'parent_id': fields.Integer,
-    'uri': fields.Url('bucket')
-}
+class UserAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(UserAPI, self).__init__()
+
+    #get specific User's Profile
+    def get(self, id):
+        u = User.query.filter_by(id=id).first()
+        # return marshal(u, user_fields), 200
+        return {'status':'success',
+                        'data':marshal(u, user_fields)}, 200
+    #modify My User Profile
+    def put(self, id):
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = request.form
+        else:
+            return {'status':'error','description':'Request Failed'}, 400
+
+        u = User.query.filter_by(id=id).first()
+        if u != g.user:
+            return {'error': 'Unauthorized'}, 401
+
+        for key in params:
+            value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja kk
+
+            # Nobody can change id, email, fb_id, last_seen
+            if key in ['id', 'email', 'fb_id', 'last_seen']:
+                return {'error':'Cannot change ' + key}, 400
+
+            # Just ROLE_ADMIN user can change 'role', 'login_fault'
+            if key in ['login_fault', 'role'] and g.user.role == ROLE_USER:
+                return {'error':'Only Admin can change ' + key}, 401
+
+            # Validate & hash Password
+            if key == 'password':
+                if len(value) < 4:
+                    return {'error':'Password is too short'}, 400
+                u.hash_password(value)
+                continue                                        # if not continue hash will be reset.
+
+            # Birthday can only be None or 8-digit integer(between 1900/01/01 ~ currentYear's 12/31)
+            elif key == 'birthday' and value is not None:
+                if len(value) != 8 or \
+                    int(value[0:4]) < 1900 or int(value[0:4]) > int(datetime.now().strftime("%Y")) or \
+                    int(value[4:6]) < 0 or int(value[4:6]) > 12 or \
+                    int(value[6:8]) < 0 or int(value[6:8]) > 31:
+                        return {"error":"Invalid value for Birthday: " + value[0:4] + '/' + value[4:6] + '/' + value [6:8]}, 400
+
+            # Username cannot be null
+            elif key == 'username':
+                if value == None:
+                    return {'error':'Username cannot be blank'}, 400
+
+
+            elif key not in ['about_me']:
+                return {'error':'Invalid user key'}, 400
+
+            setattr(u, key, value)
+        db.session.commit()
+
+        return marshal(u, user_fields), 201
+
+    #delete a User
+    def delete(self, id):
+        u = User.query.filter_by(id=id).first()
+        if u != g.user:
+            return {'error':'Unauthorized'}, 401
+        else:
+            try:
+                db.session.delete(u)
+                db.session.commit()
+            except:
+                {'error':'Something went wrong'}, 500
+
+        return {'status':'success'}, 201
 
 
 class UserListAPI(Resource):
@@ -194,6 +259,9 @@ class UserListAPI(Resource):
         else:
             return {'status':'error',
                     'description':'Request Failed!'}, 400
+
+        print params['email'];
+        print params['password'];
 
         # Check Requirements <Email, Password>
         if not 'email' in params:
@@ -256,85 +324,28 @@ class UserListAPI(Resource):
                         'token': token.decode('ascii')}}, 200
 
 
-class UserAPI(Resource):
-    decorators = [auth.login_required]
 
-    def __init__(self):
-        super(UserAPI, self).__init__()
-
-    #get specific User's Profile
-    def get(self, id):
-        u = User.query.filter_by(id=id).first()
-        # return marshal(u, user_fields), 200
-        return {'status':'success',
-                        'data':marshal(u, user_fields)}, 200
-    #modify My User Profile
-    def put(self, id):
-        if request.json:
-            params = request.json
-        elif request.form:
-            params = request.form
-        else:
-            return {'status':'error','description':'Request Failed'}, 400
-
-        u = User.query.filter_by(id=id).first()
-        if u != g.user:
-            return {'error': 'Unauthorized'}, 401
-
-        for key in params:
-            value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja kk
-
-            # Nobody can change id, email, fb_id, last_seen
-            if key in ['id', 'email', 'fb_id', 'last_seen']:
-                return {'error':'Cannot change ' + key}, 400
-
-            # Just ROLE_ADMIN user can change 'role', 'login_fault'
-            if key in ['login_fault', 'role'] and g.user.role == ROLE_USER:
-                return {'error':'Only Admin can change ' + key}, 401
-
-            # Validate & hash Password
-            if key == 'password':
-                if len(value) < 4:
-                    return {'error':'Password is too short'}, 400
-                u.hash_password(value)
-                continue                                        # if not continue hash will be reset.
-
-            # Birthday can only be None or 8-digit integer(between 1900/01/01 ~ thisyear 12/31)
-            elif key == 'birthday' and value is not None:
-                if len(value) != 8 or \
-                    int(value[0:4]) < 1900 or int(value[0:4]) > int(datetime.now().strftime("%Y")) or \
-                    int(value[4:6]) < 0 or int(value[4:6]) > 12 or \
-                    int(value[6:8]) < 0 or int(value[6:8]) > 31:
-                        return {"error":"Invalid value for Birthday: " + value[0:4] + '/' + value[4:6] + '/' + value [6:8]}, 400
-
-            # Username cannot be null
-            elif key == 'username':
-                if value == None:
-                    return {'error':'Username cannot be blank'}, 400
+api.add_resource(UserAPI, '/api/user/<int:id>', endpoint='user')
+api.add_resource(UserListAPI, '/api/users', endpoint='users')
 
 
-            elif key not in ['about_me']:
-                return {'error':'Invalid user key'}, 400
+##### about BUCKET / BUCKETLIST ####################################
 
-            setattr(u, key, value)
-        db.session.commit()
-
-        return marshal(u, user_fields), 201
-
-    #delete a User
-    def delete(self, id):
-        u = User.query.filter_by(id=id).first()
-        if u != g.user:
-            return {'error':'Unauthorized'}, 401
-        else:
-            try:
-                db.session.delete(u)
-                db.session.commit()
-            except:
-                {'error':'Something went wrong'}, 500
-
-        return {'status':'success'}, 201
-
+bucket_fields = {
+    'id': fields.Integer,
+    'user_id': fields.Integer,
+    'title': fields.String,
+    'description': fields.String,
+    'level': fields.String,
+    'status': fields.Integer,
+    'private': fields.Integer,
+    'reg_dt': fields.String,
+    'deadline': fields.String,
+    'scope': fields.String,
+    'range': fields.String,
+    'parent_id': fields.Integer,
+    'uri': fields.Url('bucket')
+}
 
 class BucketAPI(Resource):
     decorators = [auth.login_required]
@@ -359,7 +370,7 @@ class BucketAPI(Resource):
             'deadline': b.deadline.strftime("%Y-%m-%d"),
             'scope': b.scope,
             'range': b.range,
-            'rep_type': b.rep_type,
+            'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
             'sub_buckets': []
         }
@@ -461,39 +472,54 @@ class UserBucketAPI(Resource):
             else:
                 return {'error':'User unauthorized'}, 401
 
-        data = []
-
-        if g.user == u:
-            b = Bucket.query.filter(Bucket.user_id==u.id,Bucket.status!='9',Bucket.level=='0').all()
-        else:
-            b = Bucket.query.filter(Bucket.user_id==u.id,Bucket.status!='9',Bucket.level=='0',Bucket.private=='0').all()
-
-        if len(b) == 0:
-            return {'error':'No data Found'}, 204
+        b = Bucket.query.filter_by(user_id=id, scope='DECADE').all()
+        result = [{'range':'NONE','buckets':[]}]
 
         for i in b:
-            data.append({
-                'id': i.id,
-                'user_id': i.user_id,
-                'title': i.title,
-                'description': i.description,
-                'level': i.level,
-                'status': i.status,
-                'private': i.private,
-                'parent_id': i.parent_id,
-                'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'deadline': i.deadline.strftime("%Y-%m-%d"),
-                'scope': i.scope,
-                'range': i.range,
-                'rep_type': i.rep_type,
-                'rpt_cndt': i.rpt_cndt,
-                'sub_buckets': []
-            })
+            resultRange = len(result)
+            for j in range(resultRange):
+
+                if i.range == result[j]['range']:
+                    result[j]['buckets'].append({
+                        'id': i.id,
+                        'user_id': i.user_id,
+                        'title': i.title,
+                        'description': i.description,
+                        'level': i.level,
+                        'status': i.status,
+                        'private': i.private,
+                        'parent_id': i.parent_id,
+                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                        'deadline': i.deadline.strftime("%Y-%m-%d"),
+                        'scope': i.scope,
+                        'range': i.range,
+                        'rep_type': i.rpt_type,
+                        'rpt_cndt': i.rpt_cndt,
+                        })
+                    break
+
+                if j+1 == resultRange:
+                    result.append({'range':i.range,'buckets':[
+                        {'id': i.id,
+                        'user_id': i.user_id,
+                        'title': i.title,
+                        'description': i.description,
+                        'level': i.level,
+                        'status': i.status,
+                        'private': i.private,
+                        'parent_id': i.parent_id,
+                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                        'deadline': i.deadline.strftime("%Y-%m-%d"),
+                        'scope': i.scope,
+                        'range': i.range,
+                        'rep_type': i.rpt_type,
+                        'rpt_cndt': i.rpt_cndt}]
+                        })
 
         return {'status':'success',
-                'description':'a',
-                'data':data}, 200
-        # return {'buckets': map(lambda t: marshal(t, bucket_fields), data)}, 200
+                'description':'normal',
+                'data':result}, 200
+
 
     def post(self, id):
         u = User.query.filter_by(id=id).first()
@@ -541,7 +567,7 @@ class UserBucketAPI(Resource):
                      parent_id=params['parent_id'] if 'parent_id' in params else None,
                      scope=params['scope'] if 'scope' in params else None,
                      range=params['range'] if 'range' in params else None,
-                     rep_type=params['rep_type'] if 'rep_type' in params else None,
+                     rpt_type=params['rpt_type'] if 'rpt_type' in params else None,
                      rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None)
 
         db.session.add(bkt)
@@ -550,104 +576,100 @@ class UserBucketAPI(Resource):
         return {'bucket': marshal(bkt, bucket_fields)}, 201
 
 
-api.add_resource(UserAPI, '/api/user/<int:id>', endpoint='user')
-api.add_resource(UserListAPI, '/api/users', endpoint='users')
 api.add_resource(BucketAPI, '/api/bucket/<int:id>', endpoint='bucket')
 api.add_resource(UserBucketAPI, '/api/buckets/user/<int:id>', endpoint='buckets')
 
 
+##### PLAN ##################################################
 
-class VerificationAPI(Resource):
+plan_fields = {
+    'id': fields.Integer,
+    'date': fields.String,
+    'bucket_id': fields.Integer,
+    'user_id': fields.Integer,
+    'status': fields.Integer,
+    'title': fields.String,
+    'status': fields.Integer,
+    'private': fields.Integer,
+    'deadline': fields.String,
+    'scope': fields.String,
+    'range': fields.String,
+    'rpt_type': fields.String,
+    'rpt_cndt': fields.String,
+    'parent_id': fields.Integer,
+}
+
+
+class PlanListAPI(Resource):
+    decorators = [auth.login_required]
+
     def __init__(self):
-        super(VerificationAPI, self).__init__()
+        self.reqparse = reqparse.RequestParser()
+        super(PlanListAPI, self).__init__()
 
-    def post(self):
+    def get(self,username):
+
+        data = []
+        u = User.query.filter_by(username = username).first()
+        if u is None:
+            return {'status':'error',
+                    'description':'User does not Exists'}, 400
+
+        for p, b in db.session.query(Plan, Bucket).filter(Plan.bucket_id == Bucket.id,Plan.user_id == g.user.id).order_by(Plan.date.desc(), Bucket.deadline.desc()).all():
+            data.append({
+                'id': p.id,
+                'date': p.date,
+                'bucket_id': p.bucket_id,
+                'user_id': p.user_id,
+                'status': p.status,
+                'title': b.title,
+                'status': b.status,
+                'private': b.private,
+                'deadline': b.deadline,
+                'scope': b.scope,
+                'range': b.range,
+                'rpt_type': b.rpt_type,
+                'rpt_cndt': b.rpt_cndt,
+                'parent_id': b.parent_id
+            })
+
+        return map(lambda t: marshal(t, plan_fields), data), 200
+
+
+class PlanAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(PlanAPI, self).__init__()
+
+    def put(self, id):
         if request.json:
             params = request.json
         elif request.form:
             params = request.form
         else:
-            return {'status':'error',
-                    'description':'Request Failed'}, 400
+            return {'status':'Request Failed!'}
+
+        p = Plan.query.filter_by(id=id).first()
+        if p.user_id != g.user.id:
+            return {'status':'Unauthorized'}, 401
 
         try:
-            if User.email_exists(params['email']):
-                return {'status':'error',
-                        'description':'Email already exists'}, 400
-            else:
-                return {'status':'success',
-                        'description':'Available Email Address'}, 200
-        except:
-            return {'status':'error',
-                    'description':'Something went wrong'}, 500
-
-api.add_resource(VerificationAPI, '/api/valid_email', endpoint='verifyEmail')
-
-
-class ResetPassword(Resource):
-    def __init__(self):
-        super(ResetPassword, self).__init__()
-
-    def get(self,string):
-        u = User.query.filter_by(email = string).first()
-        u.key = md5('RESET_PASSWORD'+str(int(random.random()*10000))).hexdigest()
-
-        db.session.commit()
-        send_reset_password_mail(u)
-
-        return {'status':'success',
-                'description':'Reset Password Mail Sent'}, 200
-
-
-
-    def post(self,string):
-        u = User.query.filter_by(email = string).first()
-        if not u:
-            return {'status':'error',
-                    'description':'Invalid User Email'}, 400
-        u.key = md5('RESET_PASSWORD'+str(int(random.random()*10000))).hexdigest()
-
-        db.session.commit()
-        send_reset_password_mail(u)
-
-        return {'status':'success',
-                'description':'Reset Password Mail Sent'}, 200
-
-
-    def put(self,string):
-        if request.json:
-            params = request.json
-        elif request.form:
-            params = request.form
-        else:
-            return {'status':'error',
-                    'description':'Request Failed'}, 400
-
-        u = User.query.filter_by(key = string).first()
-        if not u:
-            return {'status':'error',
-                    'description':'Invalid Key'}, 400
-
-        # if
-        if 'password' not in params:
-            return {'status':'error',
-                    'description':'Password Missing'}, 400
-
-        try:
-            u.hash_password(params['password'])
-            u.key = None
+            for item in params:
+                if item:
+                    setattr(p, item, params.get(item))
             db.session.commit()
         except:
-            return {'status':'error',
-                    'description':'Something went wrong'}, 500
+            return {'status':'failed'}, 401
+
+        return {'status':'succeed'}, 200
+
+api.add_resource(PlanListAPI, '/api/plans/<username>', endpoint='plans')
+api.add_resource(PlanAPI, '/api/plan/<id>', endpoint='plan')
 
 
-        return {'status':'success',
-                'description':'Password successfully reset'}, 200
-
-
-api.add_resource(ResetPassword, '/api/reset_password/<string>', endpoint='resetPassword')
-
+##### FILE UPLOADS ##############################################
 
 class UploadFiles(Resource):
     decorators = [auth.login_required]
@@ -684,4 +706,4 @@ class UploadFiles(Resource):
                         'url':upload_files.url(f.name)}}
 
 
-api.add_resource(UploadFiles, '/api/uploads', endpoint='uploadFiles')
+api.add_resource(UploadFiles, '/api/file', endpoint='uploadFiles')
