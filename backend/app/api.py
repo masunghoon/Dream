@@ -433,8 +433,19 @@ class BucketAPI(Resource):
             if key == 'rpt_type' and value not in ['WKRP','WEEK','MNTH']:
                 return {'error':'Invalid repeat-type value'}, 400
 
-            # TODO:Change plan if condition effects today.
-            # if key == 'rpt_cndt':
+            if key == 'rpt_cndt':
+                dayOfWeek = datetime.date.today().weekday()
+                if b.rpt_type == 'WKRP' and b.rpt_cndt[dayOfWeek] != value[dayOfWeek]:
+                    if value[dayOfWeek] == '1':
+                        p = Plan(date=datetime.date.today().strftime("%Y%m%d"),
+                                 user_id=b.user_id,
+                                 bucket_id=id,
+                                 status=0,
+                                 lst_mod_dt=datetime.datetime.now())
+                        db.session.add(p)
+                    else:
+                        p = Plan.query.filter_by(date=datetime.date.today().strftime("%Y%m%d"),bucket_id=id).first()
+                        db.session.delete(p)
 
             setattr(b, key, value)
 
