@@ -205,7 +205,7 @@ class UserAPI(Resource):
             # Birthday can only be None or 8-digit integer(between 1900/01/01 ~ currentYear's 12/31)
             elif key == 'birthday' and value is not None:
                 if len(value) != 8 or \
-                    int(value[0:4]) < 1900 or int(value[0:4]) > int(datetime.now().strftime("%Y")) or \
+                    int(value[0:4]) < 1900 or int(value[0:4]) > int(datetime.datetime.now().strftime("%Y")) or \
                     int(value[4:6]) < 0 or int(value[4:6]) > 12 or \
                     int(value[6:8]) < 0 or int(value[6:8]) > 31:
                         return {"error":"Invalid value for Birthday: " + value[0:4] + '/' + value[4:6] + '/' + value [6:8]}, 400
@@ -344,6 +344,7 @@ bucket_fields = {
     'scope': fields.String,
     'range': fields.String,
     'parent_id': fields.Integer,
+    'lst_mod_dt': fields.String,
     'uri': fields.Url('bucket')
 }
 
@@ -372,7 +373,8 @@ class BucketAPI(Resource):
             'range': b.range,
             'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
-            'sub_buckets': []
+            'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")
+            # 'sub_buckets': []
         }
 
         return data, 200
@@ -431,11 +433,23 @@ class BucketAPI(Resource):
             if key == 'rpt_type' and value not in ['WKRP','WEEK','MNTH']:
                 return {'error':'Invalid repeat-type value'}, 400
 
-            # TODO:Change plan if condition effects today.
-            # if key == 'rpt_cndt':
+            if key == 'rpt_cndt':
+                dayOfWeek = datetime.date.today().weekday()
+                if b.rpt_type == 'WKRP' and b.rpt_cndt[dayOfWeek] != value[dayOfWeek]:
+                    if value[dayOfWeek] == '1':
+                        p = Plan(date=datetime.date.today().strftime("%Y%m%d"),
+                                 user_id=b.user_id,
+                                 bucket_id=id,
+                                 status=0,
+                                 lst_mod_dt=datetime.datetime.now())
+                        db.session.add(p)
+                    else:
+                        p = Plan.query.filter_by(date=datetime.date.today().strftime("%Y%m%d"),bucket_id=id).first()
+                        db.session.delete(p)
 
             setattr(b, key, value)
 
+        b.lst_mod_dt = datetime.datetime.now()
         try:
             db.session.commit()
         except:
@@ -452,6 +466,7 @@ class BucketAPI(Resource):
 
         try:
             b.status = '9'
+            b.lst_mod_dt = datetime.datetime.now()
             db.session.commit()
             return {'status': 'success'}, 200
         except:
@@ -472,14 +487,20 @@ class UserBucketAPI(Resource):
             else:
                 return {'error':'User unauthorized'}, 401
 
-        b = Bucket.query.filter_by(user_id=id, scope='DECADE').all()
-        result = [{'range':'NONE','buckets':[]}]
+        if request.values.get('syncdt'):
+            print 'syncdt'
+            sync_dt = datetime.datetime.strptime(request.values.get('syncdt'),'%Y%m%d%H%M%S')
+            b = Bucket.query.filter(Bucket.user_id==id,Bucket.scope=='DECADE',Bucket.lst_mod_dt>sync_dt).all()
+        else:
+            print 'none'
+            b = Bucket.query.filter_by(user_id=id, scope='DECADE').all()
+        result = [{'range':'Lifetime','buckets':[]}]
 
         for i in b:
             resultRange = len(result)
             for j in range(resultRange):
 
-                if i.range == result[j]['range']:
+                if 'Lifetime' if i.range is None else i.range == result[j]['range']:
                     result[j]['buckets'].append({
                         'id': i.id,
                         'user_id': i.user_id,
@@ -489,12 +510,13 @@ class UserBucketAPI(Resource):
                         'status': i.status,
                         'private': i.private,
                         'parent_id': i.parent_id,
-                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
                         'deadline': i.deadline.strftime("%Y-%m-%d"),
                         'scope': i.scope,
                         'range': i.range,
-                        'rep_type': i.rpt_type,
+                        'rpt_type': i.rpt_type,
                         'rpt_cndt': i.rpt_cndt,
+                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                        'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
                         })
                     break
 
@@ -508,12 +530,13 @@ class UserBucketAPI(Resource):
                         'status': i.status,
                         'private': i.private,
                         'parent_id': i.parent_id,
-                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
                         'deadline': i.deadline.strftime("%Y-%m-%d"),
                         'scope': i.scope,
                         'range': i.range,
-                        'rep_type': i.rpt_type,
-                        'rpt_cndt': i.rpt_cndt}]
+                        'rpt_type': i.rpt_type,
+                        'rpt_cndt': i.rpt_cndt,
+                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                        'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}]
                         })
 
         return {'status':'success',
@@ -561,8 +584,10 @@ class UserBucketAPI(Resource):
                      level=str(level),
                      status= params['status'] if 'status' in params else True,
                      private=params['private'] if 'private' in params else False,
-                     reg_dt=datetime.now(),
-                     deadline=datetime.strptime(params['deadline'],'%Y/%m/%d').date() if 'deadline' in params else datetime.now(),
+                     reg_dt=datetime.datetime.now(),
+                     lst_mod_dt=datetime.datetime.now(),
+                     deadline=datetime.strptime(params['deadline'],'%Y/%m/%d').date() if 'deadline' in params\
+                                                                                      else datetime.datetime.now(),
                      description=params['description'] if 'description' in params else None,
                      parent_id=params['parent_id'] if 'parent_id' in params else None,
                      scope=params['scope'] if 'scope' in params else None,
