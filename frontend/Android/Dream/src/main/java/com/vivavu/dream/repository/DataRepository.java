@@ -5,6 +5,8 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 import com.vivavu.dream.common.Constants;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
@@ -12,10 +14,9 @@ import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
-import com.vivavu.dream.model.Status;
 import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.model.bucket.BucketGroup;
 import com.vivavu.dream.model.bucket.BucketWrapped;
-import com.vivavu.dream.model.bucket.Plan;
 import com.vivavu.dream.model.user.User;
 
 import org.springframework.http.HttpAuthentication;
@@ -30,21 +31,21 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by yuja on 14. 1. 13.
  */
 public class DataRepository {
     private static DreamApp context;
+    private static DatabaseHelper databaseHelper;
 
     public DataRepository(DreamApp context) {
         this.context = context;
+        databaseHelper = new DatabaseHelper(context);
     }
 
     private static HttpHeaders getBasicAuthHeader(){
@@ -154,7 +155,7 @@ public class DataRepository {
         if(result != null){
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             Type type = new TypeToken<ResponseBodyWrapped<ArrayList<Bucket>>>(){}.getType();
-            //ResponseBodyWrapped<ResponseBodyWrapped> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
+            //ResponseBodyWrapped<ArrayList<Bucket>> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
         }
 
         return new ArrayList<Bucket>();
@@ -252,46 +253,6 @@ public class DataRepository {
         return user.getData();
     }
 
-    public static List<Plan> getPlanList(Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        ResponseEntity<Plan[]> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiPlanList, HttpMethod.GET, request, Plan[].class, variable);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Plan[] user = result.getBody();
-
-        return new ArrayList<Plan>(Arrays.asList(user));
-    }
-
-    public static Status updatePlanStatus(Plan plan, Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-
-        HashMap<String, Object> requestBody = new HashMap<String, Object>();
-        requestBody.put("id", plan.getId());
-        requestBody.put("isDone", plan.getIsDone()?1:0);
-
-        HttpEntity request = new HttpEntity<Map>(requestBody, requestHeaders);
-
-        ResponseEntity<Status> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiPlanInfo, HttpMethod.PUT, request, Status.class, plan.getId());
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        return result.getBody();
-
-    }
-
     public static ResponseBodyWrapped<LoginInfo> resetPassword(String email){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader();
@@ -315,8 +276,6 @@ public class DataRepository {
             return user;
         }
 
-
-
         return new ResponseBodyWrapped<LoginInfo>();
     }
 
@@ -326,5 +285,54 @@ public class DataRepository {
 
     public static void setContext(DreamApp context) {
         DataRepository.context = context;
+    }
+
+    public static DatabaseHelper getDatabaseHelper() {
+        if(databaseHelper == null){
+            databaseHelper = new DatabaseHelper(context);
+        }
+        return databaseHelper;
+    }
+
+    public static void saveBuckets(List<Bucket> list){
+        for(Bucket bucket : list){
+            if(getDatabaseHelper().getBucketRuntimeDao().queryForId( bucket.getId()) != null){
+                getDatabaseHelper().getBucketRuntimeDao().update(bucket);
+            }else{
+                getDatabaseHelper().getBucketRuntimeDao().create(bucket);
+            }
+        }
+    }
+
+    public static List<BucketGroup> listBucketGroup(){
+        QueryBuilder<Bucket, Integer> qb = getDatabaseHelper().getBucketRuntimeDao().queryBuilder();
+        qb.groupBy("range");
+        qb.orderBy("range", true);
+        qb.orderBy("deadline", true);
+        qb.orderBy("id", true);
+        List<BucketGroup> bucketGroups = new ArrayList<BucketGroup>();
+        try {
+            List<Bucket> rangeList = qb.query();
+
+            for(Bucket range : rangeList){
+                QueryBuilder<Bucket, Integer> qb2 = getDatabaseHelper().getBucketRuntimeDao().queryBuilder();
+                Where where = qb2.where();
+                if(range.getRange() == null){
+                    where.isNull("range");
+                }else{
+                    where.eq("range", range.getRange());
+                }
+
+                List<Bucket> list = qb2.query();
+                BucketGroup bucketGroup1 = new BucketGroup();
+                bucketGroup1.setRange(range.getRange());
+                bucketGroup1.setBukets(list);
+                bucketGroups.add(bucketGroup1);
+
+            }
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
+        return bucketGroups;
     }
 }

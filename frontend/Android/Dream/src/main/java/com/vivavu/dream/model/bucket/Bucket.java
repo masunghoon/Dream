@@ -1,55 +1,72 @@
 package com.vivavu.dream.model.bucket;
 
 import com.google.gson.annotations.SerializedName;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import com.vivavu.dream.util.DateUtils;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by yuja on 14. 1. 9.
  */
+@DatabaseTable(tableName = "buckets")
 public class Bucket implements Serializable{
-    @SerializedName("deadline")
-    private Date deadline;
-    @SerializedName("description")
-    private String description;
+    @DatabaseField(id = true)
     @SerializedName("id")
     private Integer id;
-    @SerializedName("is_live")
-    private Integer isLive;
+
+    @DatabaseField
+    @SerializedName("title")
+    private String title;
+
+    @DatabaseField
+    @SerializedName("description")
+    private String description;
+
+    @DatabaseField
+    @SerializedName("user_id")
+    private Integer userId;
+
+    @DatabaseField
+    @SerializedName("deadline")
+    private Date deadline;
+
+    @DatabaseField
+    @SerializedName("status")
+    private Integer status;
+
+    @DatabaseField
     @SerializedName("is_private")
     private Integer isPrivate;
-    @SerializedName("level")
-    private Integer level = 0;
-    @SerializedName("parent_id")
-    private Integer parentId;
+
+    @DatabaseField
+    @SerializedName("scope")
+    private String scope;
+
+    @DatabaseField
     @SerializedName("range")
     private String range;
 
-    @SerializedName("reg_date")
-    private Date regDate;
-
-    @SerializedName("rptType")
+    @DatabaseField
+    @SerializedName("rpt_type")
     private String rptType;
-    @SerializedName("rptCndt")
+
+    @DatabaseField
+    @SerializedName("rpt_cndt")
     private String rptCndt;
 
-    @SerializedName("scope")
-    private String scope;
-    @SerializedName("title")
-    private String title;
-    @SerializedName("user_id")
-    private Integer userId;
-    @SerializedName("todos")
-    private List<Todo> todos;
+    @DatabaseField
+    @SerializedName("reg_dt")
+    private Date regDate;
 
-    @SerializedName("subBuckets")
-    private List<Bucket> subBuckets;
+    @DatabaseField
+    @SerializedName("lst_mod_dt")
+    private Date lastModDate;
 
-    @SerializedName("uri")
-    private String uri;
+    @DatabaseField(defaultValue = "0")
+    private int modFlag;
 
     public Bucket(){
 
@@ -60,28 +77,9 @@ public class Bucket implements Serializable{
         this.title = title;
     }
 
-    public List<Todo> getTodos() {
-        return todos;
-    }
 
-    public void setTodos(List<Todo> todos) {
-        this.todos = todos;
-    }
-
-    public Date getDeadline() {
-        return deadline;
-    }
-
-    public void setDeadline(Date deadline) {
-        this.deadline = deadline;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public String getRemainDays(){
+        return DateUtils.getRemainDayInString(getDeadline());
     }
 
     public Integer getId() {
@@ -92,72 +90,20 @@ public class Bucket implements Serializable{
         this.id = id;
     }
 
-    public Integer getIsLive() {
-        return isLive;
-    }
-
-    public void setIsLive(Integer isLive) {
-        this.isLive = isLive;
-    }
-
-    public Integer getIsPrivate() {
-        return isPrivate;
-    }
-
-    public void setIsPrivate(Integer isPrivate) {
-        this.isPrivate = isPrivate;
-    }
-
-    public Integer getLevel() {
-        return level;
-    }
-
-    public void setLevel(Integer level) {
-        this.level = level;
-    }
-
-    public Integer getParentId() {
-        return parentId;
-    }
-
-    public Integer getParentID() {
-        return parentId;
-    }
-
-    public void setParentId(Integer parentId) {
-        this.parentId = parentId;
-    }
-
-    public String getRange() {
-        return range;
-    }
-
-    public void setRange(String range) {
-        this.range = range;
-    }
-
-    public Date getRegDate() {
-        return regDate;
-    }
-
-    public void setRegDate(Date regDate) {
-        this.regDate = regDate;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Integer getUserId() {
@@ -168,12 +114,44 @@ public class Bucket implements Serializable{
         this.userId = userId;
     }
 
-    public String getUri() {
-        return uri;
+    public Date getDeadline() {
+        return deadline;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public Integer getIsPrivate() {
+        return isPrivate;
+    }
+
+    public void setIsPrivate(Integer isPrivate) {
+        this.isPrivate = isPrivate;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getRange() {
+        return range;
+    }
+
+    public void setRange(String range) {
+        this.range = range;
     }
 
     public String getRptType() {
@@ -192,56 +170,47 @@ public class Bucket implements Serializable{
         this.rptCndt = rptCndt;
     }
 
-    public int getProgress(){
-        int total = getTodos().size();
-        int count = 0;
-        if(total < 1){
-            return 0;
-        }
-
-        for(int i = 0 ; i < total ; i++){
-            Todo todo = getTodos().get(i);
-            if(todo.getTodoIsLive()==1){
-                count++;
-            }
-        }
-        double p = count/(double)total *100;
-
-        return (int) p;
+    public Date getRegDate() {
+        return regDate;
     }
 
-    public List<Bucket> getSubBuckets() {
-        return subBuckets;
+    public void setRegDate(Date regDate) {
+        this.regDate = regDate;
     }
 
-    public void setSubBuckets(List<Bucket> subBuckets) {
-        this.subBuckets = subBuckets;
+    public Date getLastModDate() {
+        return lastModDate;
     }
 
-    public String getRemainDays(){
-        return DateUtils.getRemainDayInString(getDeadline());
+    public void setLastModDate(Date lastModDate) {
+        this.lastModDate = lastModDate;
+    }
+
+    public int getModFlag() {
+        return modFlag;
+    }
+
+    public void setModFlag(int modFlag) {
+        this.modFlag = modFlag;
     }
 
     @Override
     public String toString() {
         return "Bucket{" +
-                "deadline=" + deadline +
+                "id=" + id +
+                ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
-                ", id=" + id +
-                ", isLive=" + isLive +
+                ", userId=" + userId +
+                ", deadline=" + deadline +
+                ", status=" + status +
                 ", isPrivate=" + isPrivate +
-                ", level='" + level + '\'' +
-                ", parentId=" + parentId +
+                ", scope='" + scope + '\'' +
                 ", range='" + range + '\'' +
-                ", regDate=" + regDate +
                 ", rptType='" + rptType + '\'' +
                 ", rptCndt='" + rptCndt + '\'' +
-                ", scope='" + scope + '\'' +
-                ", title='" + title + '\'' +
-                ", userId=" + userId +
-                ", todos=" + todos +
-                ", subBuckets=" + subBuckets +
-                ", uri='" + uri + '\'' +
+                ", regDate=" + regDate +
+                ", lastModDate=" + lastModDate +
+                ", modFlag=" + modFlag +
                 '}';
     }
 }

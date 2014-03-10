@@ -12,4 +12,9 @@
         <item name="android:padding">16dp</item>
     </style>
 
+    <style name="AnimationPopup">
+        <item name="android:windowEnterAnimation">@anim/dropdown</item>
+        <item name="android:windowExitAnimation">@anim/riseup</item>
+    </style>
+
 </resources>

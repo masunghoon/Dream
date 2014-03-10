@@ -21,7 +21,7 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.Scope;
+import com.vivavu.dream.common.enums.Scope;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.Dday;
 import com.vivavu.dream.repository.DataRepository;
@@ -99,8 +99,8 @@ public class BucketAddActivity extends BaseActionBarActivity {
         }
 
         if (parentBucket != null) {
-            bucket.setLevel(parentBucket.getLevel() + 1);
-            bucket.setParentId(parentBucket.getId());
+            //bucket.setLevel(parentBucket.getLevel() + 1);
+            //bucket.setParentId(parentBucket.getId());
             bucket.setScope(Scope.PLAN.getValue());
         }
 

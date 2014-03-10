@@ -62,20 +62,19 @@ public class MainActivity extends BaseActionBarActivity {
 
         noticeView = getLayoutInflater().inflate(R.layout.actionbar_notice, null);
         mPopupNotice = AndroidUtils.makePopupWindow(noticeView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-
+        //mPopupNotice.setAnimationStyle(R.style.AnimationPopup);
         mBtnAddBucket.setOnClickListener(this);
         mActionbarMainNotice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                if(mPopupNotice != null && !mPopupNotice.isShowing() && mActionbarMainNotice.isSelected()){
+                if(mPopupNotice != null && !mPopupNotice.isShowing() ){
                     mPopupNotice.showAsDropDown(mActionbarMainNotice);
                 }else{
                     mPopupNotice.hide();
                 }
             }
         });
-
 
         mActionbarMainToday.getButton().setText("Today");
         mActionbarMainToday.getTextView().setText("1");
@@ -185,4 +184,5 @@ public class MainActivity extends BaseActionBarActivity {
     public void onBackPressed() {
         exit();
     }
+
 }

@@ -24,6 +24,7 @@ import com.vivavu.dream.activity.login.UserAgreementActivity;
 import com.vivavu.dream.activity.login.UserRegisterActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
+import com.vivavu.dream.util.AndroidUtils;
 
 import java.util.Locale;
 
@@ -100,6 +101,8 @@ public class IntroActivity extends BaseActionBarActivity {
                 goPrivacy();
             }
         });
+
+        AndroidUtils.getKeyHashes(this);
 
     }
 

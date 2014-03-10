@@ -23,10 +23,9 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.common.RepeatType;
 import com.vivavu.dream.common.Tag;
-import com.vivavu.dream.fragment.main.MainContentsFragment;
+import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.fragment.bucket.BucketOptionRepeatFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
@@ -97,7 +96,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
     LinearLayout mLayoutBucketItemView;
     private Bucket bucket;
 
-    private MainContentsFragment mainContentsFragment;
+    /*private MainContentsFragment mainContentsFragment;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -199,10 +198,10 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
             case R.id.bucket_btn_done:
                 view.setSelected(!view.isSelected());
                 if (view.isSelected()) {
-                    bucket.setIsLive(1);
+                    //bucket.setIsLive(1);
                     Toast.makeText(this, "완료", Toast.LENGTH_SHORT).show();
                 } else {
-                    bucket.setIsLive(0);
+                    //bucket.setIsLive(0);
                     Toast.makeText(this, "진행중", Toast.LENGTH_SHORT).show();
                 }
                 break;
@@ -284,7 +283,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
     private void bindData() {
 
-        mBucketBtnDone.setSelected(bucket.getIsLive() == 1);
+        //mBucketBtnDone.setSelected(bucket.getIsLive() == 1);
 
         mBucketItemTitle.setText(bucket.getTitle());
         mBucketItemTitle.setTag(bucket.getId());
@@ -293,13 +292,13 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
         mBucketItemRemain.setText(bucket.getRemainDays());
 
-        if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
+        /*if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
             mBucketItemProgressbar.setVisibility(ProgressBar.GONE);
         } else {
             mBucketItemProgressbar.setVisibility(ProgressBar.VISIBLE);
             mBucketItemProgressbar.setProgress(bucket.getProgress());
         }
-
+*/
         mBucketOptionList.setVisibility(View.VISIBLE);
         mBucketOptionNote.setText(bucket.getDescription());
         if (bucket.getDescription() != null && bucket.getDescription().length() > 0) {
@@ -313,7 +312,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
         mBtnBucketOptionPublic.setSelected(bucket.getIsPrivate() == 1);
 
         addOptionRepeat();
-        addSubBucketList(bucket.getSubBuckets());
+        /*addSubBucketList(bucket.getSubBuckets());*/
     }
 
     private void getOptionData() {
@@ -350,7 +349,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
     }
 
     private void addSubBucketList(List<Bucket> bucketList) {
-        mainContentsFragment = (MainContentsFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_VIEW_FRAGMENT_SUB_BUCKET_LIST);
+        /*mainContentsFragment = (MainContentsFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_VIEW_FRAGMENT_SUB_BUCKET_LIST);
         if (mainContentsFragment == null) {
             if (bucketList != null && bucketList.size() > 0) {
                 mainContentsFragment = new MainContentsFragment(bucketList);
@@ -361,7 +360,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
         } else {
             mainContentsFragment.refreshList(bucketList);
-        }
+        }*/
     }
 
     TextWatcher textWatcherInput = new TextWatcher() {

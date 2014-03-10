@@ -17,7 +17,6 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.Plan;
-import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
 
 import java.util.Collections;
@@ -85,12 +84,12 @@ public class PlanAdapter extends BaseAdapter implements View.OnClickListener {
         planAdapterViewHolder.mBucketItemScope.setText(item.getRange());
         planAdapterViewHolder.mBucketItemRemain.setText(item.getRemainDays());
 
-        if (item.getTodos() == null || item.getTodos().size() < 1) {
+        /*if (item.getTodos() == null || item.getTodos().size() < 1) {
             planAdapterViewHolder.mBucketItemProgressbar.setVisibility(ProgressBar.GONE);
         } else {
             planAdapterViewHolder.mBucketItemProgressbar.setVisibility(ProgressBar.VISIBLE);
             planAdapterViewHolder.mBucketItemProgressbar.setProgress(item.getProgress());
-        }
+        }*/
         planAdapterViewHolder.mBucketItemProgressbar.setEnabled(true);
 
         view.setTag(item);
@@ -120,7 +119,7 @@ public class PlanAdapter extends BaseAdapter implements View.OnClickListener {
                         int checkedButtonId = planPopupDoneViewHolder.mRadioGroupPopupPlanDone.getCheckedRadioButtonId();
                         plan.setIsDone(checkedButtonId == planPopupDoneViewHolder.mRadioBtnDoneTrue.getId());
 
-                        DataRepository.updatePlanStatus(plan);
+                        /*DataRepository.updatePlanStatus(plan);*/
                     }
                 });
                 //그냥 닫기버튼을 위한 부분

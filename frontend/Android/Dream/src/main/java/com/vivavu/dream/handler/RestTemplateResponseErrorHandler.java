@@ -30,6 +30,8 @@ public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
         Charset charset = contentType != null ? contentType.getCharSet() : null;
         if(contentType != null && contentType == MediaType.APPLICATION_JSON){
 
+        }else{
+
         }
 
         byte[] body = getResponseBody(response);

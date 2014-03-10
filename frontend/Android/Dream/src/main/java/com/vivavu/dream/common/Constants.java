@@ -18,6 +18,7 @@ public class Constants {
     static public String apiResetPassword = baseUrl+"api/reset_password/{email}";
     static public String apiPostBucket = baseUrl+"api/buckets/";
     static public String apiBuckets = baseUrl+"api/buckets/user/{userId}";
+    static public String apiBucketGroup = baseUrl+"api/test/{userId}";
 
     //버킷, 등록, 읽기, 수정, 삭제
     static public String apiBucketInfo = baseUrl+"api/bucket/{bkt_id}";

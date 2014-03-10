@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 import com.vivavu.dream.R;
 import com.vivavu.dream.adapter.main.ShelfRowFragmentAdapter;
-import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.model.bucket.BucketGroup;
 import com.vivavu.dream.view.PagerContainer;
 
 import java.util.List;
@@ -29,13 +29,13 @@ import butterknife.InjectView;
  */
 public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     private LayoutInflater mInflater;
-    private List<Bucket> mBucketList;
+    private List<BucketGroup> mBucketList;
     private FragmentActivity mContext;
     private int resource;
     private Fragment parentFragment;
+    private final int OFF_SCREEN_PAGE_LIMIT = 5;
 
-
-    public BucketAdapter(FragmentActivity context, int resource, List<Bucket> mBucketList) {
+    public BucketAdapter(FragmentActivity context, int resource, List<BucketGroup> mBucketList) {
         super();
         this.mContext = context;
         this.resource = resource;
@@ -52,7 +52,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     }
 
     @Override
-    public Bucket getItem(int i) {
+    public BucketGroup getItem(int i) {
         return mBucketList.get(i);
     }
 
@@ -64,7 +64,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         int res = R.layout.shelf_row;
-        Bucket item = mBucketList.get(i);
+        BucketGroup item = mBucketList.get(i);
 
         ButterknifeViewHolder holder = null;
         if (view == null) {
@@ -73,11 +73,11 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
 
             ViewPager pager = holder.mShelfRow.getViewPager();
             //PagerAdapter adapter = new ShelfRowAdapter(mContext);
-            PagerAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), mBucketList);
+            PagerAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
             pager.setAdapter(adapter);
             //Necessary or the pager will only have one extra page to show
             // make this at least however many pages you can see
-            pager.setOffscreenPageLimit(adapter.getCount());
+            pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
             //A little space between pages
             pager.setPageMargin(15);
 
@@ -102,6 +102,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
             holder = (ButterknifeViewHolder) view.getTag();
         }
 
+        holder.mShelfTitle.setText(item.getRange());
 
         return view;
     }
@@ -115,19 +116,20 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         return this.mContext;
     }
 
-    public void notifyDataSetChanged(List<Bucket> buckets) {
+    public void notifyDataSetChanged(List<BucketGroup> buckets) {
         this.mBucketList.clear();
         this.mBucketList.addAll(buckets);
 
         super.notifyDataSetChanged();
     }
 
-    public List<Bucket> getmBucketList() {
+    public List<BucketGroup> getmBucketList() {
         return mBucketList;
     }
 
-    public void setmBucketList(List<Bucket> mBucketList) {
-        this.mBucketList = mBucketList;
+    public void setBucketList(List<BucketGroup> mBucketList) {
+        this.mBucketList.clear();
+        this.mBucketList.addAll(mBucketList);
     }
 
     public Fragment getParentFragment() {

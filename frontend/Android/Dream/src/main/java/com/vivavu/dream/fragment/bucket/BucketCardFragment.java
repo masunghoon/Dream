@@ -128,7 +128,7 @@ public class BucketCardFragment extends CustomBaseFragment implements View.OnCli
     }
 
     private void bindData(){
-        mBucketBtnDone.setSelected(bucket.getIsLive() == 1);
+        //mBucketBtnDone.setSelected(bucket.getIsLive() == 1);
 
         mBucketItemTitle.setText(bucket.getTitle());
         mBucketItemTitle.setTag(bucket.getId());
@@ -137,12 +137,12 @@ public class BucketCardFragment extends CustomBaseFragment implements View.OnCli
 
         mBucketItemRemain.setText(bucket.getRemainDays());
 
-        if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
+        /*if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
             mBucketItemProgressbar.setVisibility(ProgressBar.GONE);
         } else {
             mBucketItemProgressbar.setVisibility(ProgressBar.VISIBLE);
             mBucketItemProgressbar.setProgress(bucket.getProgress());
-        }
+        }*/
 
         mBucketOptionList.setVisibility(View.VISIBLE);
         mBucketOptionNote.setText(bucket.getDescription());
@@ -186,10 +186,10 @@ public class BucketCardFragment extends CustomBaseFragment implements View.OnCli
             case R.id.bucket_btn_done:
                 view.setSelected(!view.isSelected());
                 if (view.isSelected()) {
-                    bucket.setIsLive(1);
+                    //bucket.setIsLive(1);
                     Toast.makeText(getActivity(), "완료", Toast.LENGTH_SHORT).show();
                 } else {
-                    bucket.setIsLive(0);
+                    //bucket.setIsLive(0);
                     Toast.makeText(getActivity(), "진행중", Toast.LENGTH_SHORT).show();
                 }
                 break;
