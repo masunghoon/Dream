@@ -31,7 +31,7 @@ local.properties
 .settings
 
 # IntelliJ files
-.idea
+.idea/*
 *.iml
 
 # OSX files
@@ -50,5 +50,5 @@ Thumbs.db
 .gradle
 gradlew
 gradlew.bat
-gradle/
-build/
+gradle/*
+build/*
