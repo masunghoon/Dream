@@ -29,4 +29,12 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
     public int getCount() {
         return bucketList.size()    ;
     }
+
+    public List<Bucket> getBucketList() {
+        return bucketList;
+    }
+
+    public void setBucketList(List<Bucket> bucketList) {
+        this.bucketList = bucketList;
+    }
 }

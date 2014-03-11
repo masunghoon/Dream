@@ -17,7 +17,6 @@ import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.fragment.main.MainBucketListFragment;
-import com.vivavu.dream.fragment.main.NoticeDialog;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
 import com.vivavu.dream.view.CustomPopupWindow;
@@ -35,9 +34,10 @@ public class MainActivity extends BaseActionBarActivity {
     @InjectView(R.id.actionbar_main_today)
     ButtonIncludeCount mActionbarMainToday;
 
-    NoticeDialog mNoticeDialog;
     View noticeView;
     CustomPopupWindow mPopupNotice;
+
+    MainBucketListFragment mainBucketListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,9 +54,9 @@ public class MainActivity extends BaseActionBarActivity {
         ButterKnife.inject(this);
 
         if (savedInstanceState == null) {
-
+            mainBucketListFragment= new MainBucketListFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.content_frame, new MainBucketListFragment())
+                    .add(R.id.content_frame, mainBucketListFragment)
                     .commit();
         }
 
@@ -68,10 +68,12 @@ public class MainActivity extends BaseActionBarActivity {
             @Override
             public void onClick(View v) {
 
-                if(mPopupNotice != null && !mPopupNotice.isShowing() ){
-                    mPopupNotice.showAsDropDown(mActionbarMainNotice);
+                if(mPopupNotice != null && !mPopupNotice.isShowing() && !v.isSelected()){
+                    mPopupNotice.showAsDropDown(v);
+                    v.setSelected(true);
                 }else{
                     mPopupNotice.hide();
+                    v.setSelected(false);
                 }
             }
         });
@@ -182,7 +184,11 @@ public class MainActivity extends BaseActionBarActivity {
 
     @Override
     public void onBackPressed() {
-        exit();
+        if(mPopupNotice != null && mPopupNotice.isShowing()){
+            mPopupNotice.hide();
+        }else{
+            exit();
+        }
     }
 
 }

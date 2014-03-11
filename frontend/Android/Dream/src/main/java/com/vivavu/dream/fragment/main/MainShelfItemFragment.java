@@ -102,18 +102,15 @@ public class MainShelfItemFragment extends CustomBaseFragment{
     public void onClick(View view) {
         super.onClick(view);
         if(view.getId() == mBtnBookSetting.getId()){
-            toggleBookSettingMenu();
+            if(mPopupWindow != null && !mPopupWindow.isShowing() && !view.isSelected()){
+                mPopupWindow.showAsDropDown(view);
+                view.setSelected(true);
+            }else{
+                mPopupWindow.hide();
+                view.setSelected(false);
+            }
         }
     }
-
-    public void toggleBookSettingMenu(){
-        if(mPopupWindow != null && mPopupWindow.isShowing()){
-            mPopupWindow.hide();
-        }else {
-            mPopupWindow.showAsDropDown(mBtnBookSetting, 0, 0);
-        }
-    }
-
     /**
      * This class contains all butterknife-injected Views & Layouts from layout file 'null'
      * for easy to all layout elements.

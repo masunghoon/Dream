@@ -63,6 +63,7 @@ dependencies {
     compile 'org.springframework.android:spring-android-auth:1.0.1.RELEASE@jar'
     compile 'org.springframework.android:spring-android-rest-template:1.0.1.RELEASE@jar'
 
+    compile 'com.navercorp.pulltorefresh:library:3.2.0@aar'
     compile 'com.j256.ormlite:ormlite-android:4.48'
 
     compile 'com.github.johnkil.android-progressfragment:progressfragment:1.4.0'
