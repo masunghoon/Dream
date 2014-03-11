@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.vivavu.dream.common.Constants;
@@ -295,12 +296,24 @@ public class DataRepository {
     }
 
     public static void saveBuckets(List<Bucket> list){
+        deleteAllBuckets();
         for(Bucket bucket : list){
-            if(getDatabaseHelper().getBucketRuntimeDao().queryForId( bucket.getId()) != null){
-                getDatabaseHelper().getBucketRuntimeDao().update(bucket);
-            }else{
-                getDatabaseHelper().getBucketRuntimeDao().create(bucket);
+            if(bucket.getId() != null) {
+                if (getDatabaseHelper().getBucketRuntimeDao().queryForId(bucket.getId()) != null) {
+                    getDatabaseHelper().getBucketRuntimeDao().update(bucket);
+                } else {
+                    getDatabaseHelper().getBucketRuntimeDao().create(bucket);
+                }
             }
+        }
+    }
+
+    public static void deleteAllBuckets(){
+        DeleteBuilder<Bucket,Integer> deleteBuilder = getDatabaseHelper().getBucketRuntimeDao().deleteBuilder();
+        try {
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
         }
     }
 
@@ -310,11 +323,12 @@ public class DataRepository {
         qb.orderBy("range", true);
         qb.orderBy("deadline", true);
         qb.orderBy("id", true);
-        List<BucketGroup> bucketGroups = new ArrayList<BucketGroup>();
+        List<BucketGroup> bucketGroups = null;
         try {
             List<Bucket> rangeList = qb.query();
+            bucketGroups = makeShelfList(rangeList);
 
-            for(Bucket range : rangeList){
+            for(BucketGroup range : bucketGroups){
                 QueryBuilder<Bucket, Integer> qb2 = getDatabaseHelper().getBucketRuntimeDao().queryBuilder();
                 Where where = qb2.where();
                 if(range.getRange() == null){
@@ -322,17 +336,35 @@ public class DataRepository {
                 }else{
                     where.eq("range", range.getRange());
                 }
+                qb2.orderBy("deadline", true);
 
                 List<Bucket> list = qb2.query();
-                BucketGroup bucketGroup1 = new BucketGroup();
-                bucketGroup1.setRange(range.getRange());
-                bucketGroup1.setBukets(list);
-                bucketGroups.add(bucketGroup1);
-
+                range.setBukets(list);
             }
         } catch (SQLException e) {
             Log.e("dream", e.getMessage());
         }
         return bucketGroups;
+    }
+
+    public static List<BucketGroup> makeShelfList(List<Bucket> list){
+        List<BucketGroup> returnList = new ArrayList<BucketGroup>();
+        returnList.add(new BucketGroup());
+        final int maxIndex = 7;
+        for (int i = 1; i < maxIndex; i++) {
+            returnList.add(new BucketGroup(String.valueOf(i*10)));
+        }
+
+        for (Bucket bucket : list){
+            String range = bucket.getRange();
+            if (range != null) {
+                Integer numRange = Integer.parseInt(range);
+                if(numRange >= maxIndex * 10){
+                    returnList.add(new BucketGroup(String.valueOf(range)));
+                }
+            }
+        }
+
+        return returnList;
     }
 }

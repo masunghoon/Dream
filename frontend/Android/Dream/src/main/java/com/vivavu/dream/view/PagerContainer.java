@@ -82,8 +82,8 @@ public class PagerContainer extends FrameLayout implements ViewPager.OnPageChang
         try {
 
             mPager = new ViewPager(mContext);
-            int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 80, getResources().getDisplayMetrics());
-            int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100, getResources().getDisplayMetrics());
+            int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics());
+            int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 160, getResources().getDisplayMetrics());
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height, Gravity.CENTER_HORIZONTAL);
             mPager.setLayoutParams(layoutParams);
             mPager.setId(AndroidUtils.generateViewId());

@@ -14,6 +14,18 @@ public class BucketGroup implements Comparable<BucketGroup> {
     @SerializedName("buckets")
     private List<Bucket> bukets;
 
+    public BucketGroup() {
+    }
+
+    public BucketGroup(String range) {
+        this.range = range;
+    }
+
+    public BucketGroup(String range, List<Bucket> bukets) {
+        this.range = range;
+        this.bukets = bukets;
+    }
+
     public String getRange() {
         return range;
     }

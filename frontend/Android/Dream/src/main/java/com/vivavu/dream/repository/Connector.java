@@ -9,7 +9,6 @@ import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.model.bucket.BucketGroup;
 import com.vivavu.dream.util.JsonFactory;
 import com.vivavu.dream.util.RestTemplateUtils;
 
@@ -46,7 +45,7 @@ public class Connector {
         ResponseEntity<String> resultString = null;
 
         try {
-            resultString = restTemplate.exchange(Constants.apiBucketGroup, HttpMethod.GET, request, String.class, getContext().getUser().getId());
+            resultString = restTemplate.exchange(Constants.apiBuckets, HttpMethod.GET, request, String.class, getContext().getUser().getId());
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
@@ -55,16 +54,8 @@ public class Connector {
 
         if(RestTemplateUtils.isAvailableParseToJson(resultString)){
             Gson gson = JsonFactory.getInstance();
-            Type type = new TypeToken<ResponseBodyWrapped<List<BucketGroup>>>(){}.getType();
-            ResponseBodyWrapped<List<BucketGroup>> bucketGroup = gson.fromJson((String) resultString.getBody(), type);
-
-            result.setStatus(bucketGroup.getStatus());
-            result.setDescription(bucketGroup.getDescription());
-            List<Bucket> bucketList = result.getData();
-            for(BucketGroup group : bucketGroup.getData()){
-                    bucketList.addAll(group.getBukets());
-            }
-            result.setData(bucketList);
+            Type type = new TypeToken<ResponseBodyWrapped<List<Bucket>>>(){}.getType();
+            result = gson.fromJson((String) resultString.getBody(), type);
         }
 
         return result;
