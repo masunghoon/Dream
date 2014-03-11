@@ -345,6 +345,8 @@ bucket_fields = {
     'range': fields.String,
     'parent_id': fields.Integer,
     'lst_mod_dt': fields.String,
+    'rpt_type': fields.String,
+    'rpt_cndt': fields.String,
     'uri': fields.Url('bucket')
 }
 
@@ -487,61 +489,37 @@ class UserBucketAPI(Resource):
             else:
                 return {'error':'User unauthorized'}, 401
 
-        if request.values.get('syncdt'):
-            print 'syncdt'
-            sync_dt = datetime.datetime.strptime(request.values.get('syncdt'),'%Y%m%d%H%M%S')
-            b = Bucket.query.filter(Bucket.user_id==id,Bucket.scope=='DECADE',Bucket.lst_mod_dt>sync_dt).all()
+        data = []
+        if g.user == u:
+            b = Bucket.query.filter(Bucket.user_id==u.id,Bucket.status!='9',Bucket.level=='0').all()
         else:
-            print 'none'
-            b = Bucket.query.filter_by(user_id=id, scope='DECADE').all()
-        result = [{'range':'Lifetime','buckets':[]}]
+            b = Bucket.query.filter(Bucket.user_id==u.id,Bucket.status!='9',Bucket.level=='0',Bucket.private=='0').all()
+
+        if len(b) == 0:
+            return {'error':'No data Found'}, 204
 
         for i in b:
-            resultRange = len(result)
-            for j in range(resultRange):
-
-                if 'Lifetime' if i.range is None else i.range == result[j]['range']:
-                    result[j]['buckets'].append({
-                        'id': i.id,
-                        'user_id': i.user_id,
-                        'title': i.title,
-                        'description': i.description,
-                        'level': i.level,
-                        'status': i.status,
-                        'private': i.private,
-                        'parent_id': i.parent_id,
-                        'deadline': i.deadline.strftime("%Y-%m-%d"),
-                        'scope': i.scope,
-                        'range': i.range,
-                        'rpt_type': i.rpt_type,
-                        'rpt_cndt': i.rpt_cndt,
-                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        })
-                    break
-
-                if j+1 == resultRange:
-                    result.append({'range':i.range,'buckets':[
-                        {'id': i.id,
-                        'user_id': i.user_id,
-                        'title': i.title,
-                        'description': i.description,
-                        'level': i.level,
-                        'status': i.status,
-                        'private': i.private,
-                        'parent_id': i.parent_id,
-                        'deadline': i.deadline.strftime("%Y-%m-%d"),
-                        'scope': i.scope,
-                        'range': i.range,
-                        'rpt_type': i.rpt_type,
-                        'rpt_cndt': i.rpt_cndt,
-                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}]
-                        })
+            data.append({
+                'id': i.id,
+                'user_id': i.user_id,
+                'title': i.title,
+                'description': i.description,
+                'level': i.level,
+                'status': i.status,
+                'private': i.private,
+                'parent_id': i.parent_id,
+                'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'deadline': i.deadline.strftime("%Y-%m-%d"),
+                'scope': i.scope,
+                'range': i.range,
+                'rpt_type': i.rpt_type,
+                'rpt_cndt': i.rpt_cndt,
+                'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            })
 
         return {'status':'success',
                 'description':'normal',
-                'data':result}, 200
+                'data':data}, 200
 
 
     def post(self, id):
@@ -586,7 +564,7 @@ class UserBucketAPI(Resource):
                      private=params['private'] if 'private' in params else False,
                      reg_dt=datetime.datetime.now(),
                      lst_mod_dt=datetime.datetime.now(),
-                     deadline=datetime.strptime(params['deadline'],'%Y/%m/%d').date() if 'deadline' in params\
+                     deadline=datetime.strptime(params['deadline'],'%Y/%m/%d').date() if 'deadline' in params \
                                                                                       else datetime.datetime.now(),
                      description=params['description'] if 'description' in params else None,
                      parent_id=params['parent_id'] if 'parent_id' in params else None,
