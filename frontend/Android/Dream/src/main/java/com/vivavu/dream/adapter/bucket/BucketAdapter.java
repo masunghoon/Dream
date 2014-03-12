@@ -104,7 +104,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         pager.setClipChildren(false);
 
         holder.mShelfTitle.setText(item.getRangeText());
-        adapter.notifyDataSetChanged();
+
 
         return view;
     }

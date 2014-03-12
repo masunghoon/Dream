@@ -70,5 +70,4 @@ dependencies {
     compile project(':Libraries:facebook')
     compile project(':Libraries:viewpagerindicator')
     compile project(':Libraries:bookshelf')
-    compile project(':Libraries:twowayview')
 }

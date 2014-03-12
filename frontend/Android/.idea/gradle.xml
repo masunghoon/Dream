@@ -12,7 +12,6 @@
             <option value="$PROJECT_DIR$/Libraries" />
             <option value="$PROJECT_DIR$/Libraries/bookshelf" />
             <option value="$PROJECT_DIR$/Libraries/facebook" />
-            <option value="$PROJECT_DIR$/Libraries/twowayview" />
             <option value="$PROJECT_DIR$/Libraries/viewpagerindicator" />
           </set>
         </option>
