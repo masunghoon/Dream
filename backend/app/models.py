@@ -190,7 +190,7 @@ class Bucket(db.Model):
     rpt_cndt = db.Column(db.String(8))                  # Repeat Condition
     reg_dt = db.Column(db.DateTime)                     # Registered Datetime
     lst_mod_dt = db.Column(db.DateTime)                 # Last Modified Datetime
-    cvr_img_name = db.Column(db.String(256))            # Cover Image Name
+    cvr_img_url = db.Column(db.String(256))            # Cover Image Name
 
     def __repr__(self):
         return '<Bucket %r>' % self.title

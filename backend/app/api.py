@@ -6,7 +6,7 @@ import random, datetime
 from flask import request, g
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse, fields, marshal
-from flask.ext.uploads import UploadSet, IMAGES, configure_uploads
+from flask.ext.uploads import UploadSet, IMAGES, configure_uploads, patch_request_class
 
 from hashlib import md5
 from rauth.service import OAuth2Service
@@ -18,6 +18,7 @@ from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
 photos = UploadSet('photos',IMAGES)
 configure_uploads(app, photos)
+patch_request_class(app, size=2097152) #File Upload Size = Up to 2MB
 
 ##### AUTHENTICATION #######################################
 
@@ -348,7 +349,7 @@ bucket_fields = {
     'lst_mod_dt': fields.String,
     'rpt_type': fields.String,
     'rpt_cndt': fields.String,
-    'cvr_img_name': fields.String,
+    'cvr_img_url': fields.String,
     'uri': fields.Url('bucket')
 }
 
@@ -379,29 +380,13 @@ class BucketAPI(Resource):
             'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
             'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            'cvr_img_url': None if b.cvr_img_name is None else photos.url(b.cvr_img_name)
+            'cvr_img_url': None if b.cvr_img_url is None else photos.url(b.cvr_img_url)
         }
 
         return data, 200
 
     def put(self, id):
-        if 'photo' in request.files:
-            upload_type = 'photo'
-
-            upload_files = UploadSet('photos',IMAGES)
-            configure_uploads(app, upload_files)
-
-            filename = upload_files.save(request.files[upload_type])
-            splits = []
-
-            for item in filename.split('.'):
-                splits.append(item)
-            extension = filename.split('.')[len(splits) -1]
-
-            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
-            db.session.add(f)
-            params = {'cvr_img_name':filename}
-        elif request.json:
+        if request.json:
             params = request.json
         elif request.form:
             params = request.form
@@ -410,22 +395,22 @@ class BucketAPI(Resource):
 
         b = Bucket.query.filter_by(id=id).first()
         if b.user_id != g.user.id:
-            return {'error':'Unauthorized'}, 400
+            return {'status':'error','description':'Unauthorized'}, 401
 
         for key in params:
             value = None if params[key]=="" else params[key]
 
             # Editable Fields
-            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt','cvr_img_name']:
-                return {'error':'Invalid key: '+key}, 400
+            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt','cvr_img_url']:
+                return {'status':'error','description':'Invalid key: '+key}, 403
 
             # Nobody can modify id, user_id, reg_dt
             if key in ['id','user_id','reg_dt']:
-                return {'error':'Cannot change ' + key}, 400
+                return {'status':'error','description':'Cannot change '+key}, 403
 
             # Just ROLE_ADMIN user can change 'language', 'level'
             if key in ['language','level'] and g.user.role == ROLE_USER:
-                return {'error':'Only Admin can chagne' + key}, 401
+                return {'status':'error','description':'Only Admin can change' + key}, 401
 
             # When modify user's parent_id adjusts its level
             if key == 'parent_id':
@@ -434,25 +419,25 @@ class BucketAPI(Resource):
                 else:
                     pb = Bucket.query.filter_by(id=int(value)).first() # pb = parent bucket
                     if pb == None:
-                        return {'error':'Parent does not exists'}, 400
+                        return {'status':'error','description':'Parent does not exists'}, 400
                     else:
                         params['level'] = str(int(pb.level)+1)
 
             # Set other key's validation
             if key == 'title' and len(value) > 128:
-                return {'error':'Title length must be under 128'}, 400
+                return {'status':'error','description':'Title length must be under 128'}, 400
 
             if key == 'description' and len(value) > 512:
-                return {'error':'Description too long (512)'}, 400
+                return {'status':'error','description':'Description too long (512)'}, 400
 
             if key == 'deadline':
                 value = datetime.strptime(value,'%Y-%m-%d')
 
             if key == 'scope' and value not in ['DECADE','YEARLY','MONTHLY']:
-                return {'error':'Invalid scope value'}, 400
+                return {'status':'error','description':'Invalid scope value'}, 400
 
             if key == 'rpt_type' and value not in ['WKRP','WEEK','MNTH']:
-                return {'error':'Invalid repeat-type value'}, 400
+                return {'status':'error','description':'Invalid repeat-type value'}, 400
 
             if key == 'rpt_cndt':
                 dayOfWeek = datetime.date.today().weekday()
@@ -467,6 +452,27 @@ class BucketAPI(Resource):
                     else:
                         p = Plan.query.filter_by(date=datetime.date.today().strftime("%Y%m%d"),bucket_id=id).first()
                         db.session.delete(p)
+
+            if key == 'cvr_img_url' and value == 'attachment':
+                if 'photo' in request.files:
+                    upload_type = 'photo'
+
+                    if len(request.files[upload_type].filename) > 64:
+                        return {'status':'error',
+                                'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+                    upload_files = UploadSet('photos',IMAGES)
+                    configure_uploads(app, upload_files)
+
+                    filename = upload_files.save(request.files[upload_type])
+                    splits = []
+
+                    for item in filename.split('.'):
+                        splits.append(item)
+                    extension = filename.split('.')[len(splits) -1]
+
+                    f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+                    db.session.add(f)
+                    value = filename
 
             setattr(b, key, value)
 
@@ -535,7 +541,7 @@ class UserBucketAPI(Resource):
                 'rpt_type': i.rpt_type,
                 'rpt_cndt': i.rpt_cndt,
                 'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'cvr_img_url': None if i.cvr_img_name is None else photos.url(i.cvr_img_name)
+                'cvr_img_url': None if i.cvr_img_url is None else photos.url(i.cvr_img_url)
             })
 
         return {'status':'success',
@@ -551,7 +557,9 @@ class UserBucketAPI(Resource):
         if request.json:
             params = request.json
         elif request.form:
-            params = request.form
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
         else:
             return {'status':'error','description':'Request Failed'}
 
@@ -578,9 +586,11 @@ class UserBucketAPI(Resource):
             else:
                 level = int(b.level) + 1
 
-        if 'cvr_img' in request.files:
+        if 'photo' in request.files:
             upload_type = 'photo'
 
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error','description':'Filename is too long (Max 64bytes include extensions)'}, 403
             upload_files = UploadSet('photos',IMAGES)
             configure_uploads(app, upload_files)
 
@@ -593,7 +603,6 @@ class UserBucketAPI(Resource):
 
             f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
             db.session.add(f)
-            print f.id
 
         bkt = Bucket(title=params['title'],
                      user_id=g.user.id,
@@ -609,7 +618,8 @@ class UserBucketAPI(Resource):
                      scope=params['scope'] if 'scope' in params else None,
                      range=params['range'] if 'range' in params else None,
                      rpt_type=params['rpt_type'] if 'rpt_type' in params else None,
-                     rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None)
+                     rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None,
+                     cvr_img_url=filename if params['cvr_img_url'] == 'attachment' else None)
 
         db.session.add(bkt)
         db.session.commit()
