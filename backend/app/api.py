@@ -16,6 +16,8 @@ from models import User, Bucket, Plan, File, ROLE_ADMIN, ROLE_USER
 from emails import send_awaiting_confirm_mail, send_reset_password_mail
 from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
+photos = UploadSet('photos',IMAGES)
+configure_uploads(app, photos)
 
 ##### AUTHENTICATION #######################################
 
@@ -137,7 +139,6 @@ class ResetPassword(Resource):
         except:
             return {'status':'error',
                     'description':'Something went wrong'}, 500
-
 
         return {'status':'success',
                 'description':'Password successfully reset'}, 200
@@ -347,6 +348,7 @@ bucket_fields = {
     'lst_mod_dt': fields.String,
     'rpt_type': fields.String,
     'rpt_cndt': fields.String,
+    'cvr_img_name': fields.String,
     'uri': fields.Url('bucket')
 }
 
@@ -360,6 +362,7 @@ class BucketAPI(Resource):
         b = Bucket.query.filter(Bucket.id==id, Bucket.status!='9').first()
         if b == None:
             return {'error':'No data found'}, 204
+
         data={
             'id': b.id,
             'user_id': b.user_id,
@@ -375,14 +378,30 @@ class BucketAPI(Resource):
             'range': b.range,
             'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
-            'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")
-            # 'sub_buckets': []
+            'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            'cvr_img_url': None if b.cvr_img_name is None else photos.url(b.cvr_img_name)
         }
 
         return data, 200
 
     def put(self, id):
-        if request.json:
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            params = {'cvr_img_name':filename}
+        elif request.json:
             params = request.json
         elif request.form:
             params = request.form
@@ -397,7 +416,7 @@ class BucketAPI(Resource):
             value = None if params[key]=="" else params[key]
 
             # Editable Fields
-            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt']:
+            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt','cvr_img_name']:
                 return {'error':'Invalid key: '+key}, 400
 
             # Nobody can modify id, user_id, reg_dt
@@ -455,6 +474,7 @@ class BucketAPI(Resource):
         try:
             db.session.commit()
         except:
+            db.session.rollback()
             return {'error':'Something went wrong'}, 500
 
         return {'bucket': marshal(b, bucket_fields)}, 201
@@ -515,6 +535,7 @@ class UserBucketAPI(Resource):
                 'rpt_type': i.rpt_type,
                 'rpt_cndt': i.rpt_cndt,
                 'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'cvr_img_url': None if i.cvr_img_name is None else photos.url(i.cvr_img_name)
             })
 
         return {'status':'success',
@@ -556,6 +577,23 @@ class UserBucketAPI(Resource):
                 return {'error':'Cannot make sub_bucket with other user\'s Bucket'}, 401
             else:
                 level = int(b.level) + 1
+
+        if 'cvr_img' in request.files:
+            upload_type = 'photo'
+
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            print f.id
 
         bkt = Bucket(title=params['title'],
                      user_id=g.user.id,

@@ -36,7 +36,7 @@
             data.append('photo',$("#photo")[0].files[0])
             $.ajax({
                 type:'POST',
-                url:'http://masunghoon.iptime.org:5001/api/uploads',
+                url:'http://masunghoon.iptime.org:5001/api/file',
                 contentType: false,
                 processData: false,
                 data: data,

@@ -416,7 +416,7 @@ photos = UploadSet('photos',IMAGES)
 configure_uploads(app, photos)
 
 @app.route('/upload', methods=['GET','POST'])
-@auth.login_required
+# @auth.login_required
 def upload():
     if request.method == 'POST' and 'photo' in request.files:
         filename = photos.save(request.files['photo'])
