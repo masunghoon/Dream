@@ -1,0 +1,25 @@
+<!-- From: file:/C:/Dream/mobileApps/Android/Dream/src/main/AndroidManifest.xml --><manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="1.0" package="com.vivavu.dream">
+    <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="9"/>
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application android:allowBackup="true" android:icon="@drawable/ic_launcher" android:label="@string/app_name" android:name="com.vivavu.dream.common.DreamApp" android:theme="@style/AppTheme">
+        <activity android:label="@string/title_activity_login" android:name="com.vivavu.dream.LoginActivity" android:windowSoftInputMode="adjustResize|stateVisible">
+        </activity>
+        <activity android:label="View Bucket" android:name="com.vivavu.dream.activity.BucketViewActivity">
+
+        </activity>
+        <activity android:label="Add Bucket" android:name="com.vivavu.dream.activity.BucketAddActivity">
+
+        </activity>
+        <activity android:label="@string/title_activity_main" android:name="com.vivavu.dream.MainActivity" android:uiOptions="splitActionBarWhenNarrow">
+            <meta-data android:name="android.support.UI_OPTIONS" android:value="splitActionBarWhenNarrow"/>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+        </activity>
+    </application>
+
+</manifest>
