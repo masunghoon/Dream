@@ -489,6 +489,7 @@ bold
             </file>
         </source>
         <source path="C:\Dream\frontend\Android\Libraries\viewpagerindicator\build\res\rs\debug" />
+        <source path="C:\Dream\frontend\Android\Libraries\viewpagerindicator\build\res\generated\debug" />
     </dataSet>
     <dataSet config="debug" >
         <source path="C:\Dream\frontend\Android\Libraries\viewpagerindicator\src\debug\res" />

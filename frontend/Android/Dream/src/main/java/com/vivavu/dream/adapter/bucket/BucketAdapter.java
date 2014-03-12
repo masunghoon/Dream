@@ -68,7 +68,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         BucketGroup item = mBucketList.get(i);
 
         ButterknifeViewHolder holder = null;
-        if (view == null) {
+        /*if (view == null) {*/
             view = mInflater.inflate(res, viewGroup, false);
             holder = new ButterknifeViewHolder(view);
             final ButterknifeViewHolder finalViewHolder = holder;
@@ -85,9 +85,9 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
                 }
             });
             view.setTag(holder);
-        }else{
+        /*}else{
             holder = (ButterknifeViewHolder) view.getTag();
-        }
+        }*/
 
         ViewPager pager = holder.mShelfRow.getViewPager();
         //PagerAdapter adapter = new ShelfRowAdapter(mContext);
@@ -104,7 +104,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         pager.setClipChildren(false);
 
         holder.mShelfTitle.setText(item.getRangeText());
-
+        adapter.notifyDataSetChanged();
 
         return view;
     }

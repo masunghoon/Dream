@@ -35,5 +35,13 @@
             android:id="@+id/shelf_row"
             >
             </com.vivavu.dream.view.PagerContainer>
+        <!--<org.lucasr.twowayview.TwoWayView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/shelf_row"
+
+            >
+
+        </org.lucasr.twowayview.TwoWayView>-->
     </LinearLayout>
 </LinearLayout>

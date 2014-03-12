@@ -83,6 +83,7 @@
     <orderEntry type="library" exported="" name="support-v4-19.0.1" level="project" />
     <orderEntry type="module" module-name="viewpagerindicator" exported="" />
     <orderEntry type="module" module-name="bookshelf" exported="" />
+    <orderEntry type="module" module-name="twowayview" exported="" />
     <orderEntry type="module" module-name="facebook" exported="" />
   </component>
 </module>

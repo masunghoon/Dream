@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal">
+
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_sun"
+            android:id="@+id/btn_bucket_option_sun"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_mon"
+            android:id="@+id/btn_bucket_option_mon"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_tue"
+            android:id="@+id/btn_bucket_option_tue"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_wen"
+            android:id="@+id/btn_bucket_option_wen"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_thu"
+            android:id="@+id/btn_bucket_option_thu"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_fri"
+            android:id="@+id/btn_bucket_option_fri"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="@string/btn_bucket_option_sat"
+            android:id="@+id/btn_bucket_option_sat"
+            android:enabled="true"
+            android:clickable="true"
+            android:background="@drawable/btn_check" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_del"
+            android:id="@+id/btn_bucket_option_repeat_cnt"
+            android:layout_gravity="right" />
+    </LinearLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bucket_custom_date_set"
+        android:id="@+id/btn_bucket_option_repeat_custom"
+        android:layout_gravity="center_horizontal" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/layout_bucket_option_repeat_custom"
+        >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal">
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:ems="10"
+                    android:id="@+id/txt_bucket_option_repeat_cnt"
+                    android:maxLength="3"
+                    android:maxLines="1"
+                    android:minLines="1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/txt_bucket_option_repeat_cnt"
+                    />
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Spinner
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/spin_repeat_period"
+
+                android:layout_weight="1"
+                />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"
+        >
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/txt_save"
+            android:id="@+id/btn_bucket_option_repeat_save" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/txt_cancel"
+            android:id="@+id/btn_bucket_option_repeat_cancel" />
+    </LinearLayout>
+
+
+</LinearLayout><!-- From: file:/C:/Dream/mobileApps/Android/Dream/src/main/res/layout/bucket_option_repeat.xml -->
