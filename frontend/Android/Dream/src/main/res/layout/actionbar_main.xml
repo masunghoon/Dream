@@ -23,7 +23,7 @@
             android:layout_height="30dp"
             android:text="@string/actionbar_main_notice"
             android:id="@+id/actionbar_main_notice"
-            />
+            android:clickable="true" />
         </LinearLayout>
 
     <com.vivavu.dream.view.ButtonIncludeCount

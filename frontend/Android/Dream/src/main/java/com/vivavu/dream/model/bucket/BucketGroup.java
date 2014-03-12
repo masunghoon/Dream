@@ -30,6 +30,13 @@ public class BucketGroup implements Comparable<BucketGroup> {
         return range;
     }
 
+    public String getRangeText() {
+        if(range == null){
+            return "In My Life";
+        }
+        return range + "대";
+    }
+
     public void setRange(String range) {
         this.range = range;
     }
