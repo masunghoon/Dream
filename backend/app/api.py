@@ -187,7 +187,7 @@ class UserAPI(Resource):
             return {'error': 'Unauthorized'}, 401
 
         for key in params:
-            value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja kk
+            value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja
 
             # Nobody can change id, email, fb_id, last_seen
             if key in ['id', 'email', 'fb_id', 'last_seen']:
@@ -349,7 +349,8 @@ bucket_fields = {
     'lst_mod_dt': fields.String,
     'rpt_type': fields.String,
     'rpt_cndt': fields.String,
-    'cvr_img_url': fields.String,
+    'cvr_img_id': fields.Integer,
+    # 'cvr_img_url': fields.Url('file'),
     'uri': fields.Url('bucket')
 }
 
@@ -380,7 +381,7 @@ class BucketAPI(Resource):
             'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
             'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            'cvr_img_url': None if b.cvr_img_url is None else photos.url(b.cvr_img_url)
+            'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
         }
 
         return data, 200
@@ -401,7 +402,7 @@ class BucketAPI(Resource):
             value = None if params[key]=="" else params[key]
 
             # Editable Fields
-            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt','cvr_img_url']:
+            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt','cvr_img']:
                 return {'status':'error','description':'Invalid key: '+key}, 403
 
             # Nobody can modify id, user_id, reg_dt
@@ -453,7 +454,7 @@ class BucketAPI(Resource):
                         p = Plan.query.filter_by(date=datetime.date.today().strftime("%Y%m%d"),bucket_id=id).first()
                         db.session.delete(p)
 
-            if key == 'cvr_img_url' and value == 'attachment':
+            if key == 'cvr_img' and value == 'true':
                 if 'photo' in request.files:
                     upload_type = 'photo'
 
@@ -472,7 +473,11 @@ class BucketAPI(Resource):
 
                     f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
                     db.session.add(f)
-                    value = filename
+                    db.session.flush()
+                    db.session.refresh(f)
+
+                    key = 'cvr_img_id'
+                    value = f.id
 
             setattr(b, key, value)
 
@@ -541,7 +546,7 @@ class UserBucketAPI(Resource):
                 'rpt_type': i.rpt_type,
                 'rpt_cndt': i.rpt_cndt,
                 'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'cvr_img_url': None if i.cvr_img_url is None else photos.url(i.cvr_img_url)
+                'cvr_img_url': None if i.cvr_img_id is None else photos.url(File.query.filter_by(id=i.cvr_img_id).first().name)
             })
 
         return {'status':'success',
@@ -586,23 +591,37 @@ class UserBucketAPI(Resource):
             else:
                 level = int(b.level) + 1
 
-        if 'photo' in request.files:
-            upload_type = 'photo'
+        if 'rpt_cndt' in params:
+            dayOfWeek = datetime.date.today().weekday()
+            if params['rpt_type'] == 'WKRP':
+                if params['rpt_cndt'][dayOfWeek] == '1':
+                    p = Plan(date=datetime.date.today().strftime("%Y%m%d"),
+                             user_id=g.user.id,
+                             bucket_id=None,
+                             status=0,
+                             lst_mod_dt=datetime.datetime.now())
+                    db.session.add(p)
 
-            if len(request.files[upload_type].filename) > 64:
-                return {'status':'error','description':'Filename is too long (Max 64bytes include extensions)'}, 403
-            upload_files = UploadSet('photos',IMAGES)
-            configure_uploads(app, upload_files)
+        if 'cvr_img' in params and params['cvr_img'] == 'true':
+            if 'photo' in request.files:
+                upload_type = 'photo'
 
-            filename = upload_files.save(request.files[upload_type])
-            splits = []
+                if len(request.files[upload_type].filename) > 64:
+                    return {'status':'error','description':'Filename is too long (Max 64bytes include extensions)'}, 403
+                upload_files = UploadSet('photos',IMAGES)
+                configure_uploads(app, upload_files)
 
-            for item in filename.split('.'):
-                splits.append(item)
-            extension = filename.split('.')[len(splits) -1]
+                filename = upload_files.save(request.files[upload_type])
+                splits = []
 
-            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
-            db.session.add(f)
+                for item in filename.split('.'):
+                    splits.append(item)
+                extension = filename.split('.')[len(splits) -1]
+
+                f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+                db.session.add(f)
+                db.session.flush()
+                db.session.refresh(f)
 
         bkt = Bucket(title=params['title'],
                      user_id=g.user.id,
@@ -619,9 +638,13 @@ class UserBucketAPI(Resource):
                      range=params['range'] if 'range' in params else None,
                      rpt_type=params['rpt_type'] if 'rpt_type' in params else None,
                      rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None,
-                     cvr_img_url=filename if params['cvr_img_url'] == 'attachment' else None)
+                     cvr_img_id=f.id if 'cvr_img' in params and params['cvr_img'] == 'true' else None)
 
         db.session.add(bkt)
+        db.session.flush()
+        db.session.refresh(bkt)
+        if 'cvr_img' in params and params['cvr_img'] == 'true':
+            p.bucket_id = bkt.id
         db.session.commit()
 
         return {'bucket': marshal(bkt, bucket_fields)}, 201

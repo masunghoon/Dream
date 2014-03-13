@@ -1,11 +1,10 @@
-#!flask/bin/python
 # makeplan.py
 
 import MySQLdb
 import sys
 
 # open a database connection
-connection = MySQLdb.connect (host="localhost", user="dream", passwd="bravo", db="dream_dev")
+connection = MySQLdb.connect (host="localhost", user="dream", passwd="bravo", db="test")
 
 # prepare a cursor object using cursor() method
 cursor = connection.cursor()
