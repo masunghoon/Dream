@@ -14,4 +14,12 @@ public class Code {
     final static public int ACT_ADD_BUCKET_DEFAULT_CARD = 3;
     final static public int ACT_MOD_BUCKET_DEFAULT_CARD = 4;
 
+    final static public int ACT_ADD_BUCKET_OPTION_DDAY = 5;
+    final static public int ACT_ADD_BUCKET_OPTION_DESCRIPTION = 6;
+    final static public int ACT_ADD_BUCKET_OPTION_REPEAT = 7;
+    final static public int ACT_ADD_BUCKET_TAKE_CAMERA = 8;
+    final static public int ACT_ADD_BUCKET_TAKE_GALLERY = 9;
+    final static public int ACT_ADD_BUCKET_CROP_FROM_CAMERA = 10;
+
+
 }

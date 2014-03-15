@@ -4,6 +4,7 @@ import com.vivavu.dream.handler.RestTemplateResponseErrorHandler;
 import com.vivavu.dream.model.user.User;
 
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJacksonHttpMessageConverter;
@@ -28,7 +29,8 @@ public class RestTemplateFactory {
             //ObjectMapper om = converter.getObjectMapper();
             //om.configure(DeserializationConfig.Feature.UNWRAP_ROOT_VALUE, true);
             //om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);//이부분은 json에 있는데 객체에 해당 대상이 없으면 그냥 넘기는 옵션
-
+            FormHttpMessageConverter formHttpMessageConverter = new FormHttpMessageConverter();
+            restTemplate.getMessageConverters().add(formHttpMessageConverter);
             GsonHttpMessageConverter gsonHttpMessageConverter = new GsonHttpMessageConverter();
             restTemplate.getMessageConverters().add(gsonHttpMessageConverter);
             restTemplate.setErrorHandler(new RestTemplateResponseErrorHandler());

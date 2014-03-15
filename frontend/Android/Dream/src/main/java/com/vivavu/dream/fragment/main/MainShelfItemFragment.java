@@ -39,6 +39,10 @@ public class MainShelfItemFragment extends CustomBaseFragment{
     View popupView;
     CustomPopupWindow mPopupWindow;
 
+    public MainShelfItemFragment() {
+        this.bucket = new Bucket();
+    }
+
     public static MainShelfItemFragment newInstance(Bucket bucket) {
         return new MainShelfItemFragment(bucket);
     }

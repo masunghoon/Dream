@@ -155,7 +155,6 @@ public class MainActivity extends BaseActionBarActivity {
         Intent intent;
         intent = new Intent();
         intent.setClass(this, BucketAddActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         startActivity(intent);
     }
 

@@ -76,5 +76,6 @@
     <string name="bucket_status_achievement">달성</string>
     <string name="bucket_status_seal">봉인</string>
     <string name="bucket_status_delete">삭제</string>
+    <string name="bucket_option_note_hint">버킷의 상세 설명을 입력하세요.</string>
 
 </resources>

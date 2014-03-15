@@ -48,8 +48,6 @@ public class BucketCardFragment extends CustomBaseFragment implements View.OnCli
     TextView mBucketItemRemain;
     @InjectView(R.id.bucket_item_progressbar)
     ProgressBar mBucketItemProgressbar;
-    @InjectView(R.id.imageView)
-    ImageView mImageView;
     @InjectView(R.id.bucket_option_note)
     EditText mBucketOptionNote;
     @InjectView(R.id.btn_option_remove)

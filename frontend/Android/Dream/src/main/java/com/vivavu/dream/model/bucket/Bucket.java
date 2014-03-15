@@ -5,6 +5,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.vivavu.dream.util.DateUtils;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -67,6 +68,8 @@ public class Bucket implements Serializable{
 
     @DatabaseField(defaultValue = "0")
     private int modFlag;
+
+    private File file;
 
     public Bucket(){
 
@@ -212,5 +215,58 @@ public class Bucket implements Serializable{
                 ", lastModDate=" + lastModDate +
                 ", modFlag=" + modFlag +
                 '}';
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Bucket)) return false;
+
+        Bucket bucket = (Bucket) o;
+
+        if (deadline != null ? !deadline.equals(bucket.deadline) : bucket.deadline != null)
+            return false;
+        if (description != null ? !description.equals(bucket.description) : bucket.description != null)
+            return false;
+        if (file != null ? !file.equals(bucket.file) : bucket.file != null) return false;
+        if (id != null ? !id.equals(bucket.id) : bucket.id != null) return false;
+        if (isPrivate != null ? !isPrivate.equals(bucket.isPrivate) : bucket.isPrivate != null)
+            return false;
+        if (range != null ? !range.equals(bucket.range) : bucket.range != null) return false;
+        if (rptCndt != null ? !rptCndt.equals(bucket.rptCndt) : bucket.rptCndt != null)
+            return false;
+        if (rptType != null ? !rptType.equals(bucket.rptType) : bucket.rptType != null)
+            return false;
+        if (scope != null ? !scope.equals(bucket.scope) : bucket.scope != null) return false;
+        if (status != null ? !status.equals(bucket.status) : bucket.status != null) return false;
+        if (title != null ? !title.equals(bucket.title) : bucket.title != null) return false;
+        if (userId != null ? !userId.equals(bucket.userId) : bucket.userId != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (userId != null ? userId.hashCode() : 0);
+        result = 31 * result + (deadline != null ? deadline.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (isPrivate != null ? isPrivate.hashCode() : 0);
+        result = 31 * result + (scope != null ? scope.hashCode() : 0);
+        result = 31 * result + (range != null ? range.hashCode() : 0);
+        result = 31 * result + (rptType != null ? rptType.hashCode() : 0);
+        result = 31 * result + (rptCndt != null ? rptCndt.hashCode() : 0);
+        result = 31 * result + (file != null ? file.hashCode() : 0);
+        return result;
     }
 }

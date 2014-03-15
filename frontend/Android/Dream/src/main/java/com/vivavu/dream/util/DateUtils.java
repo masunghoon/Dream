@@ -2,7 +2,7 @@ package com.vivavu.dream.util;
 
 import android.util.Log;
 
-import com.vivavu.dream.model.bucket.Dday;
+import com.vivavu.dream.model.bucket.option.OptionDDay;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -64,9 +64,9 @@ public class DateUtils {
         return percentage;
     }
 
-    public static List<Dday> getUserDdays(Date birthday){
+    public static List<OptionDDay> getUserDdays(Date birthday){
         Calendar cal = Calendar.getInstance();
-        List<Dday> ddays = new ArrayList<Dday>();
+        List<OptionDDay> ddays = new ArrayList<OptionDDay>();
 
         if(birthday != null){
             int ageInFull = getAgeInFull(birthday);
@@ -76,13 +76,13 @@ public class DateUtils {
             cal.add(Calendar.DATE, -1);
             for(int i = 0; i < 6; i++){
                 cal.add(Calendar.YEAR, 10 );
-                ddays.add(new Dday( (period + i*10) +"대" , cal.getTime()));
+                ddays.add(new OptionDDay( (period + i*10) +"대" , cal.getTime()));
             }
         } else {
             cal.add(Calendar.DATE, -1);
             for(int i = 0; i < 6; i++){
                 cal.add(Calendar.YEAR, 10 );
-                ddays.add(new Dday( (i+1)*10 +"년 후" , cal.getTime()));
+                ddays.add(new OptionDDay( (i+1)*10 +"년 후" , cal.getTime()));
             }
         }
 

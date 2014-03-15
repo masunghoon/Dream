@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
@@ -17,7 +18,6 @@ import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.BucketGroup;
-import com.vivavu.dream.model.bucket.BucketWrapped;
 import com.vivavu.dream.model.user.User;
 
 import org.springframework.http.HttpAuthentication;
@@ -162,60 +162,9 @@ public class DataRepository {
         return new ArrayList<Bucket>();
     }
 
-    public static Bucket getBucket(Integer id){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
 
-        HttpHeaders requestHeaders = getBasicAuthHeader();
 
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-        //HttpEntity request = new HttpEntity<String>( new HttpHeaders());
 
-        ResponseEntity<Bucket> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketInfo, HttpMethod.GET, request, Bucket.class, id);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Bucket bucket = result.getBody();
-
-        return bucket;
-    }
-
-    public static Bucket postBucketDefault(Bucket bucket, Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<Bucket>(bucket, requestHeaders);
-
-        ResponseEntity<BucketWrapped> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.POST, request, BucketWrapped.class, variable);
-            return result.getBody().getBucket();
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-        Log.d("dream", String.valueOf(result));
-
-        return null;
-    }
-
-    public static Bucket updateBucketInfo(Bucket bucket){
-        //return sendBucketInfo(Constants.apiBucketInfo, HttpMethod.PUT, bucket);
-
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<Bucket>(bucket, requestHeaders);
-
-        ResponseEntity<BucketWrapped> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketInfo, HttpMethod.PUT, request, BucketWrapped.class, bucket.getId());
-            return result.getBody().getBucket();
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-        Log.d("dream", String.valueOf(result));
-        return null;
-    }
 
     public static void deleteBucket(Integer bucketId){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
@@ -298,12 +247,16 @@ public class DataRepository {
     public static void saveBuckets(List<Bucket> list){
         deleteAllBuckets();
         for(Bucket bucket : list){
-            if(bucket.getId() != null) {
-                if (getDatabaseHelper().getBucketRuntimeDao().queryForId(bucket.getId()) != null) {
-                    getDatabaseHelper().getBucketRuntimeDao().update(bucket);
-                } else {
-                    getDatabaseHelper().getBucketRuntimeDao().create(bucket);
-                }
+            saveBucket(bucket);
+        }
+    }
+
+    public static void saveBucket(Bucket bucket){
+        if(bucket.getId() != null) {
+            if (getDatabaseHelper().getBucketRuntimeDao().queryForId(bucket.getId()) != null) {
+                getDatabaseHelper().getBucketRuntimeDao().update(bucket);
+            } else {
+                getDatabaseHelper().getBucketRuntimeDao().create(bucket);
             }
         }
     }
@@ -366,5 +319,17 @@ public class DataRepository {
         }
 
         return returnList;
+    }
+
+    public static Bucket getBucket(Integer id){
+        RuntimeExceptionDao<Bucket,Integer> bucketRuntimeDao = getDatabaseHelper().getBucketRuntimeDao();
+        Bucket bucket = null;
+        if(id != null) {
+            bucket = bucketRuntimeDao.queryForId(id);
+        }
+        if(bucket == null){
+            bucket = new Bucket();
+        }
+        return bucket;
     }
 }

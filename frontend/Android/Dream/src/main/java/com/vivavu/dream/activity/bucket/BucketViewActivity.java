@@ -25,7 +25,6 @@ import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.common.RepeatType;
 import com.vivavu.dream.common.Tag;
-import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.fragment.bucket.BucketOptionRepeatFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
@@ -39,7 +38,7 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 10.
  */
-public class BucketViewActivity extends BaseActionBarActivity implements BucketOptionRepeatFragment.OnOptionFragmentRemovedListener {
+public class BucketViewActivity extends BaseActionBarActivity {
     @InjectView(R.id.bucket_btn_done)
     Button mBucketBtnDone;
     @InjectView(R.id.bucket_item_title)
@@ -52,8 +51,6 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
     TextView mBucketItemRemain;
     @InjectView(R.id.bucket_item_progressbar)
     ProgressBar mBucketItemProgressbar;
-    @InjectView(R.id.imageView)
-    ImageView mImageView;
     @InjectView(R.id.bucket_option_note)
     EditText mBucketOptionNote;
     @InjectView(R.id.btn_option_remove)
@@ -146,12 +143,12 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
                 return true;
             case R.id.bucket_view_menu_save:
                 getOptionData();
-                if (DataRepository.updateBucketInfo(bucket) != null) {
+                /*if (DataRepository.updateBucketInfo(bucket) != null) {
                     Toast.makeText(this, "수정완료", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
                     Toast.makeText(this, "수정실패", Toast.LENGTH_SHORT).show();
-                }
+                }*/
                 return true;
             case R.id.bucket_view_menu_cancel:
                 finish();
@@ -381,16 +378,6 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
         }
     };
 
-    @Override
-    public void onOptionFragmentRemoved(String tag) {
-        CustomBaseFragment bucketOptionFragment = (CustomBaseFragment) getSupportFragmentManager().findFragmentByTag(tag);
-        if (bucketOptionFragment != null) {
-            getSupportFragmentManager().beginTransaction().remove(bucketOptionFragment).commit();
-        }
-        if (Tag.BUCKET_OPTION_FRAGMENT_REPEAT.equals(tag)) {
-            mBtnBucketOptionRepeat.setVisibility(View.VISIBLE);
-        }
-    }
 
     private void goAddBucket() {
         Intent intent;
