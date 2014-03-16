@@ -247,9 +247,7 @@ class UserListAPI(Resource):
 
     @auth.login_required
     def get(self):
-        # data = []
         u = User.query.all()
-        # return map(lambda t:marshal(t, user_fields), u)
         return {'status':'success',
                 'data':map(lambda t:marshal(t, user_fields), u)}, 200
 
@@ -320,7 +318,7 @@ class UserListAPI(Resource):
                                 'email': g.user.email,
                                 'birthday': g.user.birthday,
                                 'confirmed_at':g.user.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
-                        'token': token.decode('ascii')}}, 200
+                        'token': token.decode('ascii')}}, 201
 
 
 
@@ -329,27 +327,6 @@ api.add_resource(UserListAPI, '/api/users', endpoint='users')
 
 
 ##### about BUCKET / BUCKETLIST ####################################
-
-bucket_fields = {
-    'id': fields.Integer,
-    'user_id': fields.Integer,
-    'title': fields.String,
-    'description': fields.String,
-    'level': fields.String,
-    'status': fields.Integer,
-    'private': fields.Integer,
-    'reg_dt': fields.String,
-    'deadline': fields.String,
-    'scope': fields.String,
-    'range': fields.String,
-    'parent_id': fields.Integer,
-    'lst_mod_dt': fields.String,
-    'rpt_type': fields.String,
-    'rpt_cndt': fields.String,
-    'cvr_img_id': fields.Integer,
-    # 'cvr_img_url': fields.Url('file'),
-    'uri': fields.Url('bucket')
-}
 
 class BucketAPI(Resource):
     decorators = [auth.login_required]
@@ -381,13 +358,17 @@ class BucketAPI(Resource):
             'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
         }
 
-        return data, 200
+        return {'status':'success',
+                'description':'GET Success',
+                'data':data}, 200
 
     def put(self, id):
         if request.json:
             params = request.json
         elif request.form:
-            params = request.form
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
         else:
             return {'status':'error','description':'Request Failed'}, 500
 
@@ -399,7 +380,7 @@ class BucketAPI(Resource):
             value = None if params[key]=="" else params[key]
 
             # Editable Fields
-            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt','cvr_img']:
+            if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt']:
                 return {'status':'error','description':'Invalid key: '+key}, 403
 
             # Nobody can modify id, user_id, reg_dt
@@ -451,41 +432,59 @@ class BucketAPI(Resource):
                         p = Plan.query.filter_by(date=datetime.date.today().strftime("%Y%m%d"),bucket_id=id).first()
                         db.session.delete(p)
 
-            if key == 'cvr_img' and value == 'true':
-                if 'photo' in request.files:
-                    upload_type = 'photo'
-
-                    if len(request.files[upload_type].filename) > 64:
-                        return {'status':'error',
-                                'description':'Filename is too long (Max 64bytes include extensions)'}, 403
-                    upload_files = UploadSet('photos',IMAGES)
-                    configure_uploads(app, upload_files)
-
-                    filename = upload_files.save(request.files[upload_type])
-                    splits = []
-
-                    for item in filename.split('.'):
-                        splits.append(item)
-                    extension = filename.split('.')[len(splits) -1]
-
-                    f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
-                    db.session.add(f)
-                    db.session.flush()
-                    db.session.refresh(f)
-
-                    key = 'cvr_img_id'
-                    value = f.id
-
             setattr(b, key, value)
+
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error',
+                        'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+
+            setattr(b, 'cvr_img_id', f.id)
 
         b.lst_mod_dt = datetime.datetime.now()
         try:
             db.session.commit()
+            data={
+                'id': b.id,
+                'user_id': b.user_id,
+                'title': b.title,
+                'description': b.description,
+                'level': b.level,
+                'status': b.status,
+                'private': b.private,
+                'parent_id': b.parent_id,
+                'reg_dt': b.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'deadline': b.deadline.strftime("%Y-%m-%d"),
+                'scope': b.scope,
+                'range': b.range,
+                'rpt_type': b.rpt_type,
+                'rpt_cndt': b.rpt_cndt,
+                'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
+            }
+            return {'status':'success',
+                    'description':'Bucket put success.',
+                    'data':data}, 201
         except:
             db.session.rollback()
             return {'error':'Something went wrong'}, 500
 
-        return {'bucket': marshal(b, bucket_fields)}, 201
 
     def delete(self, id):
         b = Bucket.query.filter_by(id=id).first()
@@ -498,9 +497,10 @@ class BucketAPI(Resource):
             b.status = '9'
             b.lst_mod_dt = datetime.datetime.now()
             db.session.commit()
-            return {'status': 'success'}, 200
+            return {'status':'success'}, 200
         except:
-            return {'status': 'delete failed'}, 500
+            return {'status':'error',
+                    'description':'delete failed'}, 500
 
 
 class UserBucketAPI(Resource):
@@ -554,7 +554,8 @@ class UserBucketAPI(Resource):
     def post(self, id):
         u = User.query.filter_by(id=id).first()
         if u.id != g.user.id:
-            return {'error':'Unauthorized'}, 401
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
 
         if request.json:
             params = request.json
@@ -599,7 +600,6 @@ class UserBucketAPI(Resource):
                              lst_mod_dt=datetime.datetime.now())
                     db.session.add(p)
 
-        # if 'cvr_img' in params and params['cvr_img'] == 'true':
         if 'photo' in request.files:
             upload_type = 'photo'
 
@@ -640,12 +640,33 @@ class UserBucketAPI(Resource):
         db.session.add(bkt)
         db.session.flush()
         db.session.refresh(bkt)
-        # if 'cvr_img' in params and params['cvr_img'] == 'true':
+
         if 'photo' in request.files:
-            p.bucket_id = bkt.id
+            f.bucket_id = bkt.id
         db.session.commit()
 
-        return {'bucket': marshal(bkt, bucket_fields)}, 201
+        data={
+            'id': bkt.id,
+            'user_id': bkt.user_id,
+            'title': bkt.title,
+            'description': bkt.description,
+            'level': bkt.level,
+            'status': bkt.status,
+            'private': bkt.private,
+            'parent_id': bkt.parent_id,
+            'reg_dt': bkt.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            'deadline': bkt.deadline.strftime("%Y-%m-%d"),
+            'scope': bkt.scope,
+            'range': bkt.range,
+            'rpt_type': bkt.rpt_type,
+            'rpt_cndt': bkt.rpt_cndt,
+            'lst_mod_dt': None if bkt.lst_mod_dt is None else bkt.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            'cvr_img_url': None if bkt.cvr_img_id is None else photos.url(File.query.filter_by(id=bkt.cvr_img_id).first().name)
+        }
+
+        return {'status':'success',
+                'description':'Bucket put success.',
+                'data':data}, 201
 
 
 api.add_resource(BucketAPI, '/api/bucket/<int:id>', endpoint='bucket')
@@ -773,7 +794,7 @@ class UploadFiles(Resource):
         return {'status':'success',
                 'description':'Upload Succeeded',
                 'data':{'id':f.id,
-                        'url':upload_files.url(f.name)}}
+                        'url':upload_files.url(f.name)}}, 201
 
 
 api.add_resource(UploadFiles, '/api/file', endpoint='uploadFiles')
