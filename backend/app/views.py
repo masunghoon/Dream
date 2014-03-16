@@ -39,158 +39,28 @@ def get_locale():
     return request.accept_languages.best_match(LANGUAGES.keys())
 
 
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/index', methods=['GET', 'POST'])
-@app.route('/index/<int:page>', methods=['GET', 'POST'])
-@auth.login_required
-def index(page=1):
-    form = PostForm()
-    if form.validate_on_submit():
-        language = guessLanguage(form.post.data)
-        if language == 'UNKNOWN' or len(language) > 5:
-            language = ''
-        post = Post(body=form.post.data, timestamp=datetime.utcnow(), author=g.user, language=language)
-        db.session.add(post)
-        db.session.commit()
-        flash('Your post is now live!')
-        return redirect(url_for('index'))
-    posts = g.user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
-    return render_template("index.html", title='Home', form=form, posts=posts)
+##### VIEW ##################################################
+@app.route('/')
+@app.route('/index')
+def index():
+    return render_template('index.html', title='index')
 
 
-@app.route('/delete/<int:id>')
-@auth.login_required
-def delete(id):
-    post = Post.query.get(id)
-    if post is None:
-        flash('Post not found.')
-        return redirect(url_for('index'))
-    if post.author.id != g.user.id:
-        flash('You cannot delete this post.')
-        return redirect(url_for('index'))
-    db.session.delete(post)
-    db.session.commit()
-    flash('Your post has been deleted.')
-    return redirect(url_for('index'))
+@app.route('/login_new')
+def login():
+    return render_template('login.html', title='Login')
 
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if g.user is not None and g.user.is_authenticated():
-        return redirect(url_for('index'))
-    form = RegisterForm()
-    if form.validate_on_submit():
-        u = User(email=form.email.data,
-                 username=form.username.data,
-                 password=generate_password_hash(form.password.data))
-        db.session.add(u)
-        db.session.commit()
-        return redirect(url_for('index'))
-    return render_template('register.html', title='Register', form=form)
-
-
-@app.route('/login_old', methods=['GET', 'POST'])
-def login_old():
-    if g.user is not None and g.user.is_authenticated():
-        return redirect(url_for('index'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if not check_password_hash(user.password, form.password.data):
-            if user.login_fault < 5:
-                user.login_fault += 1
-                db.session.commit()
-                print user.login_fault
-                return redirect(url_for('login'))
-            else:
-                print "ID " + user.email + " Blocked!!"
-                return redirect(url_for('login'))
-                #         if login_error_cnt > 5:
-                #             print login_error_cnt
-                #             user.is_blocked = 1
-                #             return redirect(url_for('index'))
-        else:
-            session_user = db.session.query(User).filter_by(email=form.email.data).first()
-            login_user(session_user)
-            user.login_fault = 0
-            db.session.commit()
-            flash('You were logged in')
-            return redirect(url_for('index'))
-    return render_template('login_old.html', title='Login', form=form)
-
-
-@app.route('/logout')
+@app.route('/logout_new')
 def logout():
-    logout_user()
-    return redirect(url_for('index'))
+    return render_template('index.html', title='Index', action='logout')
+    # logout_user()
+    # return redirect(url_for('index'))
 
 
-@app.route('/userprofile/<username>')
-@app.route('/userprofile/<username>/<int:page>')
-@auth.login_required
-def userprofile(username, page=1):
-    user = User.query.filter_by(username=username).first()
-    if user is None:
-        flash(gettext('User %(username)s not found.', username=username))
-        return redirect(url_for('index'))
-    posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
-    return render_template('user.html', user=user, posts=posts)
-
-
-@app.route('/edit', methods=['GET', 'POST'])
-@auth.login_required
-def edit():
-    form = EditForm(g.user.username)
-    if form.validate_on_submit():
-        g.user.username = form.username.data
-        g.user.about_me = form.about_me.data
-        db.session.add(g.user)
-        db.session.commit()
-        flash('Your changes have been saved.')
-        return redirect(url_for('edit'))
-    else:
-        form.username.data = g.user.username
-        form.about_me.data = g.user.about_me
-    return render_template('edit.html', form=form)
-
-
-@app.route('/follow/<username>')
-def follow(username):
-    user = User.query.filter_by(username=username).first()
-    if user is None:
-        flash('User ' + username + ' not found.')
-        return redirect(url_for('index'))
-    if user == g.user:
-        flash('You can\'t follow yourself!')
-        return redirect(url_for('user', username=username))
-    u = g.user.follow(user)
-    if u is None:
-        flash('Cannot follow ' + username + '.')
-        return redirect(url_for('user', username=username))
-    db.session.add(u)
-    db.session.commit()
-    flash('You are now following ' + username + '!')
-    follower_notification(user, g.user)
-    return redirect(url_for('userprofile', username=g.user.username))
-
-
-@app.route('/unfollow/<username>')
-def unfollow(username):
-    user = User.query.filter_by(username=username).first()
-    if user is None:
-        flash('User ' + username + ' not found.')
-        return redirect(url_for('index'))
-    if g.user == user:
-        flash('You can\'t unfollow yourself!')
-        return redirect(url_for('user', username=username))
-    u = g.user.unfollow(user)
-    if u is None:
-        flash('Cannot unfollow ' + username + '.')
-        return redirect(url_for('user', username=username))
-    db.session.add(u)
-    db.session.commit()
-    flash('You have stopped following ' + username + '.')
-    return redirect(url_for('userprofile', username=g.user.username))
+@app.route('/register')
+def register():
+    return render_template('register.html', title='Register')
 
 
 ##### SEARCHING #############################################
@@ -252,44 +122,7 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 
-##### Routes for RESTful API #################################
-@app.route('/user/<string:username>/bucketlist')
-@auth.login_required
-def show_buckets(username=None):
-    if not username:
-        user = g.user
-    else:
-        user = User.query.filter_by(username=username).first()
-    return render_template('bucketlist.html', user=user)
-
-
-@app.route('/user/<string:username>/bucket/<int:id>')
-def bucketdetail(username, id):
-    bkt = Bucket.query.filter_by(id=id).first()
-    if bkt.parent_id:
-        return jsonify({'status': 'error'}), 400
-    return render_template('bucketdetail.html', bucket=bkt)
-
-
-@app.route('/html5study')
-def html5_study():
-    return render_template('html5study/studyMain.html')
-
-
-@app.route('/html5study/<string:id>')
-def uri_redirect(id):
-    return render_template('html5study/' + id + '.html')
-
-
 ##### Authentication #######################################
-@app.route('/login_new')
-def login_new():
-    return render_template('login.html', title='Login')
-
-@app.route('/register_new')
-def register_new():
-    return render_template('register_new.html', title='Register')
-
 @app.route('/api/token')
 @auth.login_required
 def get_auth_token():
@@ -339,6 +172,8 @@ def verify_password(username_or_token, password):
             return False
         if not user.verify_password(password):
             return False
+
+    print user
     g.user = user
     return True
 
@@ -439,3 +274,148 @@ def show(id):
     return render_template('show.html', url=url, photo=f)
 
 
+##### DO NOT USE ANYMORE ############################################
+@app.route('/userprofile/<username>')
+@app.route('/userprofile/<username>/<int:page>')
+@auth.login_required
+def userprofile(username, page=1):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash(gettext('User %(username)s not found.', username=username))
+        return redirect(url_for('index'))
+    posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
+    return render_template('user.html', user=user, posts=posts)
+
+
+@app.route('/edit', methods=['GET', 'POST'])
+@auth.login_required
+def edit():
+    form = EditForm(g.user.username)
+    if form.validate_on_submit():
+        g.user.username = form.username.data
+        g.user.about_me = form.about_me.data
+        db.session.add(g.user)
+        db.session.commit()
+        flash('Your changes have been saved.')
+        return redirect(url_for('edit'))
+    else:
+        form.username.data = g.user.username
+        form.about_me.data = g.user.about_me
+    return render_template('edit.html', form=form)
+
+
+@app.route('/follow/<username>')
+def follow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User ' + username + ' not found.')
+        return redirect(url_for('index'))
+    if user == g.user:
+        flash('You can\'t follow yourself!')
+        return redirect(url_for('user', username=username))
+    u = g.user.follow(user)
+    if u is None:
+        flash('Cannot follow ' + username + '.')
+        return redirect(url_for('user', username=username))
+    db.session.add(u)
+    db.session.commit()
+    flash('You are now following ' + username + '!')
+    follower_notification(user, g.user)
+    return redirect(url_for('userprofile', username=g.user.username))
+
+
+@app.route('/unfollow/<username>')
+def unfollow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User ' + username + ' not found.')
+        return redirect(url_for('index'))
+    if g.user == user:
+        flash('You can\'t unfollow yourself!')
+        return redirect(url_for('user', username=username))
+    u = g.user.unfollow(user)
+    if u is None:
+        flash('Cannot unfollow ' + username + '.')
+        return redirect(url_for('user', username=username))
+    db.session.add(u)
+    db.session.commit()
+    flash('You have stopped following ' + username + '.')
+    return redirect(url_for('userprofile', username=g.user.username))
+
+
+# @app.route('/index', methods=['GET', 'POST'])
+# @app.route('/index/<int:page>', methods=['GET', 'POST'])
+# @auth.login_required
+# def index(page=1):
+#     form = PostForm()
+#     if form.validate_on_submit():
+#         language = guessLanguage(form.post.data)
+#         if language == 'UNKNOWN' or len(language) > 5:
+#             language = ''
+#         post = Post(body=form.post.data, timestamp=datetime.utcnow(), author=g.user, language=language)
+#         db.session.add(post)
+#         db.session.commit()
+#         flash('Your post is now live!')
+#         return redirect(url_for('index'))
+#     posts = g.user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
+#     return render_template("index.html", title='Home', form=form, posts=posts)
+
+
+# @app.route('/delete/<int:id>')
+# @auth.login_required
+# def delete(id):
+#     post = Post.query.get(id)
+#     if post is None:
+#         flash('Post not found.')
+#         return redirect(url_for('index'))
+#     if post.author.id != g.user.id:
+#         flash('You cannot delete this post.')
+#         return redirect(url_for('index'))
+#     db.session.delete(post)
+#     db.session.commit()
+#     flash('Your post has been deleted.')
+#     return redirect(url_for('index'))
+
+
+# @app.route('/register_old', methods=['GET', 'POST'])
+# def register_old():
+#     if g.user is not None and g.user.is_authenticated():
+#         return redirect(url_for('index'))
+#     form = RegisterForm()
+#     if form.validate_on_submit():
+#         u = User(email=form.email.data,
+#                  username=form.username.data,
+#                  password=generate_password_hash(form.password.data))
+#         db.session.add(u)
+#         db.session.commit()
+#         return redirect(url_for('index'))
+#     return render_template('register.html', title='Register', form=form)
+
+
+# def login_old():
+#     if g.user is not None and g.user.is_authenticated():
+#         return redirect(url_for('index'))
+#     form = LoginForm()
+#     if form.validate_on_submit():
+#         user = User.query.filter_by(email=form.email.data).first()
+#         if not check_password_hash(user.password, form.password.data):
+#             if user.login_fault < 5:
+#                 user.login_fault += 1
+#                 db.session.commit()
+#                 print user.login_fault
+#                 return redirect(url_for('login'))
+#             else:
+#                 print "ID " + user.email + " Blocked!!"
+#                 return redirect(url_for('login'))
+#                 #         if login_error_cnt > 5:
+#                 #             print login_error_cnt
+#                 #             user.is_blocked = 1
+#                 #             return redirect(url_for('index'))
+#         else:
+#             session_user = db.session.query(User).filter_by(email=form.email.data).first()
+#             login_user(session_user)
+#             user.login_fault = 0
+#             db.session.commit()
+#             flash('You were logged in')
+#             return redirect(url_for('index'))
+#     return render_template('login_old.html', title='Login', form=form)
