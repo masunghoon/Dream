@@ -172,7 +172,7 @@ class UserAPI(Resource):
         u = User.query.filter_by(id=id).first()
         # return marshal(u, user_fields), 200
         return {'status':'success',
-                        'data':marshal(u, user_fields)}, 200
+                  'data':marshal(u, user_fields)}, 200
     #modify My User Profile
     def put(self, id):
         if request.json:
@@ -261,9 +261,6 @@ class UserListAPI(Resource):
         else:
             return {'status':'error',
                     'description':'Request Failed!'}, 400
-
-        print params['email'];
-        print params['password'];
 
         # Check Requirements <Email, Password>
         if not 'email' in params:
@@ -602,26 +599,26 @@ class UserBucketAPI(Resource):
                              lst_mod_dt=datetime.datetime.now())
                     db.session.add(p)
 
-        if 'cvr_img' in params and params['cvr_img'] == 'true':
-            if 'photo' in request.files:
-                upload_type = 'photo'
+        # if 'cvr_img' in params and params['cvr_img'] == 'true':
+        if 'photo' in request.files:
+            upload_type = 'photo'
 
-                if len(request.files[upload_type].filename) > 64:
-                    return {'status':'error','description':'Filename is too long (Max 64bytes include extensions)'}, 403
-                upload_files = UploadSet('photos',IMAGES)
-                configure_uploads(app, upload_files)
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error','description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
 
-                filename = upload_files.save(request.files[upload_type])
-                splits = []
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
 
-                for item in filename.split('.'):
-                    splits.append(item)
-                extension = filename.split('.')[len(splits) -1]
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
 
-                f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
-                db.session.add(f)
-                db.session.flush()
-                db.session.refresh(f)
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
 
         bkt = Bucket(title=params['title'],
                      user_id=g.user.id,
@@ -630,7 +627,7 @@ class UserBucketAPI(Resource):
                      private=params['private'] if 'private' in params else False,
                      reg_dt=datetime.datetime.now(),
                      lst_mod_dt=datetime.datetime.now(),
-                     deadline=datetime.strptime(params['deadline'],'%Y/%m/%d').date() if 'deadline' in params \
+                     deadline=datetime.datetime.strptime(params['deadline'],'%Y-%m-%d').date() if 'deadline' in params \
                                                                                       else datetime.datetime.now(),
                      description=params['description'] if 'description' in params else None,
                      parent_id=params['parent_id'] if 'parent_id' in params else None,
@@ -638,12 +635,13 @@ class UserBucketAPI(Resource):
                      range=params['range'] if 'range' in params else None,
                      rpt_type=params['rpt_type'] if 'rpt_type' in params else None,
                      rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None,
-                     cvr_img_id=f.id if 'cvr_img' in params and params['cvr_img'] == 'true' else None)
-
+                     cvr_img_id=f.id if 'photo' in request.files else None)
+                     # cvr_img_id=f.id if 'cvr_img' in params and params['cvr_img'] == 'true' else None)
         db.session.add(bkt)
         db.session.flush()
         db.session.refresh(bkt)
-        if 'cvr_img' in params and params['cvr_img'] == 'true':
+        # if 'cvr_img' in params and params['cvr_img'] == 'true':
+        if 'photo' in request.files:
             p.bucket_id = bkt.id
         db.session.commit()
 
