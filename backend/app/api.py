@@ -642,7 +642,7 @@ class UserBucketAPI(Resource):
         db.session.refresh(bkt)
 
         if 'photo' in request.files:
-            f.bucket_id = bkt.id
+            p.bucket_id = bkt.id
         db.session.commit()
 
         data={
@@ -665,7 +665,7 @@ class UserBucketAPI(Resource):
         }
 
         return {'status':'success',
-                'description':'Bucket put success.',
+                'description':'Bucket posted successfully.',
                 'data':data}, 201
 
 
