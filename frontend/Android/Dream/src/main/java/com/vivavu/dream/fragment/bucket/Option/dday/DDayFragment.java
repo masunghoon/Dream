@@ -1,4 +1,4 @@
-package com.vivavu.dream.fragment.bucket;
+package com.vivavu.dream.fragment.bucket.option.dday;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -11,6 +11,7 @@ import android.widget.DatePicker;
 import android.widget.LinearLayout;
 
 import com.vivavu.dream.R;
+import com.vivavu.dream.fragment.bucket.option.OptionBaseFragment;
 import com.vivavu.dream.model.bucket.option.OptionDDay;
 import com.vivavu.dream.util.DateUtils;
 
@@ -23,7 +24,7 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 24.
  */
-public class BucketOptionDDayFragment extends OptionBaseFragment<OptionDDay> implements View.OnClickListener{
+public class DDayFragment extends OptionBaseFragment<OptionDDay> implements View.OnClickListener{
     @InjectView(R.id.btn_bucket_option_dday)
     Button mBtnBucketOptionDday;
     @InjectView(R.id.btn_range_1)
@@ -55,7 +56,7 @@ public class BucketOptionDDayFragment extends OptionBaseFragment<OptionDDay> imp
     @InjectView(R.id.layout_bucket_option_note)
     LinearLayout mLayoutBucketOptionNote;
 
-    public BucketOptionDDayFragment(OptionDDay originalData) {
+    public DDayFragment(OptionDDay originalData) {
         super(originalData);
     }
 
@@ -145,14 +146,14 @@ public class BucketOptionDDayFragment extends OptionBaseFragment<OptionDDay> imp
         getActivity().finish();
     }
 
-    public void bindData() {
+    @Override
+    public void update() {
 
     }
 
     @Override
-    public OptionDDay getContents() {
+    public void bind() {
 
-        return userInput;
     }
 
     private void makeDdaysButtonUi(List<OptionDDay> ddays) {

@@ -1,4 +1,4 @@
-package com.vivavu.dream.fragment.bucket;
+package com.vivavu.dream.fragment.bucket.option.description;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.vivavu.dream.R;
+import com.vivavu.dream.fragment.bucket.option.OptionBaseFragment;
 import com.vivavu.dream.model.bucket.option.OptionDescription;
 
 import butterknife.ButterKnife;
@@ -17,7 +18,8 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 24.
  */
-public class BucketOptionDescriptionFragment extends OptionBaseFragment<OptionDescription> implements View.OnClickListener {
+public class DescriptionFragment extends OptionBaseFragment<OptionDescription> implements View.OnClickListener {
+    public static final String TAG = "com.vivavu.dream.fragment.bucket.option.description.DescriptionFragment";
 
     @InjectView(R.id.btn_bucket_option_note)
     Button mBtnBucketOptionNote;
@@ -26,7 +28,7 @@ public class BucketOptionDescriptionFragment extends OptionBaseFragment<OptionDe
     @InjectView(R.id.layout_bucket_option_note)
     LinearLayout mLayoutBucketOptionNote;
 
-    public BucketOptionDescriptionFragment(OptionDescription originalData) {
+    public DescriptionFragment(OptionDescription originalData) {
         super(originalData);
     }
 
@@ -39,8 +41,7 @@ public class BucketOptionDescriptionFragment extends OptionBaseFragment<OptionDe
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        bindData();
+        update();
     }
 
     @Override
@@ -60,14 +61,15 @@ public class BucketOptionDescriptionFragment extends OptionBaseFragment<OptionDe
         }
     }
 
-    public void bindData() {
-        mBucketOptionNote.setText(userInput.getDescription());
+    @Override
+    public void update() {
+        mBucketOptionNote.setText(contents.getDescription());
     }
 
     @Override
-    public OptionDescription getContents() {
-        userInput.setDescription(mBucketOptionNote.getText().toString());
-        return userInput;
+    public void bind() {
+        contents.setDescription(mBucketOptionNote.getText().toString());
     }
+
 
 }

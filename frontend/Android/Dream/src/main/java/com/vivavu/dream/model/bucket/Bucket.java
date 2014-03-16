@@ -69,6 +69,9 @@ public class Bucket implements Serializable{
     @DatabaseField(defaultValue = "0")
     private int modFlag;
 
+    @DatabaseField
+    @SerializedName("cvr_img_id")
+    private Integer cvrImgId;
     private File file;
 
     public Bucket(){
@@ -195,6 +198,14 @@ public class Bucket implements Serializable{
 
     public void setModFlag(int modFlag) {
         this.modFlag = modFlag;
+    }
+
+    public Integer getCvrImgId() {
+        return cvrImgId;
+    }
+
+    public void setCvrImgId(Integer cvrImgId) {
+        this.cvrImgId = cvrImgId;
     }
 
     @Override

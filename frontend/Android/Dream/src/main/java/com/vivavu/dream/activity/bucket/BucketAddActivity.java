@@ -29,6 +29,8 @@ import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RepeatType;
+import com.vivavu.dream.fragment.bucket.option.description.DescriptionViewFragment;
+import com.vivavu.dream.fragment.bucket.option.repeat.RepeatViewFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.BucketWrapped;
@@ -237,10 +239,14 @@ public class BucketAddActivity extends BaseActionBarActivity {
     private void updateUiData(OptionRepeat repeat) {
         bucket.setRptType(repeat.getRepeatType().getCode());
         bucket.setRptCndt(repeat.getOptionStat());
+
+        bindData();
     }
 
     private void updateUiData(OptionDescription description) {
         bucket.setDescription(description.getDescription());
+
+        bindData();
     }
 
     private void addEventListener() {
@@ -273,39 +279,82 @@ public class BucketAddActivity extends BaseActionBarActivity {
         mTextInputDday.setText(bucket.getRange());
         mTextInputRemain.setText(bucket.getRemainDays());
         mBucketInputTitle.setText(bucket.getTitle());
+        DescriptionViewFragment descriptionViewFragment = (DescriptionViewFragment) getSupportFragmentManager().findFragmentByTag(DescriptionViewFragment.TAG);
+        if(bucket.getDescription() != null ){
+            OptionDescription option = new OptionDescription(bucket.getDescription());
+            if (descriptionViewFragment == null) {
+                descriptionViewFragment = new DescriptionViewFragment(option);
+                getSupportFragmentManager().beginTransaction().add(R.id.option_contents, descriptionViewFragment, DescriptionViewFragment.TAG).commit();
+            } else {
+                descriptionViewFragment.setContents(option);
+            }
+            mBtnBucketOptionNote.setVisibility(View.GONE);
+        }else{
+            if (descriptionViewFragment != null) {
+                getSupportFragmentManager().beginTransaction().remove(descriptionViewFragment).commit();
+            }
+            mBtnBucketOptionNote.setVisibility(View.VISIBLE);
+        }
+        RepeatViewFragment repeatFragment = (RepeatViewFragment) getSupportFragmentManager().findFragmentByTag(RepeatViewFragment.TAG);
+        if (bucket.getRptType() != null) {
+            OptionRepeat option = new OptionRepeat(RepeatType.fromCode(bucket.getRptType()), bucket.getRptCndt());
+            if (repeatFragment == null) {
+                repeatFragment = new RepeatViewFragment(option);
+                getSupportFragmentManager().beginTransaction().add(R.id.option_contents, repeatFragment, RepeatViewFragment.TAG).commit();
+            } else {
+                repeatFragment.setContents(option);
+            }
+            mBtnBucketOptionRepeat.setVisibility(View.GONE);
+        } else {
+            if (repeatFragment != null) {
+                getSupportFragmentManager().beginTransaction().remove(repeatFragment).commit();
+            }
+            mBtnBucketOptionRepeat.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
     public void onClick(View view) {
         super.onClick(view);
         if(view == mBtnInputDday){
-            Intent intent = new Intent();
-            intent.setClass(this, BucketOptionActivity.class);
-            OptionDDay dDay = new OptionDDay(bucket.getRange(), bucket.getDeadline());
-            intent.putExtra("option", dDay);
-            startActivityForResult(intent, Code.ACT_ADD_BUCKET_OPTION_DDAY);
+            goOptionDday();
         }else if(view == mBtnBucketOptionNote){
-            Intent intent = new Intent();
-            intent.setClass(this, BucketOptionActivity.class);
-            OptionDescription description = new OptionDescription(bucket.getDescription());
-            intent.putExtra("option", description);
-            startActivityForResult(intent, Code.ACT_ADD_BUCKET_OPTION_DESCRIPTION);
+            goOptionDescription();
 
         } else if(view == mBtnBucketOptionRepeat){
-            Intent intent = new Intent();
-            intent.setClass(this, BucketOptionActivity.class);
-            OptionRepeat repeat = new OptionRepeat();
-            repeat.setRepeatType(RepeatType.fromCode(bucket.getRptType()));
-            repeat.setOptionStat(bucket.getRptCndt());
-            intent.putExtra("option", repeat);
-            startActivityForResult(intent, Code.ACT_ADD_BUCKET_OPTION_REPEAT);
+            goOptionRepeat();
         } else if(view == mBtnBucketOptionPublic){
-
+            mBtnBucketOptionPublic.setSelected(!mBtnBucketOptionPublic.isSelected());
+            bucket.setIsPrivate( mBtnBucketOptionPublic.isSelected() ? 1 : 0 );
         } else if(view == mBtnBucketOptionPic) {
             doTakePhotoAction();
         } else if( view == mBtnBucketOptionGallery ) {
             doTakeAlbumAction();
         }
+    }
+
+    public void goOptionRepeat() {
+        Intent intent = new Intent();
+        intent.setClass(this, BucketOptionActivity.class);
+        OptionRepeat repeat = new OptionRepeat(RepeatType.fromCode(bucket.getRptType()), bucket.getRptCndt());
+        intent.putExtra("option", repeat);
+        startActivityForResult(intent, Code.ACT_ADD_BUCKET_OPTION_REPEAT);
+    }
+
+    public void goOptionDescription() {
+        Intent intent = new Intent();
+        intent.setClass(this, BucketOptionActivity.class);
+        OptionDescription description = new OptionDescription(bucket.getDescription());
+        intent.putExtra("option", description);
+        startActivityForResult(intent, Code.ACT_ADD_BUCKET_OPTION_DESCRIPTION);
+    }
+
+    public void goOptionDday() {
+        Intent intent = new Intent();
+        intent.setClass(this, BucketOptionActivity.class);
+        OptionDDay dDay = new OptionDDay(bucket.getRange(), bucket.getDeadline());
+        intent.putExtra("option", dDay);
+        startActivityForResult(intent, Code.ACT_ADD_BUCKET_OPTION_DDAY);
     }
 
     TextWatcher textWatcherInput = new TextWatcher() {
@@ -417,9 +466,9 @@ public class BucketAddActivity extends BaseActionBarActivity {
             if(params != null && params.length > 0){
                 Bucket param = params[0];
                 if(param.getId() != null && param.getId() > 0) {
-                    responseBodyWrapped = connector.postBucketDefault(params[0]);
-                }else{
                     responseBodyWrapped = connector.updateBucketInfo(params[0]);
+                }else{
+                    responseBodyWrapped = connector.postBucketDefault(params[0]);
                 }
             }
 
@@ -438,10 +487,12 @@ public class BucketAddActivity extends BaseActionBarActivity {
                         Intent intent = new Intent();
                         intent.putExtra("bucketId", (Integer) bucket.getId());
                         setResult(RESULT_OK, intent);
+                        finish();
                     }
                 }
+            }else {
+                Toast.makeText(BucketAddActivity.this, modString + "실패하였습니다. 다시 시도해주세요.", Toast.LENGTH_LONG).show();
             }
-            super.onPostExecute(bucketWrappedResponseBodyWrapped);
         }
     }
 
@@ -453,9 +504,9 @@ public class BucketAddActivity extends BaseActionBarActivity {
     public void confirm(){
         Bucket compare = DataRepository.getBucket(bucket.getId());
         if(!compare.equals(bucket)) {
-            AlertDialog.Builder alert_confirm = new AlertDialog.Builder(this);
-            alert_confirm.setTitle("내용 변경 확인");
-            alert_confirm.setMessage("변경한 내용을 저장하시겠습니까?").setCancelable(false).setPositiveButton("예",
+            AlertDialog.Builder alertConfirm = new AlertDialog.Builder(this);
+            alertConfirm.setTitle("내용 변경 확인");
+            alertConfirm.setMessage("변경한 내용을 저장하시겠습니까?").setCancelable(false).setPositiveButton("예",
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -471,7 +522,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
                         }
                     }
             );
-            AlertDialog alert = alert_confirm.create();
+            AlertDialog alert = alertConfirm.create();
             alert.show();
         } else {
             finish();

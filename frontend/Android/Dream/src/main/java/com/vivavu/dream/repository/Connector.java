@@ -105,7 +105,7 @@ public class Connector {
 
         ResponseEntity<String> resultString = null;
         try {
-            resultString = restTemplate.exchange(Constants.apiBuckets, HttpMethod.POST, request, String.class, variable);
+            resultString = restTemplate.exchange(Constants.apiBuckets, HttpMethod.POST, request, String.class, getContext().getUser().getId());
 
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
@@ -115,8 +115,10 @@ public class Connector {
 
         if(RestTemplateUtils.isAvailableParseToJson(resultString)){
             Gson gson = JsonFactory.getInstance();
-            Type type = new TypeToken<ResponseBodyWrapped<BucketWrapped>>(){}.getType();
-            result = gson.fromJson((String) resultString.getBody(), type);
+            Type type = new TypeToken<BucketWrapped>(){}.getType();
+            BucketWrapped bucketWrapped = gson.fromJson((String) resultString.getBody(), type);
+            result.setData(bucketWrapped);
+            result.setStatus("success");
         }
 
         return result;

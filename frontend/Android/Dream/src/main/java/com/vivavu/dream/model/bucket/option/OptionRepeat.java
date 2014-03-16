@@ -176,4 +176,25 @@ public class OptionRepeat extends Option {
                 ", period=" + period +
                 '}';
     }
+
+    public String getOptionContents(){
+        StringBuilder sb = new StringBuilder();
+       if(repeatType == RepeatType.WKRP){
+
+            sb.append(isSun()?"일":"");
+            sb.append(isMon()?"월":"");
+            sb.append(isTue()?"화":"");
+            sb.append(isWen()?"수":"");
+            sb.append(isThu()?"목":"");
+            sb.append(isFri()?"금":"");
+            sb.append(isSat()?"토":"");
+
+            sb.append(repeatType.getValue());
+        } else {
+            sb.append(repeatCount);
+            sb.append("th");
+            sb.append(repeatType.getValue());
+        }
+        return sb.toString();
+    }
 }

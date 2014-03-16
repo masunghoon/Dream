@@ -135,37 +135,6 @@ public class DataRepository {
         return new ResponseBodyWrapped<BaseInfo>();
     }
 
-    public static List<Bucket>  getBuckets() {
-        return getBuckets(context.getUser().getId());
-    }
-    public static List<Bucket> getBuckets(Integer userId) {
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        //Users users = restTemplate.getForObject(Constants.apiUsers, Users.class);
-        ResponseEntity<String> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.GET, request, String.class, userId);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        if(result != null){
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-            Type type = new TypeToken<ResponseBodyWrapped<ArrayList<Bucket>>>(){}.getType();
-            //ResponseBodyWrapped<ArrayList<Bucket>> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
-        }
-
-        return new ArrayList<Bucket>();
-    }
-
-
-
-
-
     public static void deleteBucket(Integer bucketId){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader();

@@ -25,7 +25,7 @@ import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.common.RepeatType;
 import com.vivavu.dream.common.Tag;
-import com.vivavu.dream.fragment.bucket.BucketOptionRepeatFragment;
+import com.vivavu.dream.fragment.bucket.option.repeat.RepeatFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
 import com.vivavu.dream.repository.DataRepository;
@@ -315,7 +315,7 @@ public class BucketViewActivity extends BaseActionBarActivity {
     private void getOptionData() {
         //옵션에서의 내용들 읽어오기
         // 반복설정
-        BucketOptionRepeatFragment repeatFragment = (BucketOptionRepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
+        RepeatFragment repeatFragment = (RepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
         if (repeatFragment != null) {
             OptionRepeat repeat = repeatFragment.getContents();
             bucket.setRptType(repeat.getRepeatType().getCode());
@@ -329,13 +329,13 @@ public class BucketViewActivity extends BaseActionBarActivity {
 
     private void addOptionRepeat() {
 
-        BucketOptionRepeatFragment bucketOptionReaptFragment = (BucketOptionRepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
+        RepeatFragment bucketOptionReaptFragment = (RepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
         if (bucketOptionReaptFragment == null) {
             if (bucket.getRptType() != null) {
                 OptionRepeat optionRepeat = new OptionRepeat();
                 optionRepeat.setRepeatType(RepeatType.fromCode(bucket.getRptType()));
                 optionRepeat.setOptionStat(bucket.getRptCndt());
-                bucketOptionReaptFragment = new BucketOptionRepeatFragment(optionRepeat);
+                bucketOptionReaptFragment = new RepeatFragment(optionRepeat);
                 getSupportFragmentManager().beginTransaction()
                         .add(mFragmentBucketOptionRepeat.getId(), bucketOptionReaptFragment, Tag.BUCKET_OPTION_FRAGMENT_REPEAT)
                         .commit();
