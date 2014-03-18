@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.facebook.Session;
@@ -165,6 +166,16 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
                 return;
         }*/
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public class CheckLoginTesk extends AsyncTask<Void, Void, Void>{

@@ -1,11 +1,13 @@
 package com.vivavu.dream.activity.bucket;
 
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -17,9 +19,11 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,7 +37,6 @@ import com.vivavu.dream.fragment.bucket.option.description.DescriptionViewFragme
 import com.vivavu.dream.fragment.bucket.option.repeat.RepeatViewFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.model.bucket.BucketWrapped;
 import com.vivavu.dream.model.bucket.option.OptionDDay;
 import com.vivavu.dream.model.bucket.option.OptionDescription;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
@@ -41,7 +44,9 @@ import com.vivavu.dream.repository.Connector;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.repository.task.CustomAsyncTask;
 import com.vivavu.dream.util.DateUtils;
+import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
+import com.vivavu.dream.util.ValidationUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,6 +81,10 @@ public class BucketAddActivity extends BaseActionBarActivity {
     Button mBtnBucketOptionGallery;
     @InjectView(R.id.ivCardImage)
     ImageView mIvCardImage;
+    @InjectView(R.id.option_contents)
+    LinearLayout mOptionContents;
+    @InjectView(R.id.bucket_add_image_container)
+    LinearLayout mBucketAddImageContainer;
 
     private LayoutInflater layoutInflater;
     private Bucket bucket = null;
@@ -113,17 +122,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
         root.addView(viewGroup);
 
         addEventListener();
-        switch (code) {
-            case Code.ACT_ADD_BUCKET_DEFAULT_CARD:
-
-                break;
-            case Code.ACT_MOD_BUCKET_DEFAULT_CARD:
-
-
-                bindData();
-                break;
-        }
-
     }
 
     @Override
@@ -144,10 +142,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
                 }else{
                     saveBucket();
                 }
-
-                return true;
-            case R.id.bucket_add_menu_cancel:
-
 
                 return true;
         }
@@ -231,21 +225,24 @@ public class BucketAddActivity extends BaseActionBarActivity {
                     }
                 }
                 break;
-
         }
+    }
 
+    private void updateUiData(OptionDDay dday) {
+        bucket.setTitle(mBucketInputTitle.getText().toString());
+        bucket.setRange(dday.getRange());
+        bucket.setDeadline(dday.getDeadline());
+        bindData();
     }
 
     private void updateUiData(OptionRepeat repeat) {
         bucket.setRptType(repeat.getRepeatType().getCode());
         bucket.setRptCndt(repeat.getOptionStat());
-
         bindData();
     }
 
     private void updateUiData(OptionDescription description) {
         bucket.setDescription(description.getDescription());
-
         bindData();
     }
 
@@ -260,27 +257,27 @@ public class BucketAddActivity extends BaseActionBarActivity {
         mBtnBucketOptionGallery.setOnClickListener(this);
     }
 
-    private void updateUiData(OptionDDay dday) {
-        if (dday.getDeadline() != null) {
-            mTextInputDday.setText(dday.getDdayString());
-        } else {
-            mTextInputDday.setText(dday.getRange());
-        }
-        if (dday.getDeadline() != null) {
-            mTextInputRemain.setText(DateUtils.getRemainDayInString(dday.getDeadline()));
-        } else {
-            mTextInputRemain.setText("");
-        }
-        bucket.setTitle(mBucketInputTitle.getText().toString());
-        bucket.setDeadline(dday.getDeadline());
-    }
 
     private void bindData() {
-        mTextInputDday.setText(bucket.getRange());
+        mTextInputDday.setText(DateUtils.getDateString(bucket.getDeadline(), "yyyy-MM-dd"));
         mTextInputRemain.setText(bucket.getRemainDays());
         mBucketInputTitle.setText(bucket.getTitle());
+
+        if(bucket.getCvrImgUrl() != null && mIvCardImage.getDrawable()== null) {
+            ImageDownloadTask imageDownloadTask = new ImageDownloadTask();
+            imageDownloadTask.execute(bucket.getCvrImgUrl());
+        }
+
+        if (bucket.getDeadline() != null) {
+            mTextInputDday.setText( DateUtils.getDateString(bucket.getDeadline(), "yyyy-MM-dd"));
+            mTextInputRemain.setText(DateUtils.getRemainDayInString(bucket.getDeadline()));
+        } else {
+            mTextInputDday.setText("");
+            mTextInputRemain.setText("");
+        }
+
         DescriptionViewFragment descriptionViewFragment = (DescriptionViewFragment) getSupportFragmentManager().findFragmentByTag(DescriptionViewFragment.TAG);
-        if(bucket.getDescription() != null ){
+        if(ValidationUtils.isNotEmpty(bucket.getDescription())){
             OptionDescription option = new OptionDescription(bucket.getDescription());
             if (descriptionViewFragment == null) {
                 descriptionViewFragment = new DescriptionViewFragment(option);
@@ -295,8 +292,9 @@ public class BucketAddActivity extends BaseActionBarActivity {
             }
             mBtnBucketOptionNote.setVisibility(View.VISIBLE);
         }
+
         RepeatViewFragment repeatFragment = (RepeatViewFragment) getSupportFragmentManager().findFragmentByTag(RepeatViewFragment.TAG);
-        if (bucket.getRptType() != null) {
+        if (bucket.getRptType() != null && ValidationUtils.isValidRepeatCount(bucket.getRptCndt())) {
             OptionRepeat option = new OptionRepeat(RepeatType.fromCode(bucket.getRptType()), bucket.getRptCndt());
             if (repeatFragment == null) {
                 repeatFragment = new RepeatViewFragment(option);
@@ -310,6 +308,28 @@ public class BucketAddActivity extends BaseActionBarActivity {
                 getSupportFragmentManager().beginTransaction().remove(repeatFragment).commit();
             }
             mBtnBucketOptionRepeat.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ViewTreeObserver viewTreeObserver = mIvCardImage.getViewTreeObserver();
+        if (viewTreeObserver.isAlive()) {
+            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+                @Override
+                public void onGlobalLayout() {
+                    if(Build.VERSION.SDK_INT < 16) {
+                        mIvCardImage.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    }else{
+                        mIvCardImage.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                    mIvCardImage.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                    bindData();
+
+                }
+            });
         }
     }
 
@@ -451,7 +471,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
         startActivityForResult(intent, Code.ACT_ADD_BUCKET_CROP_FROM_CAMERA);
     }
 
-    public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<BucketWrapped>>{
+    public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<Bucket>>{
         private DreamApp context;
 
         public BucketAddTask(DreamApp context) {
@@ -459,9 +479,9 @@ public class BucketAddActivity extends BaseActionBarActivity {
         }
 
         @Override
-        protected ResponseBodyWrapped<BucketWrapped> doInBackground(Bucket... params) {
+        protected ResponseBodyWrapped<Bucket> doInBackground(Bucket... params) {
             Connector connector = new Connector();
-            ResponseBodyWrapped<BucketWrapped> responseBodyWrapped = new ResponseBodyWrapped<BucketWrapped>();
+            ResponseBodyWrapped<Bucket> responseBodyWrapped = new ResponseBodyWrapped<Bucket>();
 
             if(params != null && params.length > 0){
                 Bucket param = params[0];
@@ -476,9 +496,9 @@ public class BucketAddActivity extends BaseActionBarActivity {
         }
 
         @Override
-        protected void onPostExecute(ResponseBodyWrapped<BucketWrapped> bucketWrappedResponseBodyWrapped) {
+        protected void onPostExecute(ResponseBodyWrapped<Bucket> bucketWrappedResponseBodyWrapped) {
             if(bucketWrappedResponseBodyWrapped.getData() != null){
-                Bucket bucket = bucketWrappedResponseBodyWrapped.getData().getBucket();
+                Bucket bucket = bucketWrappedResponseBodyWrapped.getData();
                 if(bucket != null){
                     DataRepository.saveBucket(bucket);
 
@@ -526,6 +546,30 @@ public class BucketAddActivity extends BaseActionBarActivity {
             alert.show();
         } else {
             finish();
+        }
+    }
+    public class ImageDownloadTask extends CustomAsyncTask<String, Void, Bitmap>{
+
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            try {
+                File downloadedFileName = FileUtils.getDownloadFromUrl(params[0]);
+                Bitmap bitmap = ImageUtil.getBitmap(downloadedFileName, mIvCardImage.getWidth(), mIvCardImage.getHeight());
+                return bitmap;
+            } catch (Exception e) {
+                Log.e("dream", e.getMessage());
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            if (bitmap != null) {
+                //Drawable drawable = new BitmapDrawable( getResources(), bitmap );
+                mIvCardImage.setImageBitmap(bitmap);
+            }
         }
     }
 }

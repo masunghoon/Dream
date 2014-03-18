@@ -72,6 +72,11 @@ public class Bucket implements Serializable{
     @DatabaseField
     @SerializedName("cvr_img_id")
     private Integer cvrImgId;
+
+    @DatabaseField
+    @SerializedName("cvr_img_url")
+    private String cvrImgUrl;
+
     private File file;
 
     public Bucket(){
@@ -206,6 +211,14 @@ public class Bucket implements Serializable{
 
     public void setCvrImgId(Integer cvrImgId) {
         this.cvrImgId = cvrImgId;
+    }
+
+    public String getCvrImgUrl() {
+        return cvrImgUrl;
+    }
+
+    public void setCvrImgUrl(String cvrImgUrl) {
+        this.cvrImgUrl = cvrImgUrl;
     }
 
     @Override

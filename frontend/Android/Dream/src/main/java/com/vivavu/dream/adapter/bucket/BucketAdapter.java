@@ -90,6 +90,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         }*/
 
         ViewPager pager = holder.mShelfRow.getViewPager();
+
         //PagerAdapter adapter = new ShelfRowAdapter(mContext);
         ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
         pager.setAdapter(adapter);
@@ -104,7 +105,6 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         pager.setClipChildren(false);
 
         holder.mShelfTitle.setText(item.getRangeText());
-
 
         return view;
     }

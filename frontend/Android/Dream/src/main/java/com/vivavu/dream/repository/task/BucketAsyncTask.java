@@ -36,7 +36,9 @@ public class BucketAsyncTask extends CustomAsyncTask<Void, Void, ResponseBodyWra
 
     @Override
     protected void onPostExecute(ResponseBodyWrapped<List<Bucket>> listResponseBodyWrapped) {
-        DataRepository.saveBuckets(listResponseBodyWrapped.getData());
+        if(listResponseBodyWrapped != null) {
+            DataRepository.saveBuckets(listResponseBodyWrapped.getData());
+        }
         if(onPostExecuteCallback != null) {
             onPostExecuteCallback.onPostExecuteCallback();//위에것을 하고 이 문장을 실행시켜야함
         }

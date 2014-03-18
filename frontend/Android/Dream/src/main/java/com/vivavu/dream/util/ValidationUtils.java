@@ -46,4 +46,28 @@ public class ValidationUtils {
 
         return true;
     }
+
+    public static Boolean isValidRepeatCount(String count){
+        if(count != null && count.length() > 0){
+            String numberExp = "\\d+";
+            Pattern p = Pattern.compile(numberExp);
+            Matcher m = p.matcher(count);
+            if( m.matches() ){
+                int parseInt = Integer.parseInt(count);
+                return parseInt > 0;
+            }
+        }
+        return false;
+    }
+
+    public static Boolean isNotEmpty(String str){
+        if(str != null && str.length() > 0){
+            return true;
+        }
+        return false;
+    }
+
+    public static Boolean isEmpty(String str){
+        return !isNotEmpty(str);
+    }
 }

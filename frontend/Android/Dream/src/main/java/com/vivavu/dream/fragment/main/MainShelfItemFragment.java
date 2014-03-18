@@ -1,21 +1,30 @@
 package com.vivavu.dream.fragment.main;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.BucketAddActivity;
 import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.repository.task.CustomAsyncTask;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.util.DateUtils;
+import com.vivavu.dream.util.FileUtils;
+import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.view.CustomPopupWindow;
+
+import java.io.File;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -34,6 +43,10 @@ public class MainShelfItemFragment extends CustomBaseFragment{
     TextView mBookDudate;
     @InjectView(R.id.book_status)
     TextView mBookStatus;
+    @InjectView(R.id.book_cover)
+    LinearLayout mBookCover;
+    @InjectView(R.id.book_cover_image)
+    ImageView mBookCoverImage;
     private Bucket bucket;
 
     View popupView;
@@ -59,6 +72,15 @@ public class MainShelfItemFragment extends CustomBaseFragment{
         viewGroup.setBackgroundColor(Color.argb(127, 0, 0, 255));
         init();
         return viewGroup;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(bucket.getCvrImgUrl() != null) {
+            ImageDownloadTask imageDownloadTask = new ImageDownloadTask();
+            imageDownloadTask.execute(bucket.getCvrImgUrl());
+        }
     }
 
     public void init() {
@@ -100,6 +122,12 @@ public class MainShelfItemFragment extends CustomBaseFragment{
         });
         mPopupWindow = AndroidUtils.makePopupWindow(popupView);
         mPopupWindow.setAnimationStyle(-1); // 애니메이션 설정(-1:설정, 0:설정안함)
+
+
+        mBookCover.setOnClickListener(this);
+        mBookTitle.setOnClickListener(this);
+        mBookDudate.setOnClickListener(this);
+        mBookStatus.setOnClickListener(this);
     }
 
     @Override
@@ -114,7 +142,14 @@ public class MainShelfItemFragment extends CustomBaseFragment{
                 view.setSelected(false);
             }
         }
+        if(view == mBookCover || view == mBookDudate || view == mBookDudate || view == mBookStatus){
+            Intent intent = new Intent();
+            intent.setClass(getActivity(), BucketAddActivity.class);
+            intent.putExtra("bucketId", bucket.getId());
+            startActivity(intent);
+        }
     }
+
     /**
      * This class contains all butterknife-injected Views & Layouts from layout file 'null'
      * for easy to all layout elements.
@@ -131,6 +166,31 @@ public class MainShelfItemFragment extends CustomBaseFragment{
 
         PopupWindowViewHolder(View view) {
             ButterKnife.inject(this, view);
+        }
+    }
+    public class ImageDownloadTask extends CustomAsyncTask<String, Void, Bitmap>{
+
+        @Override
+        protected Bitmap doInBackground(String... params) {
+            try {
+                File downloadedFileName = FileUtils.getDownloadFromUrl(params[0]);
+                Bitmap bitmap = ImageUtil.getBitmap(downloadedFileName, (int) getResources().getDimension(R.dimen.book_width_dp), (int) getResources().getDimension(R.dimen.book_height_dp));
+                return bitmap;
+            } catch (Exception e) {
+                Log.e("dream", e.getMessage());
+            }
+
+            return null;
+
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            if (bitmap != null) {
+                //Drawable drawable = new BitmapDrawable( getResources(), bitmap );
+                mBookCoverImage.setImageBitmap(bitmap);
+            }
         }
     }
 }

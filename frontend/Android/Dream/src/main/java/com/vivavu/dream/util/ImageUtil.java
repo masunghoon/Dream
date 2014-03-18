@@ -15,6 +15,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
@@ -55,25 +56,66 @@ public class ImageUtil {
         view.setImageBitmap(getBitmap(photoPath, targetW, targetH ));
     }
 
-    public static Bitmap getBitmap(String photoPath, int targetWidth, int targetHeight) {
-        final int maxW = 1024;
-        final int maxH = 1024;
-
-        if(targetWidth <= 0){
-            targetWidth = 1;
-        }
-        if(targetHeight <= 0){
-            targetHeight = 1;
-        }
-        // Get the dimensions of the bitmap
+    public static Bitmap decodeStream(InputStream inputStream){
+        /*// Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(photoPath, bmOptions);
+        BitmapFactory.decodeStream(inputStream, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
         // Determine how much to scale down the image
         int scaleFactor = Math.min(photoW/maxW, photoH/maxH);
+
+        // Decode the image file into a Bitmap sized to fill the View
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        Bitmap bitmap = BitmapFactory.decodeFile(photoPath, bmOptions);
+        return bitmap;*/
+        return null;
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
+    public static Bitmap getBitmap(File file, int targetWidth, int targetHeight) {
+        return getBitmap(file.getAbsolutePath(), targetWidth, targetHeight);
+    }
+
+    public static Bitmap getBitmap(String photoPath, int targetWidth, int targetHeight) {
+
+        targetWidth = targetWidth <= 0 ? 1: targetWidth;
+        targetHeight = targetHeight <= 0 ? 1: targetHeight;
+
+        // Get the dimensions of the bitmap
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(photoPath, bmOptions);
+
+        // Determine how much to scale down the image
+        //int scaleFactor = Math.min(photoW/targetWidth, photoH/targetHeight);
+        int scaleFactor = calculateInSampleSize(bmOptions, targetWidth, targetHeight);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;

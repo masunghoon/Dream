@@ -10,7 +10,6 @@ import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.model.bucket.BucketWrapped;
 import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.JsonFactory;
@@ -70,11 +69,9 @@ public class Connector {
         return result;
     }
 
-    public ResponseBodyWrapped<BucketWrapped> postBucketDefault(final Bucket bucket, Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
-        requestHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        final MultiValueMap<String, Object> requestBucket = new LinkedMultiValueMap<String, Object>();
+    public MultiValueMap convertBucketToMap(final Bucket bucket){
+        MultiValueMap<String, Object> requestBucket = new LinkedMultiValueMap<String, Object>();
+
         requestBucket.add("title", bucket.getTitle());
         if (bucket.getDescription() != null) {
             requestBucket.add("description", bucket.getDescription());
@@ -88,7 +85,6 @@ public class Connector {
         }
 
         if(bucket.getFile() != null && bucket.getFile().exists()) {
-            requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
             Bitmap bm = ImageUtil.getBitmap(bucket.getFile().getAbsolutePath(), 1024, 1024);
             ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
             bm.compress(Bitmap.CompressFormat.JPEG, 70, byteArray );
@@ -100,6 +96,22 @@ public class Connector {
             };
             requestBucket.add("photo", bar);
         }
+
+        return requestBucket;
+    }
+
+    public ResponseBodyWrapped<Bucket> postBucketDefault(final Bucket bucket, Object... variable){
+        RestTemplate restTemplate = RestTemplateFactory.getInstance();
+        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+
+        final MultiValueMap<String, Object> requestBucket = convertBucketToMap(bucket);
+
+        if(bucket.getFile() != null && bucket.getFile().exists()) {
+            requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+        }else {
+            requestHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        }
+
         HttpEntity request = new HttpEntity<MultiValueMap<String, Object>>(requestBucket, requestHeaders);
         //HttpEntity request = new HttpEntity<Bucket>(bucket, requestHeaders);
 
@@ -111,66 +123,46 @@ public class Connector {
             Log.e("dream", e.toString());
         }
 
-        ResponseBodyWrapped<BucketWrapped> result = new ResponseBodyWrapped<BucketWrapped>("error", String.valueOf(resultString.getStatusCode()), new BucketWrapped());
+        ResponseBodyWrapped<Bucket> result = new ResponseBodyWrapped<Bucket>("error", String.valueOf(resultString.getStatusCode()), new Bucket());
 
         if(RestTemplateUtils.isAvailableParseToJson(resultString)){
             Gson gson = JsonFactory.getInstance();
-            Type type = new TypeToken<BucketWrapped>(){}.getType();
-            BucketWrapped bucketWrapped = gson.fromJson((String) resultString.getBody(), type);
-            result.setData(bucketWrapped);
-            result.setStatus("success");
+            Type type = new TypeToken<ResponseBodyWrapped<Bucket>>(){}.getType();
+            result = gson.fromJson((String) resultString.getBody(), type);
         }
 
         return result;
     }
 
-    public ResponseBodyWrapped<BucketWrapped> updateBucketInfo(final Bucket bucket, Object... variable){
+    public ResponseBodyWrapped<Bucket> updateBucketInfo(final Bucket bucket, Object... variable){
 
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
-        requestHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        final MultiValueMap<String, Object> requestBucket = new LinkedMultiValueMap<String, Object>();
-        requestBucket.add("title", bucket.getTitle());
-        if (bucket.getDescription() != null) {
-            requestBucket.add("description", bucket.getDescription());
-        }
-        if (bucket.getDeadline() != null) {
-            requestBucket.add("deadline", DateUtils.getDateString(bucket.getDeadline(), "yyyy-MM-dd"));
-        }
-        if (bucket.getRptType() != null) {
-            requestBucket.add("rpt_type", bucket.getRptType());
-            requestBucket.add("rpt_cndt", bucket.getRptCndt());
-        }
+
+        final MultiValueMap<String, Object> requestBucket = convertBucketToMap(bucket);
 
         if(bucket.getFile() != null && bucket.getFile().exists()) {
             requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
-            Bitmap bm = ImageUtil.getBitmap(bucket.getFile().getAbsolutePath(), 1024, 1024);
-            ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
-            bm.compress(Bitmap.CompressFormat.JPEG, 70, byteArray );
-            ByteArrayResource bar = new ByteArrayResource(byteArray.toByteArray()){
-                @Override
-                public String getFilename() throws IllegalStateException {
-                    return bucket.getFile().getName();
-                }
-            };
-            requestBucket.add("photo", bar);
+        }else {
+            requestHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         }
+
         HttpEntity request = new HttpEntity<MultiValueMap<String, Object>>(requestBucket, requestHeaders);
         //HttpEntity request = new HttpEntity<Bucket>(bucket, requestHeaders);
 
         ResponseEntity<String> resultString = null;
         try {
-            resultString = restTemplate.exchange(Constants.apiBucketInfo, HttpMethod.POST, request, String.class, bucket.getId());
+            resultString = restTemplate.exchange(Constants.apiBucketInfo, HttpMethod.PUT, request, String.class, bucket.getId());
 
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
 
-        ResponseBodyWrapped<BucketWrapped> result = new ResponseBodyWrapped<BucketWrapped>("error", String.valueOf(resultString.getStatusCode()), new BucketWrapped());
+        ResponseBodyWrapped<Bucket> result = new ResponseBodyWrapped<Bucket>("error", String.valueOf(resultString.getStatusCode()), new Bucket());
 
         if(RestTemplateUtils.isAvailableParseToJson(resultString)){
             Gson gson = JsonFactory.getInstance();
-            Type type = new TypeToken<ResponseBodyWrapped<BucketWrapped>>(){}.getType();
+            Type type = new TypeToken<ResponseBodyWrapped<Bucket>>(){}.getType();
             result = gson.fromJson((String) resultString.getBody(), type);
         }
 
