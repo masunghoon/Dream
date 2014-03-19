@@ -410,7 +410,7 @@ class BucketAPI(Resource):
                 return {'status':'error','description':'Description too long (512)'}, 400
 
             if key == 'deadline':
-                value = datetime.strptime(value,'%Y-%m-%d')
+                value = datetime.datetime.strptime(value,'%Y-%m-%d')
 
             if key == 'scope' and value not in ['DECADE','YEARLY','MONTHLY']:
                 return {'status':'error','description':'Invalid scope value'}, 400
@@ -564,7 +564,7 @@ class UserBucketAPI(Resource):
             for key in request.form:
                 params[key] = request.form[key]
         else:
-            return {'status':'error','description':'Request Failed'}
+            return {'status':'error','description':'Request Failed'}, 400
 
         # Replace blank value to None(null) in params
         for key in params:
@@ -641,7 +641,7 @@ class UserBucketAPI(Resource):
         db.session.flush()
         db.session.refresh(bkt)
 
-        if 'photo' in request.files:
+        if 'photo' in request.files and 'rpt_cndt' in params:
             p.bucket_id = bkt.id
         db.session.commit()
 
