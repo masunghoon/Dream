@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import com.vivavu.dream.adapter.main.ShelfRowFragmentAdapter;
 import com.vivavu.dream.model.bucket.BucketGroup;
 import com.vivavu.dream.view.PagerContainer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -39,7 +41,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         this.mContext = context;
         this.resource = resource;
         this.mInflater = (LayoutInflater) this.mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.mBucketList = mBucketList;
+        this.mBucketList = new ArrayList<BucketGroup>(mBucketList);
     }
 
     @Override
@@ -64,12 +66,11 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        int res = R.layout.shelf_row;
         BucketGroup item = mBucketList.get(i);
 
         ButterknifeViewHolder holder = null;
-        /*if (view == null) {*/
-            view = mInflater.inflate(res, viewGroup, false);
+        if (view == null) {
+            view = mInflater.inflate(R.layout.shelf_row, viewGroup, false);
             holder = new ButterknifeViewHolder(view);
             final ButterknifeViewHolder finalViewHolder = holder;
             holder.mShelfRoll.setOnClickListener(new View.OnClickListener() {
@@ -85,24 +86,28 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
                 }
             });
             view.setTag(holder);
-        /*}else{
+
+            ViewPager pager = holder.mShelfRow.getViewPager();
+            ShelfRowFragmentAdapter shelfRowFragmentAdapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
+            pager.setAdapter(shelfRowFragmentAdapter);
+            //Necessary or the pager will only have one extra page to show
+            // make this at least however many pages you can see
+            pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
+            //A little space between pages
+            pager.setPageMargin(15);
+
+            //If hardware acceleration is enabled, you should also remove
+            // clipping on the pager for its children.
+            pager.setClipChildren(false);
+
+        }else{
             holder = (ButterknifeViewHolder) view.getTag();
-        }*/
+        }
 
         ViewPager pager = holder.mShelfRow.getViewPager();
-
-        //PagerAdapter adapter = new ShelfRowAdapter(mContext);
-        ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
-        pager.setAdapter(adapter);
-        //Necessary or the pager will only have one extra page to show
-        // make this at least however many pages you can see
-        pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
-        //A little space between pages
-        pager.setPageMargin(15);
-
-        //If hardware acceleration is enabled, you should also remove
-        // clipping on the pager for its children.
-        pager.setClipChildren(false);
+        ShelfRowFragmentAdapter adapter = (ShelfRowFragmentAdapter) pager.getAdapter();
+        Log.v("dream", String.valueOf(pager.getId()));
+        adapter.setBucketList(item.getBukets());
 
         holder.mShelfTitle.setText(item.getRangeText());
 
@@ -122,16 +127,17 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         this.mBucketList.clear();
         this.mBucketList.addAll(buckets);
 
-        super.notifyDataSetChanged();
+        notifyDataSetChanged();
     }
 
-    public List<BucketGroup> getmBucketList() {
+    public List<BucketGroup> getBucketList() {
         return mBucketList;
     }
 
-    public void setBucketList(List<BucketGroup> mBucketList) {
+    public void setBucketList(List<BucketGroup> bucketList) {
         this.mBucketList.clear();
-        this.mBucketList.addAll(mBucketList);
+        this.mBucketList.addAll(bucketList);
+        notifyDataSetChanged();
     }
 
     public Fragment getParentFragment() {

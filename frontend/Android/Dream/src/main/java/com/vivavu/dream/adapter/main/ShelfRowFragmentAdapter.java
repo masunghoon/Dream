@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import com.vivavu.dream.fragment.main.MainShelfItemFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
 
     public ShelfRowFragmentAdapter(FragmentManager fm, List<Bucket> bucketList) {
         super(fm);
-        this.bucketList = bucketList;
+        this.bucketList = new ArrayList<Bucket>(bucketList) ;
     }
 
     @Override
@@ -35,6 +36,8 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
     }
 
     public void setBucketList(List<Bucket> bucketList) {
-        this.bucketList = bucketList;
+        this.bucketList.clear();
+        this.bucketList.addAll(bucketList);
+        notifyDataSetChanged();
     }
 }

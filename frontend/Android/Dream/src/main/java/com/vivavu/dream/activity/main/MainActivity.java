@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.BucketAddActivity;
@@ -17,9 +16,12 @@ import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.fragment.main.MainBucketListFragment;
+import com.vivavu.dream.fragment.main.MainTodayFragment;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
 import com.vivavu.dream.view.CustomPopupWindow;
+
+import java.io.IOException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -38,12 +40,12 @@ public class MainActivity extends BaseActionBarActivity {
     CustomPopupWindow mPopupNotice;
 
     MainBucketListFragment mainBucketListFragment;
-
+    MainTodayFragment mainTodayFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        Thread.currentThread().setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler());
         //actionbar setting
         final ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -56,7 +58,8 @@ public class MainActivity extends BaseActionBarActivity {
         if (savedInstanceState == null) {
             mainBucketListFragment= new MainBucketListFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.content_frame, mainBucketListFragment)
+                    .add(R.id.content_frame, mainBucketListFragment, MainBucketListFragment.TAG)
+                    //.addToBackStack(MainBucketListFragment.TAG)
                     .commit();
         }
 
@@ -83,7 +86,16 @@ public class MainActivity extends BaseActionBarActivity {
         mActionbarMainToday.getButton().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "클릭클릭클릭", Toast.LENGTH_SHORT).show();
+                mainTodayFragment = (MainTodayFragment) getSupportFragmentManager().findFragmentByTag(MainTodayFragment.TAG);
+                if(mainTodayFragment == null) {
+                    mainTodayFragment = new MainTodayFragment();
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.content_frame, mainTodayFragment, MainTodayFragment.TAG)
+                            //.addToBackStack(MainTodayFragment.TAG)
+                            .commit();
+                } else {
+                    //getSupportFragmentManager().popBackStackImmediate();
+                }
             }
         });
     }
@@ -185,9 +197,24 @@ public class MainActivity extends BaseActionBarActivity {
     public void onBackPressed() {
         if(mPopupNotice != null && mPopupNotice.isShowing()){
             mPopupNotice.hide();
+        }else if(getSupportFragmentManager().getBackStackEntryCount() > 1) {
+            //back stack을 이용하여 책장과 투데이를 이동함
+            super.onBackPressed();
         }else{
             exit();
         }
     }
 
+    public static class MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+        public void uncaughtException(Thread thread, Throwable ex) {
+            if (ex.getClass().equals(OutOfMemoryError.class)) {
+                try {
+                    android.os.Debug.dumpHprofData("/data/data/com.vivavu.dream/dump.hprof");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            ex.printStackTrace();
+        }
+    }
 }

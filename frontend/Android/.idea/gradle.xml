@@ -7,12 +7,12 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/Dream" />
-            <option value="$PROJECT_DIR$/Libraries" />
-            <option value="$PROJECT_DIR$/Libraries/bookshelf" />
-            <option value="$PROJECT_DIR$/Libraries/facebook" />
-            <option value="$PROJECT_DIR$/Libraries/viewpagerindicator" />
+            <option value="C:\Dream\frontend\Android" />
+            <option value="C:\Dream\frontend\Android\Dream" />
+            <option value="C:\Dream\frontend\Android\Libraries" />
+            <option value="C:\Dream\frontend\Android\Libraries\bookshelf" />
+            <option value="C:\Dream\frontend\Android\Libraries\facebook" />
+            <option value="C:\Dream\frontend\Android\Libraries\viewpagerindicator" />
           </set>
         </option>
       </GradleProjectSettings>

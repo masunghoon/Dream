@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -469,6 +470,17 @@ public class BucketAddActivity extends BaseActionBarActivity {
         intent.putExtra("scale", true);
         intent.putExtra("return-data", true);
         startActivityForResult(intent, Code.ACT_ADD_BUCKET_CROP_FROM_CAMERA);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(mIvCardImage.getDrawable() != null){
+            BitmapDrawable drawable = (BitmapDrawable) mIvCardImage.getDrawable();
+            mIvCardImage.setImageDrawable(null);
+            Bitmap bitmap = drawable.getBitmap();
+            bitmap.recycle();
+        }
+        super.onDestroy();
     }
 
     public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<Bucket>>{

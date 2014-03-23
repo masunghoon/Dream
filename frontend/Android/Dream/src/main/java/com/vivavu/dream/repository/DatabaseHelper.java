@@ -10,6 +10,7 @@ import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.model.bucket.Today;
 
 import java.sql.SQLException;
 
@@ -18,11 +19,15 @@ import java.sql.SQLException;
  */
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String DATABASE_NAME = "dream.db";
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     // the DAO object we use to access the SimpleData table
     private Dao<Bucket, Integer> bucketDao = null;
     private RuntimeExceptionDao<Bucket, Integer> bucketRuntimeDao = null;
+
+    // the DAO object we use to access the SimpleData table
+    private Dao<Today, Integer> todayDao = null;
+    private RuntimeExceptionDao<Today, Integer> todayRuntimeDao = null;
 
 
     public DatabaseHelper(Context context){
@@ -35,6 +40,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             Log.i(DatabaseHelper.class.getName(), "onCreate");
             TableUtils.createTable(connectionSource, Bucket.class);
+            TableUtils.createTable(connectionSource, Today.class);
         } catch (SQLException e) {
             Log.e(DatabaseHelper.class.getName(), "Can't create database", e);
             throw new RuntimeException(e);
@@ -54,6 +60,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             Log.i(DatabaseHelper.class.getName(), "onUpgrade");
             TableUtils.dropTable(connectionSource, Bucket.class, true);
+            TableUtils.dropTable(connectionSource, Today.class, true);
             // after we drop the old databases, we create the new ones
             onCreate(database, connectionSource);
         } catch (SQLException e) {
@@ -74,6 +81,20 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             bucketRuntimeDao = getRuntimeExceptionDao(Bucket.class);
         }
         return bucketRuntimeDao;
+    }
+
+    public Dao<Today, Integer> getTodayDao() throws SQLException {
+        if(todayDao == null){
+            todayDao = getDao(Today.class);
+        }
+        return todayDao;
+    }
+
+    public RuntimeExceptionDao<Today, Integer> getTodayRuntimeDao() {
+        if (todayRuntimeDao == null) {
+            todayRuntimeDao = getRuntimeExceptionDao(Today.class);
+        }
+        return todayRuntimeDao;
     }
 
     @Override

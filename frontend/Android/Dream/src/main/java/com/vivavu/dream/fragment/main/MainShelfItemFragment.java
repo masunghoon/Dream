@@ -3,6 +3,7 @@ package com.vivavu.dream.fragment.main;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -150,6 +151,19 @@ public class MainShelfItemFragment extends CustomBaseFragment{
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        if(mBookCoverImage.getDrawable() != null){
+            BitmapDrawable drawable = (BitmapDrawable) mBookCoverImage.getDrawable();
+            mBookCoverImage.setImageDrawable(null);
+            Bitmap bitmap = drawable.getBitmap();
+            bitmap.recycle();
+
+        }
+        super.onDestroyView();
+
+    }
+
     /**
      * This class contains all butterknife-injected Views & Layouts from layout file 'null'
      * for easy to all layout elements.
@@ -189,7 +203,9 @@ public class MainShelfItemFragment extends CustomBaseFragment{
             super.onPostExecute(bitmap);
             if (bitmap != null) {
                 //Drawable drawable = new BitmapDrawable( getResources(), bitmap );
-                mBookCoverImage.setImageBitmap(bitmap);
+                if(mBookCoverImage.getDrawable() == null) {
+                    mBookCoverImage.setImageBitmap(bitmap);
+                }
             }
         }
     }
