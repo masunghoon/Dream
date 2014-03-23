@@ -21,8 +21,6 @@ import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
 import com.vivavu.dream.view.CustomPopupWindow;
 
-import java.io.IOException;
-
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
@@ -45,7 +43,6 @@ public class MainActivity extends BaseActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Thread.currentThread().setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler());
         //actionbar setting
         final ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -205,16 +202,4 @@ public class MainActivity extends BaseActionBarActivity {
         }
     }
 
-    public static class MyUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
-        public void uncaughtException(Thread thread, Throwable ex) {
-            if (ex.getClass().equals(OutOfMemoryError.class)) {
-                try {
-                    android.os.Debug.dumpHprofData("/data/data/com.vivavu.dream/dump.hprof");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            ex.printStackTrace();
-        }
-    }
 }

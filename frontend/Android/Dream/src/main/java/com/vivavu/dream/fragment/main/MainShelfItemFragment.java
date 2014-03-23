@@ -161,7 +161,11 @@ public class MainShelfItemFragment extends CustomBaseFragment{
 
         }
         super.onDestroyView();
+    }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
     /**

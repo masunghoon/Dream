@@ -5,7 +5,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,7 +68,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         BucketGroup item = mBucketList.get(i);
 
         ButterknifeViewHolder holder = null;
-        if (view == null) {
+        /*if (view == null) {*/
             view = mInflater.inflate(R.layout.shelf_row, viewGroup, false);
             holder = new ButterknifeViewHolder(view);
             final ButterknifeViewHolder finalViewHolder = holder;
@@ -85,29 +84,26 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
                     }
                 }
             });
-            view.setTag(holder);
-
-            ViewPager pager = holder.mShelfRow.getViewPager();
-            ShelfRowFragmentAdapter shelfRowFragmentAdapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
-            pager.setAdapter(shelfRowFragmentAdapter);
-            //Necessary or the pager will only have one extra page to show
-            // make this at least however many pages you can see
-            pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
-            //A little space between pages
-            pager.setPageMargin(15);
-
-            //If hardware acceleration is enabled, you should also remove
-            // clipping on the pager for its children.
-            pager.setClipChildren(false);
-
-        }else{
+        view.setTag(holder);
+        /*}else{
             holder = (ButterknifeViewHolder) view.getTag();
-        }
+        }*/
 
         ViewPager pager = holder.mShelfRow.getViewPager();
-        ShelfRowFragmentAdapter adapter = (ShelfRowFragmentAdapter) pager.getAdapter();
-        Log.v("dream", String.valueOf(pager.getId()));
-        adapter.setBucketList(item.getBukets());
+
+        //PagerAdapter adapter = new ShelfRowAdapter(mContext);
+        ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
+        //adapter.refreshDataSet(item.getBukets());
+        pager.setAdapter(adapter);
+        //Necessary or the pager will only have one extra page to show
+        // make this at least however many pages you can see
+        pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
+        //A little space between pages
+        pager.setPageMargin(15);
+
+        //If hardware acceleration is enabled, you should also remove
+        // clipping on the pager for its children.
+        pager.setClipChildren(false);
 
         holder.mShelfTitle.setText(item.getRangeText());
 
@@ -123,11 +119,11 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         return this.mContext;
     }
 
-    public void notifyDataSetChanged(List<BucketGroup> buckets) {
+    public void refreshDataSet(List<BucketGroup> buckets) {
         this.mBucketList.clear();
         this.mBucketList.addAll(buckets);
 
-        notifyDataSetChanged();
+        super.notifyDataSetChanged();
     }
 
     public List<BucketGroup> getBucketList() {
@@ -137,7 +133,6 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     public void setBucketList(List<BucketGroup> bucketList) {
         this.mBucketList.clear();
         this.mBucketList.addAll(bucketList);
-        notifyDataSetChanged();
     }
 
     public Fragment getParentFragment() {

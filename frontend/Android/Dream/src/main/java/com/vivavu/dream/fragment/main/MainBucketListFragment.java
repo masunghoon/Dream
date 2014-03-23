@@ -29,12 +29,6 @@ import butterknife.ButterKnife;
 public class MainBucketListFragment extends CustomPullToRefreshFragment<ListView> {
     private static final int SEND_NETWORK_DATA = 3;
     public static String TAG = "com.vivavu.dream.fragment.main.MainBucketListFragment";
-    private List<BucketGroup> bucketGroupList;
-    private BucketAdapter bucketAdapter;
-    public MainBucketListFragment() {
-        bucketGroupList = new ArrayList<BucketGroup>();
-    }
-
     protected final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -58,6 +52,12 @@ public class MainBucketListFragment extends CustomPullToRefreshFragment<ListView
         }
     };
 
+    private List<BucketGroup> bucketGroupList;
+    private BucketAdapter bucketAdapter;
+    public MainBucketListFragment() {
+        bucketGroupList = new ArrayList<BucketGroup>();
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_shelf_list, container, false);
@@ -70,6 +70,8 @@ public class MainBucketListFragment extends CustomPullToRefreshFragment<ListView
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Thread thread = new Thread(new DataThread());
+        thread.start();
     }
 
     public void updateContents(){
@@ -78,20 +80,15 @@ public class MainBucketListFragment extends CustomPullToRefreshFragment<ListView
             bucketAdapter.setParentFragment(this);
             mList.setAdapter(bucketAdapter);
         }
-        bucketAdapter.setBucketList(bucketGroupList);
-        bucketAdapter.notifyDataSetChanged();
-        //mList.invalidate();
-    }
-
-    private void startUpdateData(){
-
+        bucketAdapter.refreshDataSet(bucketGroupList);
+        mList.invalidate();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Thread thread = new Thread(new DataThread());
-        thread.start();
+        /*Thread thread = new Thread(new DataThread());
+        thread.start();*/
     }
 
     @Override
