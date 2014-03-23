@@ -39,6 +39,11 @@
             android:label="Add Bucket" >
         </activity>
         <activity
+            android:name="com.vivavu.dream.activity.main.TodayActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_main">
+        </activity>
+        <activity
             android:name="com.vivavu.dream.activity.main.MainActivity"
             android:screenOrientation="portrait"
             android:label="@string/title_activity_main">

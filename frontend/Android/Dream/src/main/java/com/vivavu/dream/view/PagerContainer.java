@@ -29,9 +29,13 @@ import android.graphics.Point;
 import android.os.Build;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+
+import com.vivavu.dream.R;
+import com.vivavu.dream.util.AndroidUtils;
 
 /**
  * PagerContainer: A layout that displays a ViewPager with its children that are outside
@@ -77,15 +81,16 @@ public class PagerContainer extends FrameLayout implements ViewPager.OnPageChang
     protected void onFinishInflate() {
         try {
 
-            /*mPager = new ViewPager(mContext);
+            mPager = new ViewPager(mContext);
             int width = (int) getResources().getDimension(R.dimen.book_width_dp);
             int height = (int) getResources().getDimension(R.dimen.book_height_dp);
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height, Gravity.CENTER_HORIZONTAL);
             mPager.setLayoutParams(layoutParams);
             mPager.setId(AndroidUtils.generateViewId());
-            this.addView(mPager, 0);*/
-            mPager = (ViewPager) getChildAt(0);
-            mPager.setOnPageChangeListener(this);
+            //mPager.setId(R.id.shelf_pager);
+            this.addView(mPager, 0);
+            /*mPager = (ViewPager) getChildAt(0);
+            mPager.setOnPageChangeListener(this);*/
         } catch (Exception e) {
             throw new IllegalStateException("The root child of PagerContainer must be a ViewPager");
         }

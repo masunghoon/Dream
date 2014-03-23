@@ -84,29 +84,35 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
                     }
                 }
             });
-        view.setTag(holder);
+
+            ViewPager pager = holder.mShelfRow.getViewPager();
+
+            //PagerAdapter adapter = new ShelfRowAdapter(mContext);
+            //ShelfRowAdapter adapter = new ShelfRowAdapter(getContext(), item.getBukets());
+            ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
+            //adapter.refreshDataSet(item.getBukets());
+            pager.setAdapter(adapter);
+            //Necessary or the pager will only have one extra page to show
+            // make this at least however many pages you can see
+            pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
+            //A little space between pages
+            pager.setPageMargin(15);
+
+            //If hardware acceleration is enabled, you should also remove
+            // clipping on the pager for its children.
+            pager.setClipChildren(false);
+
+
+            view.setTag(holder);
         /*}else{
             holder = (ButterknifeViewHolder) view.getTag();
         }*/
 
-        ViewPager pager = holder.mShelfRow.getViewPager();
-
-        //PagerAdapter adapter = new ShelfRowAdapter(mContext);
-        ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
-        //adapter.refreshDataSet(item.getBukets());
-        pager.setAdapter(adapter);
-        //Necessary or the pager will only have one extra page to show
-        // make this at least however many pages you can see
-        pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
-        //A little space between pages
-        pager.setPageMargin(15);
-
-        //If hardware acceleration is enabled, you should also remove
-        // clipping on the pager for its children.
-        pager.setClipChildren(false);
 
         holder.mShelfTitle.setText(item.getRangeText());
-
+        //ViewPager pager = holder.mShelfRow.getViewPager();
+        //ShelfRowFragmentAdapter adapter = (ShelfRowFragmentAdapter) pager.getAdapter();
+        adapter.refreshDataSet(item.getBukets());
         return view;
     }
 

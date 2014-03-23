@@ -34,14 +34,7 @@
             android:layout_width="match_parent"
             android:id="@+id/shelf_row"
             >
-            <android.support.v4.view.ViewPager
-                android:layout_width="@dimen/book_width_dp"
-                android:layout_height="@dimen/book_height_dp"
-                android:layout_gravity="center_horizontal"
-                android:id="@+id/shelf_pager"
-                >
-
-                </android.support.v4.view.ViewPager>
+            <!-- 코드안에서 viewpager 생성 아니면 이상한 버그남-->
             </com.vivavu.dream.view.PagerContainer>
     </LinearLayout>
 </LinearLayout>

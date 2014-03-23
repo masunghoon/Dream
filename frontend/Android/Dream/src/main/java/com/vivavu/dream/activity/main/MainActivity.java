@@ -56,7 +56,7 @@ public class MainActivity extends BaseActionBarActivity {
             mainBucketListFragment= new MainBucketListFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.content_frame, mainBucketListFragment, MainBucketListFragment.TAG)
-                    //.addToBackStack(MainBucketListFragment.TAG)
+                    .addToBackStack(MainBucketListFragment.TAG)
                     .commit();
         }
 
@@ -83,16 +83,8 @@ public class MainActivity extends BaseActionBarActivity {
         mActionbarMainToday.getButton().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mainTodayFragment = (MainTodayFragment) getSupportFragmentManager().findFragmentByTag(MainTodayFragment.TAG);
-                if(mainTodayFragment == null) {
-                    mainTodayFragment = new MainTodayFragment();
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.content_frame, mainTodayFragment, MainTodayFragment.TAG)
-                            //.addToBackStack(MainTodayFragment.TAG)
-                            .commit();
-                } else {
-                    //getSupportFragmentManager().popBackStackImmediate();
-                }
+                Intent intent = new Intent(MainActivity.this, TodayActivity.class);
+                startActivity(intent);
             }
         });
     }

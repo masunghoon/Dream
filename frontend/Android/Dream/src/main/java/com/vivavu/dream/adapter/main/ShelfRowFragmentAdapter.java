@@ -3,7 +3,6 @@ package com.vivavu.dream.adapter.main;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.util.Log;
 
 import com.vivavu.dream.fragment.main.MainShelfItemFragment;
 import com.vivavu.dream.model.bucket.Bucket;
@@ -34,10 +33,6 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        if(bucketList.size() > 0 ){
-            Log.v("dream", bucketList.get(0).toString());
-        }
-        Log.v("dream", String.valueOf(bucketList.size()));
         return bucketList.size()    ;
     }
 
@@ -55,6 +50,5 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
         this.bucketList.clear();
         this.bucketList.addAll(bucketList);
         notifyDataSetChanged();
-        super.notifyDataSetChanged();
     }
 }
