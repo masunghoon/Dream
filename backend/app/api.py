@@ -906,6 +906,16 @@ class BucketTimeline(Resource):
             if len(contents) == 0:
                 return {'status':'error',
                         'description':'Nothing to Post'}, 403
+
+        p = Plan.query.filter_by(bucket_id=b.id).first()
+
+        if p is None:
+            plan = Plan(date=datetime.datetime.now().strftime('%Y%m%d'),
+                        user_id=g.user.id,
+                        bucket_id=b.id,
+                        status=0,
+                        lst_mod_dt=datetime.datetime.now())
+            db.session.add(plan)
         
         post = Post(body=None,
                     timestamp=None,
