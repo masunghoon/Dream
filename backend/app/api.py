@@ -721,7 +721,8 @@ class PlanListAPI(Resource):
                 'range': b.range,
                 'rpt_type': b.rpt_type,
                 'rpt_cndt': b.rpt_cndt,
-                'parent_id': b.parent_id
+                'parent_id': b.parent_id,
+                'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
             })
 
         return map(lambda t: marshal(t, plan_fields), data), 200
