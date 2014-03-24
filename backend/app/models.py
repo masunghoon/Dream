@@ -169,7 +169,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     language = db.Column(db.String(5))
     bucket_id = db.Column(db.Integer, db.ForeignKey('bucket.id'))
-    text = db.Column(db.text)
+    text = db.Column(db.String(20480))
     img_id = db.Column(db.Integer, db.ForeignKey('file.id'))
     url1 = db.Column(db.String(256))
     url2 = db.Column(db.String(256))
