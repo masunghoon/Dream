@@ -12,7 +12,7 @@ from hashlib import md5
 from rauth.service import OAuth2Service
 # Source
 from app import db, api, app
-from models import User, Bucket, Plan, File, ROLE_ADMIN, ROLE_USER
+from models import User, Bucket, Plan, File, Post, ROLE_ADMIN, ROLE_USER
 from emails import send_awaiting_confirm_mail, send_reset_password_mail
 from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
@@ -384,8 +384,8 @@ class BucketAPI(Resource):
                 return {'status':'error','description':'Invalid key: '+key}, 403
 
             # Nobody can modify id, user_id, reg_dt
-            if key in ['id','user_id','reg_dt']:
-                return {'status':'error','description':'Cannot change '+key}, 403
+            # if key in ['id','user_id','reg_dt']:
+            #     return {'status':'error','description':'Cannot change '+key}, 403
 
             # Just ROLE_ADMIN user can change 'language', 'level'
             if key in ['language','level'] and g.user.role == ROLE_USER:
@@ -460,30 +460,30 @@ class BucketAPI(Resource):
         b.lst_mod_dt = datetime.datetime.now()
         try:
             db.session.commit()
-            data={
-                'id': b.id,
-                'user_id': b.user_id,
-                'title': b.title,
-                'description': b.description,
-                'level': b.level,
-                'status': b.status,
-                'private': b.private,
-                'parent_id': b.parent_id,
-                'reg_dt': b.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'deadline': b.deadline.strftime("%Y-%m-%d"),
-                'scope': b.scope,
-                'range': b.range,
-                'rpt_type': b.rpt_type,
-                'rpt_cndt': b.rpt_cndt,
-                'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
-            }
-            return {'status':'success',
-                    'description':'Bucket put success.',
-                    'data':data}, 201
+
         except:
             db.session.rollback()
             return {'error':'Something went wrong'}, 500
+
+        data={'id': b.id,
+              'user_id': b.user_id,
+              'title': b.title,
+              'description': b.description,
+              'level': b.level,
+              'status': b.status,
+              'private': b.private,
+              'parent_id': b.parent_id,
+              'reg_dt': b.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+              'deadline': b.deadline.strftime("%Y-%m-%d"),
+              'scope': b.scope,
+              'range': b.range,
+              'rpt_type': b.rpt_type,
+              'rpt_cndt': b.rpt_cndt,
+              'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+              'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)}
+        return {'status':'success',
+                'description':'Bucket put success.',
+                'data':data}, 201
 
 
     def delete(self, id):
@@ -500,7 +500,7 @@ class BucketAPI(Resource):
             return {'status':'success'}, 200
         except:
             return {'status':'error',
-                    'description':'delete failed'}, 500
+                    'description':'delete failed'}, 403
 
 
 class UserBucketAPI(Resource):
@@ -641,8 +641,9 @@ class UserBucketAPI(Resource):
         db.session.flush()
         db.session.refresh(bkt)
 
-        if 'photo' in request.files and 'rpt_cndt' in params:
-            p.bucket_id = bkt.id
+        if 'rpt_cndt' in params:
+            if params['rpt_type'] == 'WKRP' and params['rpt_cndt'][dayOfWeek] == '1':
+                p.bucket_id = bkt.id
         db.session.commit()
 
         data={
@@ -799,3 +800,300 @@ class UploadFiles(Resource):
 
 
 api.add_resource(UploadFiles, '/api/file', endpoint='uploadFiles')
+
+
+##### TIMELINE / Single Post #################################################
+
+class BucketTimeline(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(BucketTimeline, self).__init__()
+
+    def get(self, bucket_id):
+        b = Bucket.query.filter_by(id=bucket_id).first()
+        if b is None:
+            return {'status':'error',
+                    'description':'There\'s no bucket with id: '+id}, 204
+
+        u = User.query.filter_by(id=b.user_id).first()
+        if not g.user.is_following(u):
+            if g.user == u:
+                pass
+            else:
+                return {'error':'User unauthorized'}, 401
+
+        post = Post.query.filter_by(bucket_id=bucket_id).all()
+        if post is None:
+            return {'status':'success',
+                    'description':'No posts'}, 204
+        for i in post:
+            data = {'id':i.id,
+                    'user_id':i.user_id,
+                    'bucket_id':i.bucket_id,
+                    'text':None if i.text is None else i.text,
+                    'img_url':None if i.img_id is None else photos.url(File.query.filter_by(id=i.img_id).first().name),
+                    'urls':[{'url1':None if i.url1 is None else i.url1},
+                            {'url2':None if i.url2 is None else i.url2},
+                            {'url3':None if i.url3 is None else i.url3},],
+                    'reg_dt':i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':post.count + 'posts are returned.',
+                'data':data}, 200
+
+    def post(self, bucket_id):
+        b = Bucket.query.fitler_by(id=bucket_id).first()
+        if b is None:
+            return {'status':'error',
+                    'description':'There\'s no bucket with id: '+id}, 403
+
+        if g.user != b.user_id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
+        else:
+            return {'status':'error','description':'Request Failed'}, 400
+
+        # Replace blank value to None(null) in params
+        for key in params:
+            params[key] = None if params[key] == "" else params[key]
+
+            if key in ['id', 'user_id', 'bucket_id', 'language', 'body', 'timestamp', 'reg_dt', 'lst_mod_dt']:
+                return {'error': key + ' cannot be entered manually.'}, 401
+
+        contents = []
+
+        if 'text' in params and params['text'] is not None:
+            contents.append('text')
+
+        if 'url1' in params and params['url1'] is not None:
+            contents.append('url1')
+
+        if 'url2' in params and params['url2'] is not None:
+            contents.append('url2')
+
+        if 'url3' in params and params['url3'] is not None:
+            contents.append('url3')
+
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error',
+                        'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+        else:
+            if len(contents) == 0:
+                return {'status':'error',
+                        'description':'Nothing to Post'}, 403
+
+        p = Plan.query.filter_by(bucket_id=b.id).first()
+
+        if p is None:
+            plan = Plan(date=datetime.datetime.now().strftime('%Y%m%d'),
+                        user_id=g.user.id,
+                        bucket_id=b.id,
+                        status=0,
+                        lst_mod_dt=datetime.datetime.now())
+            db.session.add(plan)
+        
+        post = Post(body=None,
+                    timestamp=None,
+                    user_id=b.user_id,
+                    languate=None, 
+                    bucket_id=bucket_id,
+                    text=params['text'] if 'text' in params else None,
+                    img_id=f.id if 'photo' in request.files else None,
+                    url1=params['url1'] if 'url1' in params else None,
+                    url2=params['url2'] if 'url2' in params else None,
+                    url3=params['url3'] if 'url3' in params else None,
+                    reg_dt=datetime.datetime.now(),
+                    lst_mod_dt=datetime.datetime.now())
+            
+        db.session.add(post)
+        db.session.flush()
+        db.session.refresh(post)
+        
+        db.session.commit()
+        
+        data = {'id':post.id,
+                    'user_id':post.user_id,
+                    'bucket_id':post.bucket_id,
+                    'text':None if post.text is None else post.text,
+                    'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
+                    'urls':[{'url1':None if post.url1 is None else post.url1},
+                            {'url2':None if post.url2 is None else post.url2},
+                            {'url3':None if post.url3 is None else post.url3},],
+                    'reg_dt':post.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'lst_mod_dt': None if post.lst_mod_dt is None else post.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':'Successfully posted.',
+                'data':data}, 201
+        
+
+        return 200
+
+
+class TimelineContent(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(TimelineContent, self).__init__()
+
+
+    def get(self,content_id):
+        post = Post.query.filter_by(id=content_id).first()
+        if post is None:
+            return {'status':'success',
+                    'description':'There\'s no content with id: '+id}, 204
+
+        u = User.query.filter_by(id=post.user_id).first()
+        if not g.user.is_following(u):
+            if g.user == u:
+                pass
+            else:
+                return {'error':'User unauthorized'}, 401
+            
+        data = {'id':post.id,
+                'user_id':post.user_id,
+                'bucket_id':post.bucket_id,
+                'text':None if post.text is None else post.text,
+                'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
+                'urls':[{'url1':None if post.url1 is None else post.url1},
+                        {'url2':None if post.url2 is None else post.url2},
+                        {'url3':None if post.url3 is None else post.url3},],
+                'reg_dt':post.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'lst_mod_dt': None if post.lst_mod_dt is None else post.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':'success',
+                'data':data}, 200
+
+
+    def put(self,content_id):
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
+        else:
+            return {'status':'error','description':'Request Failed'}, 500
+
+        post =  Post.query.filter_by(id=content_id).first()
+        if post.user_id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        for key in params:
+            value = None if params[key] == "" else params[key]
+
+            # Editable Fields
+            if key not in ['text','url1','url2','url3']:
+                return {'status':'error',
+                        'description':key + ' field is not editable'}, 403
+
+            # Just ROLE_ADMIN user can change 'language', 'level'
+            if key in ['language'] and g.user.role == ROLE_USER:
+                return {'status':'error','description':'Only Admin can change' + key}, 401
+
+            # Set Key validataion
+            # TODO: Make long url to shortened url
+            if key in ['url1','url2','url3'] and len(value) > 512:
+                return {'status':'error',
+                        'description': key + ' is too long. (max 256 bytes)'}
+
+            setattr(post, key, value)
+
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error',
+                        'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+
+            setattr(post, 'img_id', f.id)
+
+        post.lst_mod_dt = datetime.datetime.now()
+
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return {'status':'error',
+                    'description':'DB write error'}, 500
+
+        data = {'id':post.id,
+                'user_id':post.user_id,
+                'bucket_id':post.bucket_id,
+                'text':None if post.text is None else post.text,
+                'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
+                'urls':[{'url1':None if post.url1 is None else post.url1},
+                        {'url2':None if post.url2 is None else post.url2},
+                        {'url3':None if post.url3 is None else post.url3},],
+                'reg_dt':post.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'lst_mod_dt': None if post.lst_mod_dt is None else post.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':'Post PUT success',
+                'data':data}, 201
+
+
+    def delete(self,content_id):
+        post = Post.query.filter_by(id=content_id).first()
+
+        if post.user_id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        try:
+            db.session.delete(post)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return {'status':'error',
+                    'description':'DB delete failed'}, 403
+
+        return {'status':'success',
+                'description':'DELETE success'}, 201
+
+
+api.add_resource(BucketTimeline, '/api/bucket/<bucket_id>/timeline', endpoint='bucketTimeline')
+api.add_resource(TimelineContent, '/api/content/<content_id>', endpoint='timelineContent')
+

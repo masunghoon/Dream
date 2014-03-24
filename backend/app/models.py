@@ -168,6 +168,14 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     language = db.Column(db.String(5))
+    bucket_id = db.Column(db.Integer, db.ForeignKey('bucket.id'))
+    text = db.Column(db.text)
+    img_id = db.Column(db.Integer, db.ForeignKey('file.id'))
+    url1 = db.Column(db.String(256))
+    url2 = db.Column(db.String(256))
+    url3 = db.Column(db.String(256))
+    reg_dt = db.Column(db.DateTime)
+    lst_mod_dt = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<Post %r>' % self.body
