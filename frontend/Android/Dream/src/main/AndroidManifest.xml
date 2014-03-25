@@ -18,6 +18,7 @@
         <activity android:name=".activity.login.ResetPasswordActivity" android:label="Reset Password"></activity>
         <activity android:name=".activity.login.UserAgreementActivity" ></activity>
         <activity android:name=".activity.login.PrivacyActivity" ></activity>
+        <activity android:name=".activity.main.TodayCalendarActivity"></activity>
         <activity
             android:name="com.vivavu.dream.activity.login.UserRegisterActivity"
             android:label="register" >

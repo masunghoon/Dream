@@ -44,6 +44,7 @@ import java.util.List;
  * Created by yuja on 14. 1. 13.
  */
 public class DataRepository {
+    public static String TAG = "com.vivavu.dream.repository.DataRepository";
     private static DreamApp context;
     private static DatabaseHelper databaseHelper;
 
@@ -372,5 +373,48 @@ public class DataRepository {
         }
 
         return returnList;
+    }
+
+    public static Date firstTodayDate(){
+        QueryBuilder<Today, Integer> todayIntegerQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
+        todayIntegerQueryBuilder.orderBy("date", true);
+        Today today = null;
+        try {
+            today = todayIntegerQueryBuilder.queryForFirst();
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        if(today == null) {
+            return new Date();
+        }else{
+            return today.getDate();
+        }
+    }
+
+    public static boolean isExistsTodayData(Date date){
+        List<Today> todays = getDatabaseHelper().getTodayRuntimeDao().queryForEq("date", date);
+        if(todays != null && todays.size() > 0){
+            return true;
+        }
+        return false;
+    }
+
+    public static List<Date> getTodayDates(){
+        QueryBuilder<Today, Integer> todayGroupQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
+        todayGroupQueryBuilder.groupBy("date");
+        todayGroupQueryBuilder.orderBy("date", false);
+        List<TodayGroup> todayGroups = null;
+        List<Date> dateArrayList = new ArrayList<Date>();
+        try {
+            List<Today> rangeList = todayGroupQueryBuilder.query();
+            for (Today today : rangeList){
+                dateArrayList.add(today.getDate());
+            }
+
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+        return dateArrayList;
     }
 }

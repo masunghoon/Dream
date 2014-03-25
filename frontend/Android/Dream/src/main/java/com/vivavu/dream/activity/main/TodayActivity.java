@@ -92,7 +92,7 @@ public class TodayActivity extends BaseActionBarActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case Code.ACT_ADD_BUCKET:
                 int bucketId = data.getIntExtra("bucketId", -1);
