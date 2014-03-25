@@ -186,9 +186,6 @@ public class MainActivity extends BaseActionBarActivity {
     public void onBackPressed() {
         if(mPopupNotice != null && mPopupNotice.isShowing()){
             mPopupNotice.hide();
-        }else if(getSupportFragmentManager().getBackStackEntryCount() > 1) {
-            //back stack을 이용하여 책장과 투데이를 이동함
-            super.onBackPressed();
         }else{
             exit();
         }

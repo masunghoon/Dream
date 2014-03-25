@@ -10,9 +10,10 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.handmark.pulltorefresh.library.PullToRefreshBase;
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.adapter.bucket.TodayRowAdapter;
-import com.vivavu.dream.fragment.CustomPullToRefreshFragment;
+import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.bucket.TodayGroup;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.repository.task.CustomAsyncTask;
@@ -22,12 +23,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 /**
  * Created by yuja on 14. 1. 23.
  */
-public class MainTodayFragment extends CustomPullToRefreshFragment<ListView>{
+public class MainTodayFragment extends CustomBaseFragment implements PullToRefreshListView.OnRefreshListener<ListView>{
     public static String TAG = "com.vivavu.dream.fragment.main.MainTodayFragment";
+    static public final int SEND_REFRESH_START = 0;
+    static public final int SEND_REFRESH_STOP = 1;
+    static public final int SEND_DATA_UPDATE = 2;
+    @InjectView(R.id.list)
+    protected PullToRefreshListView mList;
+
     private List<TodayGroup> todayList;
     private TodayRowAdapter todayRowAdapter;
 
@@ -39,7 +47,7 @@ public class MainTodayFragment extends CustomPullToRefreshFragment<ListView>{
                     mList.setRefreshing();
                     break;
                 case SEND_REFRESH_STOP:
-                case SEND_BUKET_LIST_UPDATE:
+                case SEND_DATA_UPDATE:
                     updateContents();
                     mList.onRefreshComplete();
                     break;
@@ -76,7 +84,6 @@ public class MainTodayFragment extends CustomPullToRefreshFragment<ListView>{
         handler.sendEmptyMessage(SEND_REFRESH_START);
     }
 
-    @Override
     protected void updateContents() {
         if(todayRowAdapter == null){
             todayRowAdapter = new TodayRowAdapter(getActivity(), todayList);
@@ -86,8 +93,21 @@ public class MainTodayFragment extends CustomPullToRefreshFragment<ListView>{
         todayRowAdapter.notifyDataSetChanged();
     }
 
+    /*@Override
+    public void onRefresh(PullToRefreshBase<GridView> gridViewPullToRefreshBase) {
+        TodayAsyncTask todayAsyncTask = new TodayAsyncTask(getContext());
+        todayAsyncTask.setOnPostExecuteCallback(new CustomAsyncTask.OnPostExecuteCallback() {
+            @Override
+            public void onPostExecuteCallback() {
+                DataAsync dataAsync = new DataAsync();
+                dataAsync.execute();
+            }
+        });
+        todayAsyncTask.execute();
+    }*/
+
     @Override
-    public void onRefresh(final PullToRefreshBase<ListView> listViewPullToRefreshBase) {
+    public void onRefresh(PullToRefreshBase<ListView> listViewPullToRefreshBase) {
         TodayAsyncTask todayAsyncTask = new TodayAsyncTask(getContext());
         todayAsyncTask.setOnPostExecuteCallback(new CustomAsyncTask.OnPostExecuteCallback() {
             @Override

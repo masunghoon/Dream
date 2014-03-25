@@ -9,9 +9,10 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.handmark.pulltorefresh.library.PullToRefreshBase;
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.adapter.bucket.BucketAdapter;
-import com.vivavu.dream.fragment.CustomPullToRefreshFragment;
+import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.BucketGroup;
@@ -22,13 +23,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 /**
  * Created by yuja on 14. 2. 27.
  */
-public class MainBucketListFragment extends CustomPullToRefreshFragment<ListView> {
+public class MainBucketListFragment extends CustomBaseFragment implements PullToRefreshListView.OnRefreshListener<ListView> {
+    static public String TAG = "com.vivavu.dream.fragment.main.MainBucketListFragment";
+    static public final int SEND_REFRESH_START = 0;
+    static public final int SEND_REFRESH_STOP = 1;
+    static public final int SEND_BUKET_LIST_UPDATE = 2;
     private static final int SEND_NETWORK_DATA = 3;
-    public static String TAG = "com.vivavu.dream.fragment.main.MainBucketListFragment";
+
+    @InjectView(R.id.list)
+    protected PullToRefreshListView mList;
+
     protected final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {

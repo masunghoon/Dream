@@ -15,7 +15,7 @@ import com.vivavu.dream.activity.bucket.BucketAddActivity;
 import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.fragment.main.MainBucketListFragment;
+import com.vivavu.dream.fragment.main.MainTodayDailyFragment;
 import com.vivavu.dream.fragment.main.MainTodayFragment;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
@@ -56,9 +56,9 @@ public class TodayActivity extends BaseActionBarActivity {
 
         if (savedInstanceState == null) {
             mainTodayFragment= new MainTodayFragment();
+            MainTodayDailyFragment mainTodayDailyFragment = new MainTodayDailyFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.content_frame, mainTodayFragment, MainBucketListFragment.TAG)
-                    .addToBackStack(MainBucketListFragment.TAG)
+                    .add(R.id.content_frame, mainTodayDailyFragment, mainTodayDailyFragment.TAG)
                     .commit();
         }
 
@@ -88,14 +88,6 @@ public class TodayActivity extends BaseActionBarActivity {
                 finish();
             }
         });
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // Activity 와 Fragment 실행순서에 따라서 Fragment UI가 다 생성된 이후에 Activity에서
-        // Fragment의 UI에 접근 가능. Activity.onCreate -> Fragment.onCreate->Activity.onStart가 수행
-
     }
 
     @Override
