@@ -173,7 +173,6 @@ def verify_password(username_or_token, password):
         if not user.verify_password(password):
             return False
 
-    print user
     g.user = user
     return True
 
@@ -182,13 +181,11 @@ def verify_password(username_or_token, password):
 def login_fb():
     redirect_uri = url_for('authorized', _external=True)
     params = {'redirect_uri': redirect_uri, 'scope': 'email, user_birthday'}
-    print params
     return redirect(facebook.get_authorize_url(**params))
 
 
 @app.route('/facebook/authorized')
 def authorized():
-    print 1
     # check to make sure the user authorized the request
     if not 'code' in request.args:
         return jsonify({'status':'error',

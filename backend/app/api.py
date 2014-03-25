@@ -674,41 +674,33 @@ api.add_resource(BucketAPI, '/api/bucket/<int:id>', endpoint='bucket')
 api.add_resource(UserBucketAPI, '/api/buckets/user/<int:id>', endpoint='buckets')
 
 
-##### PLAN ##################################################
+##### TODAY ##################################################
 
-plan_fields = {
-    'id': fields.Integer,
-    'date': fields.String,
-    'bucket_id': fields.Integer,
-    'user_id': fields.Integer,
-    'title': fields.String,
-    'status': fields.Integer,
-    'private': fields.Integer,
-    'deadline': fields.String,
-    'scope': fields.String,
-    'range': fields.String,
-    'rpt_type': fields.String,
-    'rpt_cndt': fields.String,
-    'parent_id': fields.Integer,
-}
-
-
-class PlanListAPI(Resource):
+class TodayListAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(PlanListAPI, self).__init__()
+        super(TodayListAPI, self).__init__()
 
-    def get(self,username):
+    def get(self,user_id):
 
         data = []
-        u = User.query.filter_by(username = username).first()
+        u = User.query.filter_by(id = user_id).first()
         if u is None:
             return {'status':'error',
                     'description':'User does not Exists'}, 400
 
-        for p, b in db.session.query(Plan, Bucket).filter(Plan.bucket_id == Bucket.id,Plan.user_id == g.user.id).order_by(Plan.date.desc(), Bucket.deadline.desc()).all():
+        if u.id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        # if 'fdate' in request.args or 'tdate' in request.args:
+        result = db.session.query(Plan, Bucket).filter(Plan.bucket_id==Bucket.id,
+                                                           Plan.user_id==user_id,
+                                                           Plan.date>=request.args['fdate'] if 'fdate' in request.args else '19000101',
+                                                           Plan.date<=request.args['tdate'] if 'tdate' in request.args else datetime.datetime.now().strftime('%Y%m%d')).all()
+
+        for p, b in result:
             data.append({
                 'id': p.id,
                 'date': p.date,
@@ -717,24 +709,28 @@ class PlanListAPI(Resource):
                 'title': b.title,
                 'status': b.status,
                 'private': b.private,
-                'deadline': b.deadline,
+                'deadline': b.deadline.strftime("%Y-%m-%d"),
                 'scope': b.scope,
                 'range': b.range,
                 'rpt_type': b.rpt_type,
                 'rpt_cndt': b.rpt_cndt,
-                'parent_id': b.parent_id,
                 'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
             })
 
-        return map(lambda t: marshal(t, plan_fields), data), 200
+        if len(data) == 0:
+            return {'status':'success',
+                    'description':'No Plans returned'}, 204
+
+        return {'status':'success',
+                'description':'Get Today list succeed. (Count: '+str(len(data))+')',
+                'data':data}, 200
 
 
-class PlanAPI(Resource):
+class TodayAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(PlanAPI, self).__init__()
+        super(TodayAPI, self).__init__()
 
     def put(self, id):
         if request.json:
@@ -758,8 +754,8 @@ class PlanAPI(Resource):
 
         return {'status':'succeed'}, 200
 
-api.add_resource(PlanListAPI, '/api/plans/<username>', endpoint='plans')
-api.add_resource(PlanAPI, '/api/plan/<id>', endpoint='plan')
+api.add_resource(TodayListAPI, '/api/user/<user_id>/today', endpoint='todayList')
+api.add_resource(TodayAPI, '/api/today/<id>', endpoint='today')
 
 
 ##### FILE UPLOADS ##############################################
@@ -917,11 +913,11 @@ class BucketTimeline(Resource):
                         status=0,
                         lst_mod_dt=datetime.datetime.now())
             db.session.add(plan)
-        
+
         post = Post(body=None,
                     timestamp=None,
                     user_id=b.user_id,
-                    languate=None, 
+                    languate=None,
                     bucket_id=bucket_id,
                     text=params['text'] if 'text' in params else None,
                     img_id=f.id if 'photo' in request.files else None,
@@ -930,13 +926,13 @@ class BucketTimeline(Resource):
                     url3=params['url3'] if 'url3' in params else None,
                     reg_dt=datetime.datetime.now(),
                     lst_mod_dt=datetime.datetime.now())
-            
+
         db.session.add(post)
         db.session.flush()
         db.session.refresh(post)
-        
+
         db.session.commit()
-        
+
         data = {'id':post.id,
                     'user_id':post.user_id,
                     'bucket_id':post.bucket_id,
@@ -951,7 +947,7 @@ class BucketTimeline(Resource):
         return {'status':'success',
                 'description':'Successfully posted.',
                 'data':data}, 201
-        
+
 
         return 200
 
@@ -975,7 +971,7 @@ class TimelineContent(Resource):
                 pass
             else:
                 return {'error':'User unauthorized'}, 401
-            
+
         data = {'id':post.id,
                 'user_id':post.user_id,
                 'bucket_id':post.bucket_id,
