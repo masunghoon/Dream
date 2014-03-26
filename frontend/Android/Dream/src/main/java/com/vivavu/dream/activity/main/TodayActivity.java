@@ -15,7 +15,7 @@ import com.vivavu.dream.activity.bucket.BucketAddActivity;
 import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.fragment.main.MainBucketListFragment;
+import com.vivavu.dream.fragment.main.MainTodayDailyFragment;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
 import com.vivavu.dream.view.CustomPopupWindow;
@@ -23,7 +23,10 @@ import com.vivavu.dream.view.CustomPopupWindow;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-public class MainActivity extends BaseActionBarActivity {
+/**
+ * Created by yuja on 2014-03-21.
+ */
+public class TodayActivity extends BaseActionBarActivity {
     @InjectView(R.id.btn_add_bucket)
     Button mBtnAddBucket;
     @InjectView(R.id.actionbar_main_title)
@@ -36,8 +39,7 @@ public class MainActivity extends BaseActionBarActivity {
     View noticeView;
     CustomPopupWindow mPopupNotice;
 
-    MainBucketListFragment mainBucketListFragment;
-
+    MainTodayDailyFragment mainTodayDailyFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,10 +54,9 @@ public class MainActivity extends BaseActionBarActivity {
         ButterKnife.inject(this);
 
         if (savedInstanceState == null) {
-            mainBucketListFragment= new MainBucketListFragment();
+            mainTodayDailyFragment = new MainTodayDailyFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.content_frame, mainBucketListFragment, MainBucketListFragment.TAG)
-                    .addToBackStack(MainBucketListFragment.TAG)
+                    .add(R.id.content_frame, mainTodayDailyFragment, mainTodayDailyFragment.TAG)
                     .commit();
         }
 
@@ -77,28 +78,19 @@ public class MainActivity extends BaseActionBarActivity {
             }
         });
 
-        mActionbarMainToday.getButton().setText("Today");
+        mActionbarMainToday.getButton().setText("Main");
         mActionbarMainToday.getTextView().setText("1");
         mActionbarMainToday.getButton().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, TodayActivity.class);
-                startActivity(intent);
+                finish();
             }
         });
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        // Activity 와 Fragment 실행순서에 따라서 Fragment UI가 다 생성된 이후에 Activity에서
-        // Fragment의 UI에 접근 가능. Activity.onCreate -> Fragment.onCreate->Activity.onStart가 수행
-
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case Code.ACT_ADD_BUCKET:
                 int bucketId = data.getIntExtra("bucketId", -1);
@@ -186,8 +178,7 @@ public class MainActivity extends BaseActionBarActivity {
         if(mPopupNotice != null && mPopupNotice.isShowing()){
             mPopupNotice.hide();
         }else{
-            exit();
+            finish();
         }
     }
-
 }

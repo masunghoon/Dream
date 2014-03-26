@@ -2,27 +2,13 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#1F0000FF"
+    >
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/book_cover_image"
-        />
-    <Button
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:id="@+id/btn_book_write"
-        android:text="write"
-        />
-    <Button
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:id="@+id/btn_book_setting"
-        android:text="write"
         />
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,6 +20,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Title"
+            android:maxLines="2"
+            android:ellipsize="end"
             android:id="@+id/book_title"
             />
         <TextView
@@ -50,5 +38,21 @@
             android:id="@+id/book_status"
             />
         </LinearLayout>
-
+    <Button
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:id="@+id/btn_book_write"
+        android:text="write"
+        />
+    <Button
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:id="@+id/btn_book_setting"
+        android:text="write"
+        />
 </RelativeLayout>

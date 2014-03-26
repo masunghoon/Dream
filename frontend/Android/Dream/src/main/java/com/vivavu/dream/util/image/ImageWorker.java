@@ -400,8 +400,12 @@ public abstract class ImageWorker {
                             drawable
                     });
             // Set background to loading bitmap
-            imageView.setBackgroundDrawable(
-                    new BitmapDrawable(mResources, mLoadingBitmap));
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                imageView.setBackgroundDrawable(
+                        new BitmapDrawable(mResources, mLoadingBitmap));
+            }else{
+                imageView.setBackground(new BitmapDrawable(mResources, mLoadingBitmap));
+            }
 
             imageView.setImageDrawable(td);
             td.startTransition(FADE_IN_TIME);

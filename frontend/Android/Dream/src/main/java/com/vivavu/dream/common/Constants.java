@@ -23,7 +23,7 @@ public class Constants {
     //버킷, 등록, 읽기, 수정, 삭제
     static public String apiBucketInfo = baseUrl+"api/bucket/{bkt_id}";
     
-    static public String apiPlanList = baseUrl + "api/plans/{username}";
+    static public String apiPlanList = baseUrl + "api/user/{userid}/today";
     static public String apiPlanInfo = baseUrl + "api/plan/{plan_id}";
 
     static public String apiToken = baseUrl+"api/token";

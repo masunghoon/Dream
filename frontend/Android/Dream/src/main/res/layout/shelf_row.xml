@@ -34,6 +34,7 @@
             android:layout_width="match_parent"
             android:id="@+id/shelf_row"
             >
+            <!-- 코드안에서 viewpager 생성 아니면 이상한 버그남-->
             </com.vivavu.dream.view.PagerContainer>
     </LinearLayout>
 </LinearLayout>

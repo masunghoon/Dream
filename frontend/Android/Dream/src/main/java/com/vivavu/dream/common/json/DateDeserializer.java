@@ -17,7 +17,8 @@ import java.util.Date;
 public class DateDeserializer implements JsonDeserializer<Date> {
     private static final String[] DATE_FORMATS = new String[] {
             "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd"
+            "yyyy-MM-dd",
+            "yyyyMMdd"
     };
 
     @Override

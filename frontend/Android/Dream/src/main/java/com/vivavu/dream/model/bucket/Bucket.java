@@ -39,7 +39,7 @@ public class Bucket implements Serializable{
     private Integer status;
 
     @DatabaseField
-    @SerializedName("is_private")
+    @SerializedName("private")
     private Integer isPrivate;
 
     @DatabaseField

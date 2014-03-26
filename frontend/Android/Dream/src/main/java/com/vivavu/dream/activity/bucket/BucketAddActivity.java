@@ -2,6 +2,7 @@ package com.vivavu.dream.activity.bucket;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
 import android.text.Editable;
@@ -47,6 +50,7 @@ import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.ValidationUtils;
+import com.vivavu.dream.util.ViewUnbindHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +64,8 @@ import butterknife.InjectView;
  * Created by yuja on 14. 1. 13.
  */
 public class BucketAddActivity extends BaseActionBarActivity {
+    private static final int SEND_DATA_START = 0;
+    private static final int SEND_DATA_END = 1;
     @InjectView(R.id.bucket_input_title)
     EditText mBucketInputTitle;
     @InjectView(R.id.btn_input_dday)
@@ -90,12 +96,31 @@ public class BucketAddActivity extends BaseActionBarActivity {
     private Bucket bucket = null;
     protected Uri mImageCaptureUri;
     private String modString;
+
+    private ProgressDialog progressDialog;
+
+    protected final Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what){
+                case SEND_DATA_START:
+                    progressDialog.show();
+                    break;
+                case SEND_DATA_END:
+                    progressDialog.dismiss();
+                    break;
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bucket_input_template);
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("진행중");
 
         Intent data = getIntent();
 
@@ -471,6 +496,19 @@ public class BucketAddActivity extends BaseActionBarActivity {
         startActivityForResult(intent, Code.ACT_ADD_BUCKET_CROP_FROM_CAMERA);
     }
 
+    @Override
+    protected void onDestroy() {
+
+        ViewUnbindHelper.unbindReferences(mBtnBucketOptionGallery);
+        ViewUnbindHelper.unbindReferences(mBtnBucketOptionNote);
+        ViewUnbindHelper.unbindReferences(mBtnBucketOptionPic);
+        ViewUnbindHelper.unbindReferences(mBtnBucketOptionPublic);
+        ViewUnbindHelper.unbindReferences(mBtnBucketOptionRepeat);
+        ViewUnbindHelper.unbindReferences(mBtnInputDday);
+        ViewUnbindHelper.unbindReferences(mIvCardImage);
+        super.onDestroy();
+    }
+
     public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<Bucket>>{
         private DreamApp context;
 
@@ -480,6 +518,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
 
         @Override
         protected ResponseBodyWrapped<Bucket> doInBackground(Bucket... params) {
+            handler.sendEmptyMessage(SEND_DATA_START);
             Connector connector = new Connector();
             ResponseBodyWrapped<Bucket> responseBodyWrapped = new ResponseBodyWrapped<Bucket>();
 
@@ -507,11 +546,13 @@ public class BucketAddActivity extends BaseActionBarActivity {
                         Intent intent = new Intent();
                         intent.putExtra("bucketId", (Integer) bucket.getId());
                         setResult(RESULT_OK, intent);
+                        handler.sendEmptyMessage(SEND_DATA_END);
                         finish();
                     }
                 }
             }else {
                 Toast.makeText(BucketAddActivity.this, modString + "실패하였습니다. 다시 시도해주세요.", Toast.LENGTH_LONG).show();
+                handler.sendEmptyMessage(SEND_DATA_END);
             }
         }
     }

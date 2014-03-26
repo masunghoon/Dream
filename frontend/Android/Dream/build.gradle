@@ -67,6 +67,8 @@ dependencies {
     compile 'com.j256.ormlite:ormlite-android:4.48'
 
     compile 'com.github.johnkil.android-progressfragment:progressfragment:1.4.0'
+    compile 'com.tonicartos:stickygridheaders:1.0.1'
+    compile 'com.squareup:android-times-square:1.1.1@aar'
     compile project(':Libraries:facebook')
     compile project(':Libraries:viewpagerindicator')
     compile project(':Libraries:bookshelf')

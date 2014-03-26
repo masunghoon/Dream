@@ -16,8 +16,10 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.adapter.main.ShelfRowFragmentAdapter;
 import com.vivavu.dream.model.bucket.BucketGroup;
+import com.vivavu.dream.util.image.ImageFetcher;
 import com.vivavu.dream.view.PagerContainer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -32,14 +34,15 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     private FragmentActivity mContext;
     private int resource;
     private Fragment parentFragment;
-    private final int OFF_SCREEN_PAGE_LIMIT = 5;
+    private final int OFF_SCREEN_PAGE_LIMIT = 3;
+    private ImageFetcher mImageFetcher;
 
     public BucketAdapter(FragmentActivity context, int resource, List<BucketGroup> mBucketList) {
         super();
         this.mContext = context;
         this.resource = resource;
         this.mInflater = (LayoutInflater) this.mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.mBucketList = mBucketList;
+        this.mBucketList = new ArrayList<BucketGroup>(mBucketList);
     }
 
     @Override
@@ -64,12 +67,11 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        int res = R.layout.shelf_row;
         BucketGroup item = mBucketList.get(i);
 
         ButterknifeViewHolder holder = null;
         /*if (view == null) {*/
-            view = mInflater.inflate(res, viewGroup, false);
+            view = mInflater.inflate(R.layout.shelf_row, viewGroup, false);
             holder = new ButterknifeViewHolder(view);
             final ButterknifeViewHolder finalViewHolder = holder;
             holder.mShelfRoll.setOnClickListener(new View.OnClickListener() {
@@ -84,28 +86,36 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
                     }
                 }
             });
+
+            ViewPager pager = holder.mShelfRow.getViewPager();
+
+            //PagerAdapter adapter = new ShelfRowAdapter(mContext);
+            //ShelfRowAdapter adapter = new ShelfRowAdapter(getContext(), item.getBukets());
+            ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
+            adapter.setmImageFetcher(mImageFetcher);
+            //adapter.refreshDataSet(item.getBukets());
+            pager.setAdapter(adapter);
+            //Necessary or the pager will only have one extra page to show
+            // make this at least however many pages you can see
+            pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
+            //A little space between pages
+            pager.setPageMargin(15);
+
+            //If hardware acceleration is enabled, you should also remove
+            // clipping on the pager for its children.
+            pager.setClipChildren(false);
+
+
             view.setTag(holder);
         /*}else{
             holder = (ButterknifeViewHolder) view.getTag();
         }*/
 
-        ViewPager pager = holder.mShelfRow.getViewPager();
-
-        //PagerAdapter adapter = new ShelfRowAdapter(mContext);
-        ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
-        pager.setAdapter(adapter);
-        //Necessary or the pager will only have one extra page to show
-        // make this at least however many pages you can see
-        pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
-        //A little space between pages
-        pager.setPageMargin(15);
-
-        //If hardware acceleration is enabled, you should also remove
-        // clipping on the pager for its children.
-        pager.setClipChildren(false);
 
         holder.mShelfTitle.setText(item.getRangeText());
-
+        //ViewPager pager = holder.mShelfRow.getViewPager();
+        //ShelfRowFragmentAdapter adapter = (ShelfRowFragmentAdapter) pager.getAdapter();
+        adapter.refreshDataSet(item.getBukets());
         return view;
     }
 
@@ -118,20 +128,20 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         return this.mContext;
     }
 
-    public void notifyDataSetChanged(List<BucketGroup> buckets) {
+    public void refreshDataSet(List<BucketGroup> buckets) {
         this.mBucketList.clear();
         this.mBucketList.addAll(buckets);
 
         super.notifyDataSetChanged();
     }
 
-    public List<BucketGroup> getmBucketList() {
+    public List<BucketGroup> getBucketList() {
         return mBucketList;
     }
 
-    public void setBucketList(List<BucketGroup> mBucketList) {
+    public void setBucketList(List<BucketGroup> bucketList) {
         this.mBucketList.clear();
-        this.mBucketList.addAll(mBucketList);
+        this.mBucketList.addAll(bucketList);
     }
 
     public Fragment getParentFragment() {
@@ -148,6 +158,15 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         }
         return mContext.getSupportFragmentManager();
     }
+
+    public ImageFetcher getmImageFetcher() {
+        return mImageFetcher;
+    }
+
+    public void setmImageFetcher(ImageFetcher mImageFetcher) {
+        this.mImageFetcher = mImageFetcher;
+    }
+
     /**
      * This class contains all butterknife-injected Views & Layouts from layout file 'null'
      * for easy to all layout elements.

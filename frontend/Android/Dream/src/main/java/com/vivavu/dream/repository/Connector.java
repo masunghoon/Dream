@@ -10,6 +10,7 @@ import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.model.bucket.Today;
 import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.JsonFactory;
@@ -164,6 +165,36 @@ public class Connector {
             Gson gson = JsonFactory.getInstance();
             Type type = new TypeToken<ResponseBodyWrapped<Bucket>>(){}.getType();
             result = gson.fromJson((String) resultString.getBody(), type);
+        }
+
+        return result;
+    }
+
+    public ResponseBodyWrapped<List<Today>> getTodayList(String lastTodayDate){
+        RestTemplate restTemplate = RestTemplateFactory.getInstance();
+        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+        HttpEntity request = new HttpEntity<String>(requestHeaders);
+        ResponseEntity<String> resultString = null;
+        StringBuffer url = new StringBuffer(Constants.apiPlanList);
+        if(lastTodayDate != null){
+            url.append("?fdate=");
+            url.append(lastTodayDate);
+        }
+        try {
+            resultString = restTemplate.exchange(url.toString(), HttpMethod.GET, request, String.class, getContext().getUser().getId());
+        } catch (RestClientException e) {
+            Log.e("dream", e.toString());
+        }
+
+        ResponseBodyWrapped<List<Today>> result = new ResponseBodyWrapped<List<Today>>("error", String.valueOf(resultString.getStatusCode()), new ArrayList<Today>());
+
+        if(RestTemplateUtils.isAvailableParseToJson(resultString)){
+            Gson gson = JsonFactory.getInstance();
+            //Type type = new TypeToken<ResponseBodyWrapped<List<Today>>>(){}.getType();
+            //result = gson.fromJson((String) resultString.getBody(), type);
+            Type type = new TypeToken<ResponseBodyWrapped<List<Today>>>(){}.getType();
+            result  = gson.fromJson((String) resultString.getBody(), type);
+
         }
 
         return result;
