@@ -18,6 +18,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.vivavu.dream.view.CustomPopupWindow;
@@ -220,5 +221,23 @@ public class AndroidUtils {
         // 1dp/ms
         a.setDuration((int)(initialHeight / v.getContext().getResources().getDisplayMetrics().density));
         v.startAnimation(a);
+    }
+
+    public static void recycleImage(ImageView imageView){
+        if(imageView.getDrawable() != null){
+            BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+            imageView.setImageDrawable(null);
+            Bitmap bitmap = drawable.getBitmap();
+            bitmap.recycle();
+        }
+    }
+
+    public static void recycleImage(View view){
+        if(view.getBackground() != null){
+            BitmapDrawable drawable = (BitmapDrawable) view.getBackground();
+            view.setBackground(null);
+            Bitmap bitmap = drawable.getBitmap();
+            bitmap.recycle();
+        }
     }
 }

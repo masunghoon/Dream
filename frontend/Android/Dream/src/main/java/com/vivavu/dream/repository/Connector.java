@@ -177,7 +177,7 @@ public class Connector {
         ResponseEntity<String> resultString = null;
 
         try {
-            resultString = restTemplate.exchange(Constants.apiPlanList, HttpMethod.GET, request, String.class, getContext().getUser().getUsername());
+            resultString = restTemplate.exchange(Constants.apiPlanList, HttpMethod.GET, request, String.class, getContext().getUser().getId());
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }
@@ -188,11 +188,9 @@ public class Connector {
             Gson gson = JsonFactory.getInstance();
             //Type type = new TypeToken<ResponseBodyWrapped<List<Today>>>(){}.getType();
             //result = gson.fromJson((String) resultString.getBody(), type);
-            Type type = new TypeToken<List<Today>>(){}.getType();
-            List<Today> tmp  = gson.fromJson((String) resultString.getBody(), type);
-            result.setStatus("success");
-            result.setDescription("");
-            result.setData(tmp);
+            Type type = new TypeToken<ResponseBodyWrapped<List<Today>>>(){}.getType();
+            result  = gson.fromJson((String) resultString.getBody(), type);
+
         }
 
         return result;

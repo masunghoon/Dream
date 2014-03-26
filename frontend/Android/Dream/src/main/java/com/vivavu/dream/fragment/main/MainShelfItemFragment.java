@@ -3,7 +3,6 @@ package com.vivavu.dream.fragment.main;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +22,7 @@ import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
+import com.vivavu.dream.util.ViewUnbindHelper;
 import com.vivavu.dream.view.CustomPopupWindow;
 
 import java.io.File;
@@ -153,18 +153,13 @@ public class MainShelfItemFragment extends CustomBaseFragment{
 
     @Override
     public void onDestroyView() {
-        if(mBookCoverImage.getDrawable() != null){
-            BitmapDrawable drawable = (BitmapDrawable) mBookCoverImage.getDrawable();
-            mBookCoverImage.setImageDrawable(null);
-            Bitmap bitmap = drawable.getBitmap();
-            bitmap.recycle();
-
-        }
+        ViewUnbindHelper.unbindReferences(mBookCoverImage);
         super.onDestroyView();
     }
 
     @Override
     public void onDestroy() {
+        ViewUnbindHelper.unbindReferences(mBookCoverImage);
         super.onDestroy();
     }
 

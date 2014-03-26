@@ -33,7 +33,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     private FragmentActivity mContext;
     private int resource;
     private Fragment parentFragment;
-    private final int OFF_SCREEN_PAGE_LIMIT = 5;
+    private final int OFF_SCREEN_PAGE_LIMIT = 3;
 
     public BucketAdapter(FragmentActivity context, int resource, List<BucketGroup> mBucketList) {
         super();

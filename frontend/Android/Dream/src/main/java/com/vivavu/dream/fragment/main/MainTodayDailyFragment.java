@@ -1,6 +1,7 @@
 package com.vivavu.dream.fragment.main;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,14 +46,19 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
 
     private List<TodayGroup> todayGroupList;
     private TodayDailyViewAdapter todayDailyViewAdapter;
+    private ProgressDialog progressDialog;
 
     protected final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
+                case SEND_REFRESH_START:
+                    progressDialog.show();
+                    break;
                 case SEND_BUKET_LIST_UPDATE:
 
                     updateContents((List<TodayGroup>) msg.obj);
+                    progressDialog.dismiss();
                     break;
             }
         }
@@ -71,6 +77,10 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
                              Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_shelf_daily_list, container, false);
         ButterKnife.inject(this, rootView);
+
+        progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setMessage("진행중");
+
         return rootView;
     }
 

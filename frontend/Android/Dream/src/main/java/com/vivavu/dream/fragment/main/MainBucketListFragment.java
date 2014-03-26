@@ -1,5 +1,6 @@
 package com.vivavu.dream.fragment.main;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -37,12 +38,14 @@ public class MainBucketListFragment extends CustomBaseFragment implements PullTo
 
     @InjectView(R.id.list)
     protected PullToRefreshListView mList;
+    private ProgressDialog progressDialog;
 
     protected final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
                 case SEND_REFRESH_START:
+                    progressDialog.show();
                     mList.setRefreshing();
                     break;
                 case SEND_REFRESH_STOP:
@@ -54,6 +57,7 @@ public class MainBucketListFragment extends CustomBaseFragment implements PullTo
                     bucketGroupList.addAll((List<BucketGroup>) msg.obj);
                     updateContents();
                     mList.onRefreshComplete();
+                    progressDialog.dismiss();
                     break;
                 case SEND_NETWORK_DATA:
                     break;
@@ -73,6 +77,8 @@ public class MainBucketListFragment extends CustomBaseFragment implements PullTo
         ButterKnife.inject(this, rootView);
         mList.setOnRefreshListener(this);
         //updateContents();
+        progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setMessage("진행중");
         return rootView;
     }
 
