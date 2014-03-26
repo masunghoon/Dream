@@ -123,7 +123,7 @@ public class MainTodayFragment extends CustomBaseFragment implements PullToRefre
 
         @Override
         protected List<TodayGroup> doInBackground(Void... params) {
-            List<TodayGroup> todayGroup = DataRepository.listTodayGroup();
+            List<TodayGroup> todayGroup = DataRepository.listTodayGroupAndTodayData();
             return todayGroup;
         }
 

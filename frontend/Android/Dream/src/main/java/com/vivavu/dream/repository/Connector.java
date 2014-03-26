@@ -170,14 +170,18 @@ public class Connector {
         return result;
     }
 
-    public ResponseBodyWrapped<List<Today>> getTodayList(){
+    public ResponseBodyWrapped<List<Today>> getTodayList(String lastTodayDate){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
         HttpEntity request = new HttpEntity<String>(requestHeaders);
         ResponseEntity<String> resultString = null;
-
+        StringBuffer url = new StringBuffer(Constants.apiPlanList);
+        if(lastTodayDate != null){
+            url.append("?fdate=");
+            url.append(lastTodayDate);
+        }
         try {
-            resultString = restTemplate.exchange(Constants.apiPlanList, HttpMethod.GET, request, String.class, getContext().getUser().getId());
+            resultString = restTemplate.exchange(url.toString(), HttpMethod.GET, request, String.class, getContext().getUser().getId());
         } catch (RestClientException e) {
             Log.e("dream", e.toString());
         }

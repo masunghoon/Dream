@@ -16,7 +16,6 @@ import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.fragment.main.MainBucketListFragment;
-import com.vivavu.dream.fragment.main.MainTodayFragment;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
 import com.vivavu.dream.view.CustomPopupWindow;
@@ -38,7 +37,7 @@ public class MainActivity extends BaseActionBarActivity {
     CustomPopupWindow mPopupNotice;
 
     MainBucketListFragment mainBucketListFragment;
-    MainTodayFragment mainTodayFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

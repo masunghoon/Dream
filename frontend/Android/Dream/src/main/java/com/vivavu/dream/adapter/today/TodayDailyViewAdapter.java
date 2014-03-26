@@ -7,6 +7,7 @@ import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.GridView;
 
@@ -15,6 +16,8 @@ import com.vivavu.dream.activity.main.TodayCalendarActivity;
 import com.vivavu.dream.fragment.main.MainTodayDailyFragment;
 import com.vivavu.dream.model.bucket.TodayGroup;
 import com.vivavu.dream.util.DateUtils;
+import com.vivavu.dream.util.image.ImageFetcher;
+import com.vivavu.dream.util.image.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +34,11 @@ public class TodayDailyViewAdapter extends PagerAdapter implements View.OnClickL
     private Fragment fragment;
     private LayoutInflater mInflater;
     private List<TodayGroup> todayGroupList;
+    private TodayDailyItemAdapter mAdapter;
+    private ImageFetcher mImageFetcher;
 
     public TodayDailyViewAdapter(Fragment fragment, List<TodayGroup> todayGroupList) {
-        this.context = fragment.getActivity();
+        this.context = fragment.getActivity().getApplicationContext();
         this.fragment = fragment;
         this.mInflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.todayGroupList = new ArrayList<TodayGroup>(todayGroupList);
@@ -75,7 +80,28 @@ public class TodayDailyViewAdapter extends PagerAdapter implements View.OnClickL
         holder.mBtnDate.setText(DateUtils.getDateString(todayGroup.getDate(), "yyyy-MM-dd"));
         holder.mBtnDate.setTag(todayGroup.getDate());
         holder.mBtnDate.setOnClickListener(this);
-        holder.mTodayContents.setAdapter(new TodayDailyItemAdapter(context, todayGroup.getTodayList()));
+        mAdapter = new TodayDailyItemAdapter(context, todayGroup.getTodayList());
+        mAdapter.setmImageFetcher(mImageFetcher);
+        holder.mTodayContents.setAdapter(mAdapter);
+        holder.mTodayContents.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                // Pause fetcher to ensure smoother scrolling when flinging
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
+                    // Before Honeycomb pause image loading on scroll to help with performance
+                    if (!Utils.hasHoneycomb()) {
+                        mImageFetcher.setPauseWork(true);
+                    }
+                } else {
+                    mImageFetcher.setPauseWork(false);
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+            }
+        });
     }
 
     public List<TodayGroup> getTodayGroupList() {
@@ -84,6 +110,14 @@ public class TodayDailyViewAdapter extends PagerAdapter implements View.OnClickL
 
     public void setTodayGroupList(List<TodayGroup> todayGroupList) {
         this.todayGroupList = todayGroupList;
+    }
+
+    public ImageFetcher getmImageFetcher() {
+        return mImageFetcher;
+    }
+
+    public void setmImageFetcher(ImageFetcher mImageFetcher) {
+        this.mImageFetcher = mImageFetcher;
     }
 
     @Override

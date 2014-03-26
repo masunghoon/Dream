@@ -23,6 +23,7 @@ import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.ViewUnbindHelper;
+import com.vivavu.dream.util.image.ImageFetcher;
 import com.vivavu.dream.view.CustomPopupWindow;
 
 import java.io.File;
@@ -52,6 +53,7 @@ public class MainShelfItemFragment extends CustomBaseFragment{
 
     View popupView;
     CustomPopupWindow mPopupWindow;
+    private ImageFetcher mImageFetcher;
 
     public MainShelfItemFragment() {
         this.bucket = new Bucket();
@@ -79,8 +81,8 @@ public class MainShelfItemFragment extends CustomBaseFragment{
     public void onResume() {
         super.onResume();
         if(bucket.getCvrImgUrl() != null) {
-            ImageDownloadTask imageDownloadTask = new ImageDownloadTask();
-            imageDownloadTask.execute(bucket.getCvrImgUrl());
+            /*ImageDownloadTask imageDownloadTask = new ImageDownloadTask();
+            imageDownloadTask.execute(bucket.getCvrImgUrl());*/
         }
     }
 
@@ -129,6 +131,8 @@ public class MainShelfItemFragment extends CustomBaseFragment{
         mBookTitle.setOnClickListener(this);
         mBookDudate.setOnClickListener(this);
         mBookStatus.setOnClickListener(this);
+
+        mImageFetcher.loadImage(bucket.getCvrImgUrl(), mBookCoverImage);
     }
 
     @Override
@@ -153,7 +157,7 @@ public class MainShelfItemFragment extends CustomBaseFragment{
 
     @Override
     public void onDestroyView() {
-        ViewUnbindHelper.unbindReferences(mBookCoverImage);
+        ViewUnbindHelper.unbindReferences(getView());
         super.onDestroyView();
     }
 
@@ -161,6 +165,14 @@ public class MainShelfItemFragment extends CustomBaseFragment{
     public void onDestroy() {
         ViewUnbindHelper.unbindReferences(mBookCoverImage);
         super.onDestroy();
+    }
+
+    public ImageFetcher getmImageFetcher() {
+        return mImageFetcher;
+    }
+
+    public void setmImageFetcher(ImageFetcher mImageFetcher) {
+        this.mImageFetcher = mImageFetcher;
     }
 
     /**

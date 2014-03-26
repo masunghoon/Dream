@@ -16,6 +16,7 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.adapter.main.ShelfRowFragmentAdapter;
 import com.vivavu.dream.model.bucket.BucketGroup;
+import com.vivavu.dream.util.image.ImageFetcher;
 import com.vivavu.dream.view.PagerContainer;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     private int resource;
     private Fragment parentFragment;
     private final int OFF_SCREEN_PAGE_LIMIT = 3;
+    private ImageFetcher mImageFetcher;
 
     public BucketAdapter(FragmentActivity context, int resource, List<BucketGroup> mBucketList) {
         super();
@@ -90,6 +92,7 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
             //PagerAdapter adapter = new ShelfRowAdapter(mContext);
             //ShelfRowAdapter adapter = new ShelfRowAdapter(getContext(), item.getBukets());
             ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
+            adapter.setmImageFetcher(mImageFetcher);
             //adapter.refreshDataSet(item.getBukets());
             pager.setAdapter(adapter);
             //Necessary or the pager will only have one extra page to show
@@ -155,6 +158,15 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
         }
         return mContext.getSupportFragmentManager();
     }
+
+    public ImageFetcher getmImageFetcher() {
+        return mImageFetcher;
+    }
+
+    public void setmImageFetcher(ImageFetcher mImageFetcher) {
+        this.mImageFetcher = mImageFetcher;
+    }
+
     /**
      * This class contains all butterknife-injected Views & Layouts from layout file 'null'
      * for easy to all layout elements.

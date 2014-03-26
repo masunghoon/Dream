@@ -16,7 +16,6 @@ import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
 import com.vivavu.dream.fragment.main.MainTodayDailyFragment;
-import com.vivavu.dream.fragment.main.MainTodayFragment;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
 import com.vivavu.dream.view.CustomPopupWindow;
@@ -40,7 +39,7 @@ public class TodayActivity extends BaseActionBarActivity {
     View noticeView;
     CustomPopupWindow mPopupNotice;
 
-    MainTodayFragment mainTodayFragment;
+    MainTodayDailyFragment mainTodayDailyFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,8 +54,7 @@ public class TodayActivity extends BaseActionBarActivity {
         ButterKnife.inject(this);
 
         if (savedInstanceState == null) {
-            mainTodayFragment= new MainTodayFragment();
-            MainTodayDailyFragment mainTodayDailyFragment = new MainTodayDailyFragment();
+            mainTodayDailyFragment = new MainTodayDailyFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.content_frame, mainTodayDailyFragment, mainTodayDailyFragment.TAG)
                     .commit();

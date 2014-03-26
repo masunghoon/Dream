@@ -11,15 +11,17 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.Today;
+import com.vivavu.dream.model.bucket.TodayGroup;
 
 import java.sql.SQLException;
+import java.util.Date;
 
 /**
  * Created by yuja on 14. 3. 5.
  */
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String DATABASE_NAME = "dream.db";
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 9;
 
     // the DAO object we use to access the SimpleData table
     private Dao<Bucket, Integer> bucketDao = null;
@@ -28,6 +30,10 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     // the DAO object we use to access the SimpleData table
     private Dao<Today, Integer> todayDao = null;
     private RuntimeExceptionDao<Today, Integer> todayRuntimeDao = null;
+
+// the DAO object we use to access the SimpleData table
+    private Dao<TodayGroup, Date> todayGroupDao = null;
+    private RuntimeExceptionDao<TodayGroup, Date> todayGroupRuntimeDao = null;
 
 
     public DatabaseHelper(Context context){
@@ -41,6 +47,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             Log.i(DatabaseHelper.class.getName(), "onCreate");
             TableUtils.createTable(connectionSource, Bucket.class);
             TableUtils.createTable(connectionSource, Today.class);
+            TableUtils.createTable(connectionSource, TodayGroup.class);
         } catch (SQLException e) {
             Log.e(DatabaseHelper.class.getName(), "Can't create database", e);
             throw new RuntimeException(e);
@@ -61,6 +68,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             Log.i(DatabaseHelper.class.getName(), "onUpgrade");
             TableUtils.dropTable(connectionSource, Bucket.class, true);
             TableUtils.dropTable(connectionSource, Today.class, true);
+            TableUtils.dropTable(connectionSource, TodayGroup.class, true);
             // after we drop the old databases, we create the new ones
             onCreate(database, connectionSource);
         } catch (SQLException e) {
@@ -95,6 +103,20 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             todayRuntimeDao = getRuntimeExceptionDao(Today.class);
         }
         return todayRuntimeDao;
+    }
+
+    public Dao<TodayGroup, Date> getTodayGroupDao() throws SQLException {
+        if(todayGroupDao == null){
+            todayGroupDao = getDao(TodayGroup.class);
+        }
+        return todayGroupDao;
+    }
+
+    public RuntimeExceptionDao<TodayGroup, Date> getTodayGroupRuntimeDao() {
+        if (todayGroupRuntimeDao == null) {
+            todayGroupRuntimeDao = getRuntimeExceptionDao(TodayGroup.class);
+        }
+        return todayGroupRuntimeDao;
     }
 
     @Override

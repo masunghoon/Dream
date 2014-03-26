@@ -22,7 +22,7 @@ public class TodayAsyncTask extends CustomAsyncTask<Void, Void, ResponseBodyWrap
     @Override
     protected ResponseBodyWrapped<List<Today>> doInBackground(Void... params) {
         Connector connector = new Connector();
-        ResponseBodyWrapped<List<Today>> result = connector.getTodayList();
+        ResponseBodyWrapped<List<Today>> result = connector.getTodayList(null);
         return result;
     }
 

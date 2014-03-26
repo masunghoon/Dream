@@ -226,11 +226,7 @@ public class DataRepository {
 
     public static void saveBucket(Bucket bucket){
         if(bucket.getId() != null) {
-            if (getDatabaseHelper().getBucketRuntimeDao().queryForId(bucket.getId()) != null) {
-                getDatabaseHelper().getBucketRuntimeDao().update(bucket);
-            } else {
-                getDatabaseHelper().getBucketRuntimeDao().create(bucket);
-            }
+            getDatabaseHelper().getBucketRuntimeDao().createOrUpdate(bucket);
         }
     }
 
@@ -307,7 +303,10 @@ public class DataRepository {
     }
 
     public static void saveTodays(List<Today> list){
-        deleteAllTodays();
+        /*Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.MONTH, -1);
+        deleteTodays(cal.getTime());*/
+        updateTodayGroup();
         for(Today today : list){
             saveToday(today);
         }
@@ -315,11 +314,7 @@ public class DataRepository {
 
     public static void saveToday(Today today){
         if(today.getId() != null) {
-            if (getDatabaseHelper().getTodayRuntimeDao().queryForId(today.getId()) != null) {
-                getDatabaseHelper().getTodayRuntimeDao().update(today);
-            } else {
-                getDatabaseHelper().getTodayRuntimeDao().create(today);
-            }
+            getDatabaseHelper().getTodayRuntimeDao().createOrUpdate(today);
         }
     }
 
@@ -332,14 +327,21 @@ public class DataRepository {
         }
     }
 
-    public static List<TodayGroup> listTodayGroup(){
-        QueryBuilder<Today, Integer> todayGroupQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
-        todayGroupQueryBuilder.groupBy("date");
-        todayGroupQueryBuilder.orderBy("date", false);
+    public static void deleteTodays(Date date){
+        DeleteBuilder<Today,Integer> deleteBuilder = getDatabaseHelper().getTodayRuntimeDao().deleteBuilder();
+        try {
+            Where<Today, Integer> where = deleteBuilder.where();
+            where.lt("date", date);
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
+    }
+
+    public static List<TodayGroup> listTodayGroupAndTodayData(){
          List<TodayGroup> todayGroups = null;
         try {
-            List<Today> rangeList = todayGroupQueryBuilder.query();
-            todayGroups = makeTodayGroupList(rangeList);
+            todayGroups = listTodayGroup();
 
             for(TodayGroup todayGroup : todayGroups){
                 QueryBuilder<Today, Integer> todayQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
@@ -356,31 +358,64 @@ public class DataRepository {
                 todayGroup.setTodayList(list);
             }
         } catch (SQLException e) {
+            todayGroups = new ArrayList<TodayGroup>();
             Log.e("dream", e.getMessage());
         }
         return todayGroups;
     }
 
-    public static List<TodayGroup> makeTodayGroupList(List<Today> list){
+    public static void saveTodayGroups(List<TodayGroup> todayGroupList){
+        for (TodayGroup todayGroup : todayGroupList){
+            saveTodayGroup(todayGroup);
+        }
+    }
+    public static void saveTodayGroup(TodayGroup todayGroup){
+        if(todayGroup != null){
+            getDatabaseHelper().getTodayGroupRuntimeDao().createOrUpdate(todayGroup);
+        }
+    }
 
-        List<TodayGroup> returnList = new ArrayList<TodayGroup>();
-
-        for (Today today : list){
-            Date date = today.getDate();
-            if (date != null) {
-                returnList.add(new TodayGroup(date));
+    public static void updateTodayGroup(){
+        deleteAllTodayGroups();
+        QueryBuilder<Today, Integer> todayQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
+        todayQueryBuilder.groupBy("date");
+        todayQueryBuilder.orderBy("date", false);
+        List<TodayGroup> todayGroupList = new ArrayList<TodayGroup>();
+        try {
+            List<Today> query = todayQueryBuilder.query();
+            for (Today today : query){
+                TodayGroup tmp = new TodayGroup();
+                tmp.setDate(today.getDate());
+                todayGroupList.add(tmp);
             }
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
         }
 
-        return returnList;
+        saveTodayGroups(todayGroupList);
+
+    }
+
+    public static List<TodayGroup> listTodayGroup(){
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", false);
+        List<TodayGroup> today = null;
+        try {
+            today = todayGroupIntegerQueryBuilder.query();
+        } catch (SQLException e) {
+            today = new ArrayList<TodayGroup>();
+            Log.e(TAG, e.getMessage());
+        }
+
+        return today;
     }
 
     public static Date firstTodayDate(){
-        QueryBuilder<Today, Integer> todayIntegerQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
-        todayIntegerQueryBuilder.orderBy("date", true);
-        Today today = null;
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", true);
+        TodayGroup today = null;
         try {
-            today = todayIntegerQueryBuilder.queryForFirst();
+            today = todayGroupIntegerQueryBuilder.queryForFirst();
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage());
         }
@@ -391,8 +426,24 @@ public class DataRepository {
         }
     }
 
+    public static Date lastTodayDate(){
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", false);
+        TodayGroup today = null;
+        try {
+            today = todayGroupIntegerQueryBuilder.queryForFirst();
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        if(today == null) {
+            return null;
+        }else{
+            return today.getDate();
+        }
+    }
+
     public static boolean isExistsTodayData(Date date){
-        List<Today> todays = getDatabaseHelper().getTodayRuntimeDao().queryForEq("date", date);
+        List<TodayGroup> todays = getDatabaseHelper().getTodayGroupRuntimeDao().queryForEq("date", date);
         if(todays != null && todays.size() > 0){
             return true;
         }
@@ -400,14 +451,13 @@ public class DataRepository {
     }
 
     public static List<Date> getTodayDates(){
-        QueryBuilder<Today, Integer> todayGroupQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
-        todayGroupQueryBuilder.groupBy("date");
-        todayGroupQueryBuilder.orderBy("date", false);
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", false);
         List<TodayGroup> todayGroups = null;
         List<Date> dateArrayList = new ArrayList<Date>();
         try {
-            List<Today> rangeList = todayGroupQueryBuilder.query();
-            for (Today today : rangeList){
+            List<TodayGroup> rangeList = todayGroupIntegerQueryBuilder.query();
+            for (TodayGroup today : rangeList){
                 dateArrayList.add(today.getDate());
             }
 
@@ -416,5 +466,14 @@ public class DataRepository {
         }
 
         return dateArrayList;
+    }
+
+    public static void deleteAllTodayGroups(){
+        DeleteBuilder<TodayGroup,Date> deleteBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().deleteBuilder();
+        try {
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
     }
 }
