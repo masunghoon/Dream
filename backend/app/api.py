@@ -958,6 +958,7 @@ class BucketTimeline(Resource):
                     reg_dt=datetime.datetime.now(),
                     lst_mod_dt=datetime.datetime.now())
 
+
         db.session.add(post)
         db.session.flush()
         db.session.refresh(post)
