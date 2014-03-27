@@ -13,13 +13,14 @@ from guess_language import guessLanguage
 
 from app import app, db, babel
 from forms import LoginForm, EditForm, PostForm, SearchForm, RegisterForm
-from models import User, Post, Bucket, File
+from models import User, Post, Bucket, File, UserSocial
 from emails import follower_notification
 from translate import microsoft_translate
 
 from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, LANGUAGES, DATABASE_QUERY_TIMEOUT, FB_CLIENT_ID, FB_CLIENT_SECRET
 
 from datetime import datetime
+import httplib, urllib
 
 import api
 
@@ -158,6 +159,21 @@ def verify_password(username_or_token, password):
             # user = User.query.filter_by(email=fb_user.get('email')).first()
             birthday = fb_user['birthday'][6:10] + fb_user['birthday'][0:2] + fb_user['birthday'][3:5]
             user = User.get_or_create(fb_user['email'], fb_user['name'], fb_user['id'], birthday)
+
+            conn = httplib.HTTPSConnection("graph.facebook.com")
+            params = urllib.urlencode({'redirect_uri':'http://masunghoon.iptime.org:5001/',
+                                       'client_id':FB_CLIENT_ID,
+                                       'client_secret':FB_CLIENT_SECRET,
+                                       'grant_type':'fb_exchange_token',
+                                       'fb_exchange_token':username_or_token})
+            conn.request("GET","/oauth/access_token?"+ params)
+            response = conn.getresponse()
+            resp_body = response.read()
+
+            longLivedAccessToken=resp_body.split('&')[0].split('=')[1]
+
+            UserSocial.upsert_user(user.id, 'facebook', fb_user['id'], longLivedAccessToken)
+
         else:
             return False
     else:

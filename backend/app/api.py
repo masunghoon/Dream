@@ -2,6 +2,7 @@ __author__ = 'masunghoon'
 
 # Libraries
 import random, datetime
+import facebook
 
 from flask import request, g
 from flask.ext.httpauth import HTTPBasicAuth
@@ -12,7 +13,7 @@ from hashlib import md5
 from rauth.service import OAuth2Service
 # Source
 from app import db, api, app
-from models import User, Bucket, Plan, File, Post, ROLE_ADMIN, ROLE_USER
+from models import User, Bucket, Plan, File, Post, UserSocial, ROLE_ADMIN, ROLE_USER
 from emails import send_awaiting_confirm_mail, send_reset_password_mail
 from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
@@ -25,7 +26,7 @@ patch_request_class(app, size=2097152) #File Upload Size = Up to 2MB
 auth = HTTPBasicAuth()
 
 graph_url = 'https://graph.facebook.com/'
-facebook = OAuth2Service(name='facebook',
+fb = OAuth2Service(name='facebook',
                          authorize_url='https://www.facebook.com/dialog/oauth',
                          access_token_url=graph_url+'oauth/access_token',
                          client_id=FB_CLIENT_ID,
@@ -36,7 +37,7 @@ facebook = OAuth2Service(name='facebook',
 def verify_password(username_or_token, password):
     # first try to authenticate by token
     if password == "facebook":
-        auth = facebook.get_session(token=username_or_token)
+        auth = fb.get_session(token=username_or_token)
         resp = auth.get('/me')
         if resp.status_code == 200:
             fb_user = resp.json()
@@ -171,8 +172,20 @@ class UserAPI(Resource):
     def get(self, id):
         u = User.query.filter_by(id=id).first()
         # return marshal(u, user_fields), 200
+        social_user = UserSocial.query.filter_by(user_id=u.id).first()
+        graph = facebook.GraphAPI(social_user.access_token)
+        print graph.put_object("me","feed",
+                         message="TEST!!!",
+                         link="http://masunghoon.iptime.org:5001",
+                         picture="http://masunghoon.iptime.org:5001/_uploads/photos/DSCN0264.jpeg",
+                         # caption="TESTESTEST",
+                         # description="asdfasdfasdfasdfasdf",
+                         name="name",
+                         privacy={'value':"SELF"})
         return {'status':'success',
                   'data':marshal(u, user_fields)}, 200
+
+
     #modify My User Profile
     def put(self, id):
         if request.json:

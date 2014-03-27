@@ -233,6 +233,30 @@ class File(db.Model):
         self.type = type
 
 
+class UserSocial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    provider = db.Column(db.String(32))
+    uid = db.Column(db.String(256))
+    access_token = db.Column(db.String(512))
+
+    def __init__(self, user_id, provider, uid, access_token):
+        self.user_id = user_id
+        self.provider = provider
+        self.uid = uid
+        self.access_token = access_token
+
+    @staticmethod
+    def upsert_user(user_id, provider, uid, access_token):
+        us = UserSocial.query.filter_by(user_id=user_id, provider=provider).first()
+        if us is None:
+            us = UserSocial(user_id, provider, uid, access_token)
+            db.session.add(us)
+            db.session.commit()
+        else:
+            us.access_token = access_token;
+            db.session.commit()
+
 whooshalchemy.whoosh_index(app, Post)
 
 
