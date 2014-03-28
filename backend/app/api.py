@@ -171,17 +171,7 @@ class UserAPI(Resource):
     #get specific User's Profile
     def get(self, id):
         u = User.query.filter_by(id=id).first()
-        # return marshal(u, user_fields), 200
-        social_user = UserSocial.query.filter_by(user_id=u.id).first()
-        graph = facebook.GraphAPI(social_user.access_token)
-        print graph.put_object("me","feed",
-                         message="TEST!!!",
-                         link="http://masunghoon.iptime.org:5001",
-                         picture="http://masunghoon.iptime.org:5001/_uploads/photos/DSCN0264.jpeg",
-                         # caption="TESTESTEST",
-                         # description="asdfasdfasdfasdfasdf",
-                         name="name",
-                         privacy={'value':"SELF"})
+
         return {'status':'success',
                   'data':marshal(u, user_fields)}, 200
 
@@ -633,6 +623,7 @@ class UserBucketAPI(Resource):
             db.session.flush()
             db.session.refresh(f)
 
+
         bkt = Bucket(title=params['title'],
                      user_id=g.user.id,
                      level=str(level),
@@ -657,6 +648,21 @@ class UserBucketAPI(Resource):
         if 'rpt_cndt' in params:
             if params['rpt_type'] == 'WKRP' and params['rpt_cndt'][dayOfWeek] == '1':
                 p.bucket_id = bkt.id
+
+        if 'fb_share' in params:
+            social_user = UserSocial.query.filter_by(user_id=u.id).first()
+            graph = facebook.GraphAPI(social_user.access_token)
+            resp = graph.put_object("me","feed",
+                         message= g.user.username + " Posted " + params['title'].encode('utf-8'),
+                         link="http://masunghoon.iptime.org:5001",
+                         picture=photos.url(File.query.filter_by(id=bkt.cvr_img_id).first().name) if 'photo' in request.files else None,
+                         caption="Dream Proj.",
+                         description=None if bkt.description is None else bkt.description.encode('utf-8'),
+                         name=bkt.title.encode('utf-8'),
+                         privacy={'value':params['fb_share'].encode('utf-8')})
+
+            bkt.fb_feed_id = resp['id']
+
         db.session.commit()
 
         data={
@@ -675,7 +681,8 @@ class UserBucketAPI(Resource):
             'rpt_type': bkt.rpt_type,
             'rpt_cndt': bkt.rpt_cndt,
             'lst_mod_dt': None if bkt.lst_mod_dt is None else bkt.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            'cvr_img_url': None if bkt.cvr_img_id is None else photos.url(File.query.filter_by(id=bkt.cvr_img_id).first().name)
+            'cvr_img_url': None if bkt.cvr_img_id is None else photos.url(File.query.filter_by(id=bkt.cvr_img_id).first().name),
+            'fb_feed_id':None if bkt.fb_feed_id is None else bkt.fb_feed_id
         }
 
         return {'status':'success',
