@@ -36,6 +36,28 @@ public class DateUtils {
         return remain;
     }
 
+    public static Long getRemainDay(Date startDate, Date endDate){
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(startDate);
+        startCal.set(Calendar.HOUR_OF_DAY, 0);
+        startCal.set(Calendar.MINUTE, 0);
+        startCal.set(Calendar.SECOND, 0);
+        startCal.set(Calendar.MILLISECOND, 0);
+
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(endDate);
+        endCal.set(Calendar.HOUR_OF_DAY, 0);
+        endCal.set(Calendar.MINUTE, 0);
+        endCal.set(Calendar.SECOND, 0);
+        endCal.set(Calendar.MILLISECOND, 0);
+
+        Long now = startCal.getTimeInMillis();
+        Long end = endCal.getTimeInMillis();
+        Long remain = (end-now)/1000/60/60/24;
+
+        return remain;
+    }
+
     public static String getRemainDayInString(Date deadline){
         if(deadline != null){
             Long remain = DateUtils.getRemainDay(deadline);
@@ -53,13 +75,12 @@ public class DateUtils {
     }
 
     public static int getProgress(Date startDate, Date endDate){
-        Long totalTime = endDate.getTime()-startDate.getTime();
-        Long pastTime = Calendar.getInstance().getTimeInMillis() - startDate.getTime();
-        int percentage = (int) (pastTime/totalTime)*100;
-        if(percentage < 0){
-            return 0;
-        }else if (percentage>100){
-            return 100;
+        Long totalTime = getRemainDay(startDate, endDate);
+        Long remainTime = getRemainDay(endDate);
+        int percentage = 100;
+        if(totalTime > 0){
+            int l = (int) ((1 - (remainTime / (double)totalTime)) * 100);
+            percentage = Math.max(l, 0);
         }
         return percentage;
     }
@@ -113,8 +134,12 @@ public class DateUtils {
     }
 
     public static String getDateString(Date date, String pattern) {
+        return getDateString(date, pattern, "");
+    }
+
+    public static String getDateString(Date date, String pattern, String defaultValue) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
-        String result = "";
+        String result = defaultValue;
         try{
             result = dateFormat.format(date);
         } catch (NullPointerException e){

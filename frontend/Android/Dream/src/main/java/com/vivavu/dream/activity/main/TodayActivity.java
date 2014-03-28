@@ -3,8 +3,6 @@ package com.vivavu.dream.activity.main;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -12,9 +10,7 @@ import android.widget.TextView;
 
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.BucketAddActivity;
-import com.vivavu.dream.activity.bucket.BucketViewActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
-import com.vivavu.dream.common.Code;
 import com.vivavu.dream.fragment.main.MainTodayDailyFragment;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.view.ButtonIncludeCount;
@@ -91,46 +87,6 @@ public class TodayActivity extends BaseActionBarActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case Code.ACT_ADD_BUCKET:
-                int bucketId = data.getIntExtra("bucketId", -1);
-                if (bucketId > 0) {
-                    goBucketView(bucketId);
-                }
-
-                break;
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //actionbar에서 모든걸 처리
-        //getMenuInflater().inflate(R.menu.main_activity_actions, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        Intent intent;
-        switch (id) {
-            case R.id.main_menu_add_bucket:
-                goAddBucket();
-                return true;
-            case R.id.main_menu_refresh_bucket_list:
-
-                return true;
-            case R.id.main_menu_plan:
-                return true;
-            case R.id.main_menu_life:
-                return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -153,13 +109,6 @@ public class TodayActivity extends BaseActionBarActivity {
     @Override
     protected void onStop() {
         super.onStop();
-    }
-
-    public void goBucketView(Integer bucketId) {
-        Intent intent = new Intent();
-        intent.setClass(this, BucketViewActivity.class);
-        intent.putExtra("bucketId", bucketId);
-        startActivity(intent);
     }
 
     @Override

@@ -3,8 +3,6 @@ package com.vivavu.dream.activity.main;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -108,37 +106,6 @@ public class MainActivity extends BaseActionBarActivity {
 
                 break;
         }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //actionbar에서 모든걸 처리
-        //getMenuInflater().inflate(R.menu.main_activity_actions, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        Intent intent;
-        switch (id) {
-            case R.id.main_menu_add_bucket:
-                goAddBucket();
-                return true;
-            case R.id.main_menu_refresh_bucket_list:
-
-                return true;
-            case R.id.main_menu_plan:
-                return true;
-            case R.id.main_menu_life:
-                return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

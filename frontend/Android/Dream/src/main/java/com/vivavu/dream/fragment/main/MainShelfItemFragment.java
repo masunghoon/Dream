@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.BucketAddActivity;
+import com.vivavu.dream.activity.bucket.TimelineActivity;
 import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.repository.task.CustomAsyncTask;
@@ -149,8 +150,8 @@ public class MainShelfItemFragment extends CustomBaseFragment{
         }
         if(view == mBookCover || view == mBookDudate || view == mBookDudate || view == mBookStatus){
             Intent intent = new Intent();
-            intent.setClass(getActivity(), BucketAddActivity.class);
-            intent.putExtra("bucketId", bucket.getId());
+            intent.setClass(getActivity(), TimelineActivity.class);
+            intent.putExtra(TimelineActivity.extraKey, bucket.getId());
             startActivity(intent);
         }
     }
