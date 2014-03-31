@@ -63,6 +63,13 @@ def register():
     return render_template('register.html', title='Register')
 
 
+@app.route('/mokcha/<id>')
+def mokcha(id):
+    bkt = Bucket.query.filter_by(id=id).first()
+    user = User.query.filter_by(id=bkt.user_id).first()
+    return render_template('mokcha.html',id=id, title=bkt.title, user=user)
+
+
 ##### SEARCHING #############################################
 @app.route('/search', methods=['POST'])
 @auth.login_required
