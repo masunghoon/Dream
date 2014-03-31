@@ -58,7 +58,7 @@
             },
             error: function(jqXHR){
                 console.log("ajax error " + jqXHR.status + ": " + jqXHR.description);
-                alert("Authorize Error!");
+                localStorage.removeItem('id','token','email','username');
             }
         });
     }
