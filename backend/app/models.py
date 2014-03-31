@@ -199,6 +199,7 @@ class Bucket(db.Model):
     reg_dt = db.Column(db.DateTime)                     # Registered Datetime
     lst_mod_dt = db.Column(db.DateTime)                 # Last Modified Datetime
     cvr_img_id = db.Column(db.Integer(11))
+    fb_feed_id = db.Column(db.String(128))
 
     def __repr__(self):
         return '<Bucket %r>' % self.title
