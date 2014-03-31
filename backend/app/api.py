@@ -887,16 +887,16 @@ class BucketTimeline(Resource):
                     'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
 
         return {'status':'success',
-                'description':post.count + 'posts are returned.',
+                'description': str(len(post)) + ' posts were returned.',
                 'data':data}, 200
 
     def post(self, bucket_id):
-        b = Bucket.query.fitler_by(id=bucket_id).first()
+        b = Bucket.query.filter_by(id=bucket_id).first()
         if b is None:
             return {'status':'error',
                     'description':'There\'s no bucket with id: '+id}, 403
 
-        if g.user != b.user_id:
+        if g.user.id != b.user_id:
             return {'status':'error',
                     'description':'Unauthorized'}, 401
 
@@ -968,7 +968,7 @@ class BucketTimeline(Resource):
         post = Post(body=None,
                     timestamp=None,
                     user_id=b.user_id,
-                    languate=None,
+                    language=None,
                     bucket_id=bucket_id,
                     text=params['text'] if 'text' in params else None,
                     img_id=f.id if 'photo' in request.files else None,
