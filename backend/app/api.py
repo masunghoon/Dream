@@ -874,8 +874,9 @@ class BucketTimeline(Resource):
         if post is None:
             return {'status':'success',
                     'description':'No posts'}, 204
+        data = []
         for i in post:
-            data = {'id':i.id,
+            data.append({'id':i.id,
                     'user_id':i.user_id,
                     'bucket_id':i.bucket_id,
                     'text':None if i.text is None else i.text,
@@ -884,7 +885,7 @@ class BucketTimeline(Resource):
                             {'url2':None if i.url2 is None else i.url2},
                             {'url3':None if i.url3 is None else i.url3},],
                     'reg_dt':i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                    'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+                    'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")})
 
         return {'status':'success',
                 'description': str(len(post)) + ' posts were returned.',
