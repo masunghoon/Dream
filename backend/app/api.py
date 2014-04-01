@@ -343,6 +343,12 @@ class BucketAPI(Resource):
         if b == None:
             return {'error':'No data found'}, 204
 
+        if b.fb_feed_id is not None:
+            social_user = UserSocial.query.filter_by(user_id=b.user_id).first()
+            graph = facebook.GraphAPI(social_user.access_token)
+            fb_likes = graph.get_object(b.fb_feed_id+'/likes')
+            fb_comments = graph.get_object(b.fb_feed_id+'/comments')
+
         data={
             'id': b.id,
             'user_id': b.user_id,
@@ -359,7 +365,10 @@ class BucketAPI(Resource):
             'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
             'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
+            'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name),
+            'fb_feed_id': None if b.fb_feed_id is None else b.fb_feed_id,
+            'fb_likes': None if b.fb_feed_id is None else fb_likes['data'],
+            'fb_comments': None if b.fbfeed_id is None else fb_comments['data']
         }
 
         return {'status':'success',
@@ -530,7 +539,13 @@ class UserBucketAPI(Resource):
         if len(b) == 0:
             return {'error':'No data Found'}, 204
 
+        social_user = UserSocial.query.filter_by(user_id=u.id).first()
+        graph = facebook.GraphAPI(social_user.access_token)
+
         for i in b:
+            if i.fb_feed_id is not None:
+                fb_likes = graph.get_object(i.fb_feed_id+'/likes')
+                fb_comments = graph.get_object(i.fb_feed_id+'/comments')
             data.append({
                 'id': i.id,
                 'user_id': i.user_id,
@@ -547,7 +562,10 @@ class UserBucketAPI(Resource):
                 'rpt_type': i.rpt_type,
                 'rpt_cndt': i.rpt_cndt,
                 'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                'cvr_img_url': None if i.cvr_img_id is None else photos.url(File.query.filter_by(id=i.cvr_img_id).first().name)
+                'cvr_img_url': None if i.cvr_img_id is None else photos.url(File.query.filter_by(id=i.cvr_img_id).first().name),
+                'fb_feed_id': None if i.fb_feed_id is None else i.fb_feed_id,
+                'fb_likes': None if i.fb_feed_id is None else fb_likes['data'],
+                'fb_comments': None if i.fb_feed_id is None else fb_comments['data']
             })
 
         return {'status':'success',
