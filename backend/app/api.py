@@ -1024,7 +1024,7 @@ class TimelineContent(Resource):
         post = Post.query.filter_by(id=content_id).first()
         if post is None:
             return {'status':'success',
-                    'description':'There\'s no content with id: '+id}, 204
+                    'description':'There\'s no content with id: '+ str(id)}, 204
 
         u = User.query.filter_by(id=post.user_id).first()
         if not g.user.is_following(u):
