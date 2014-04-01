@@ -862,7 +862,7 @@ class BucketTimeline(Resource):
         b = Bucket.query.filter_by(id=bucket_id).first()
         if b is None:
             return {'status':'error',
-                    'description':'There\'s no bucket with id: '+id}, 204
+                    'description':'There\'s no bucket with id: '+ str(id)}, 204
 
         u = User.query.filter_by(id=b.user_id).first()
         if not g.user.is_following(u):
