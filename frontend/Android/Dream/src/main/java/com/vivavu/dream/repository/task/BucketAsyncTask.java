@@ -3,7 +3,7 @@ package com.vivavu.dream.repository.task;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.repository.Connector;
+import com.vivavu.dream.repository.BucketConnector;
 import com.vivavu.dream.repository.DataRepository;
 
 import java.util.List;
@@ -21,8 +21,8 @@ public class BucketAsyncTask extends CustomAsyncTask<Void, Void, ResponseBodyWra
 
     @Override
     protected ResponseBodyWrapped<List<Bucket>> doInBackground(Void... params) {
-        Connector connector = new Connector();
-        ResponseBodyWrapped<List<Bucket>> result = connector.getBucketList();
+        BucketConnector bucketConnector = new BucketConnector();
+        ResponseBodyWrapped<List<Bucket>> result = bucketConnector.getBucketList();
         return result;
     }
 

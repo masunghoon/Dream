@@ -43,7 +43,7 @@ import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionDDay;
 import com.vivavu.dream.model.bucket.option.OptionDescription;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
-import com.vivavu.dream.repository.Connector;
+import com.vivavu.dream.repository.BucketConnector;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.repository.task.CustomAsyncTask;
 import com.vivavu.dream.util.DateUtils;
@@ -345,7 +345,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
                 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
                 @Override
                 public void onGlobalLayout() {
-                    if(Build.VERSION.SDK_INT < 16) {
+                    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
                         mIvCardImage.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                     }else{
                         mIvCardImage.getViewTreeObserver().removeOnGlobalLayoutListener(this);
@@ -519,15 +519,15 @@ public class BucketAddActivity extends BaseActionBarActivity {
         @Override
         protected ResponseBodyWrapped<Bucket> doInBackground(Bucket... params) {
             handler.sendEmptyMessage(SEND_DATA_START);
-            Connector connector = new Connector();
+            BucketConnector bucketConnector = new BucketConnector();
             ResponseBodyWrapped<Bucket> responseBodyWrapped = new ResponseBodyWrapped<Bucket>();
 
             if(params != null && params.length > 0){
                 Bucket param = params[0];
                 if(param.getId() != null && param.getId() > 0) {
-                    responseBodyWrapped = connector.updateBucketInfo(params[0]);
+                    responseBodyWrapped = bucketConnector.updateBucketInfo(params[0]);
                 }else{
-                    responseBodyWrapped = connector.postBucketDefault(params[0]);
+                    responseBodyWrapped = bucketConnector.postBucketDefault(params[0]);
                 }
             }
 

@@ -18,7 +18,7 @@ import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.BucketGroup;
-import com.vivavu.dream.repository.Connector;
+import com.vivavu.dream.repository.BucketConnector;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.image.ImageCache;
 import com.vivavu.dream.util.image.ImageFetcher;
@@ -182,8 +182,8 @@ public class MainBucketListFragment extends CustomBaseFragment implements PullTo
         @Override
         public void run() {
             handler.sendEmptyMessage(SEND_REFRESH_START);
-            Connector connector = new Connector();
-            ResponseBodyWrapped<List<Bucket>> result = connector.getBucketList();
+            BucketConnector bucketConnector = new BucketConnector();
+            ResponseBodyWrapped<List<Bucket>> result = bucketConnector.getBucketList();
             if(result != null) {
                 DataRepository.saveBuckets(result.getData());
             }

@@ -172,4 +172,11 @@ public class DateUtils {
         cal.set(year, month, dayOfMonth, 0, 0);
         return cal.getTime();
     }
+
+    public static Date add(Date date, int filed, int value){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(filed, value);
+        return cal.getTime();
+    }
 }

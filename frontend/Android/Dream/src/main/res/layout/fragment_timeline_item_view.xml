@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_centerHorizontal="true"
-        android:id="@+id/container_bucket_info"
+        android:id="@+id/container_post_info"
         >
         <include
             android:layout_width="match_parent"

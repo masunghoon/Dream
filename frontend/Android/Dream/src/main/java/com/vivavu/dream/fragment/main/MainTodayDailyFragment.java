@@ -18,7 +18,7 @@ import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Today;
 import com.vivavu.dream.model.bucket.TodayGroup;
-import com.vivavu.dream.repository.Connector;
+import com.vivavu.dream.repository.BucketConnector;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.image.ImageCache;
@@ -163,12 +163,12 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
         public void run() {
             handler.sendEmptyMessage(SEND_REFRESH_START);
             Date lastDate = DataRepository.lastTodayDate();
-            Connector connector = new Connector();
+            BucketConnector bucketConnector = new BucketConnector();
             String lastTodayDate = null;
             if(lastDate != null ){
                 lastTodayDate = DateUtils.getDateString(lastDate, "yyyyMMdd");
             }
-            ResponseBodyWrapped<List<Today>> result = connector.getTodayList(lastTodayDate);
+            ResponseBodyWrapped<List<Today>> result = bucketConnector.getTodayList(lastTodayDate);
             if(result != null) {
                 DataRepository.saveTodays(result.getData());
             }
@@ -194,7 +194,7 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
                 Date selectedDate = (Date) data.getSerializableExtra(TodayCalendarActivity.selectedDateExtraName);
                 Integer selectedIndex =  data.getIntExtra(TodayCalendarActivity.selectedDateIndexExtraName, 0);
                 if(selectedDate != null){
-                    mDailyPager.setCurrentItem(selectedIndex, true);
+                    mDailyPager.setCurrentItem(selectedIndex);
                 }
                 return;
             }

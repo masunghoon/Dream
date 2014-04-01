@@ -79,7 +79,7 @@
     <string name="bucket_option_note_hint">버킷의 상세 설명을 입력하세요.</string>
     <string name="no_network_connection_toast">네트워크에 연결할 수 없습니다.</string>
     <string name="today">Today</string>
-    <string name="invalid_selected_date">Today 데이터가 없는 날짜입니다. 다시 선택해주세요.</string>
+    <string name="invalid_selected_date">데이터가 없는 날짜입니다. 다시 선택해주세요.</string>
     <string name="complete">달성</string>
     <string name="menu_edit">수정</string>
     <string name="menu_share">공유</string>
