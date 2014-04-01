@@ -11,6 +11,7 @@ from flask.ext.uploads import UploadSet, IMAGES, configure_uploads, patch_reques
 
 from hashlib import md5
 from rauth.service import OAuth2Service
+from sqlalchemy.sql import func
 # Source
 from app import db, api, app
 from models import User, Bucket, Plan, File, Post, UserSocial, ROLE_ADMIN, ROLE_USER
@@ -870,14 +871,21 @@ class BucketTimeline(Resource):
             else:
                 return {'error':'User unauthorized'}, 401
 
-        post = Post.query.filter_by(bucket_id=bucket_id).all()
-        if post is None:
+        # post = Post.query.filter_by(bucket_id=bucket_id).all()
+        if 'date' in request.args:
+            result = db.session.query(Post).filter(Post.bucket_id==bucket_id, Post.date==request.args['date']).all()
+        else:
+            result = db.session.query(Post).filter(Post.bucket_id==bucket_id).all()
+
+        if result is None:
             return {'status':'success',
                     'description':'No posts'}, 204
-        data = []
-        for i in post:
-            data.append({'id':i.id,
+        data = {}
+        timelineData = []
+        for i in result:
+            timelineData.append({'id':i.id,
                     'user_id':i.user_id,
+                    'date':i.date,
                     'bucket_id':i.bucket_id,
                     'text':None if i.text is None else i.text,
                     'img_url':None if i.img_id is None else photos.url(File.query.filter_by(id=i.img_id).first().name),
@@ -887,8 +895,11 @@ class BucketTimeline(Resource):
                     'reg_dt':i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
                     'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")})
 
+        data['count'] = len(result)
+        data['timelineData'] = timelineData
+
         return {'status':'success',
-                'description': str(len(post)) + ' posts were returned.',
+                'description': str(len(result)) + ' posts were returned.',
                 'data':data}, 200
 
     def post(self, bucket_id):
@@ -967,7 +978,7 @@ class BucketTimeline(Resource):
             db.session.add(plan)
 
         post = Post(body=None,
-                    timestamp=None,
+                    date=params['date'] if 'date' in params else datetime.datetime.now().strftime('%Y%m%d'),
                     user_id=b.user_id,
                     language=None,
                     bucket_id=bucket_id,
@@ -1002,9 +1013,6 @@ class BucketTimeline(Resource):
                 'data':data}, 201
 
 
-        return 200
-
-
 class TimelineContent(Resource):
     decorators = [auth.login_required]
 
@@ -1027,6 +1035,7 @@ class TimelineContent(Resource):
 
         data = {'id':post.id,
                 'user_id':post.user_id,
+                'date':post.date,
                 'bucket_id':post.bucket_id,
                 'text':None if post.text is None else post.text,
                 'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
@@ -1110,6 +1119,7 @@ class TimelineContent(Resource):
 
         data = {'id':post.id,
                 'user_id':post.user_id,
+                'date':post.date,
                 'bucket_id':post.bucket_id,
                 'text':None if post.text is None else post.text,
                 'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
@@ -1143,6 +1153,44 @@ class TimelineContent(Resource):
                 'description':'DELETE success'}, 201
 
 
+class TimelineExists(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(TimelineExists, self).__init__()
+
+    def get(self, bucket_id):
+        b = Bucket.query.filter_by(id=bucket_id).first()
+        if b is None:
+            return {'status':'error',
+                    'description':'Bucket ' + bucket_id + ' does not exists.'}, 204
+
+        u = User.query.filter_by(id=b.user_id).first()
+        if u.id != g.user.id and b.private != '0':
+            return {'status':'error',
+                    'description':'Private Bucket'}, 401
+
+        result = db.session.query(Post.date).filter(Post.bucket_id==bucket_id).distinct(Post.date).all()
+
+        data = {}
+        if len(result) == 0:
+            return {'status':'error',
+                    'description':'No rows returned'}, 204
+        else:
+            dateList = []
+            for i in range(len(result)):
+                dateList.append(result[i][0])
+
+        data['count'] = len(result)
+        data['minDate'] = db.session.query(func.min(Post.date).label("min_date")).filter(Post.bucket_id==bucket_id).first().min_date
+        data['maxDate'] = db.session.query(func.max(Post.date).label("max_date")).filter(Post.bucket_id==bucket_id).first().max_date
+        data['dateList'] = dateList
+
+        return {'status':'success',
+                'description': 'Data successfully returned.',
+                'data':data}, 200
+
+
 api.add_resource(BucketTimeline, '/api/bucket/<bucket_id>/timeline', endpoint='bucketTimeline')
 api.add_resource(TimelineContent, '/api/content/<content_id>', endpoint='timelineContent')
-
+api.add_resource(TimelineExists, '/api/bucket/<bucket_id>/timeline/exists', endpoint='timelineExists')
