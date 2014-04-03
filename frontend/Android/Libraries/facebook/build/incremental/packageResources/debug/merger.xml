@@ -794,6 +794,7 @@ center
             </file>
         </source>
         <source path="C:\Dream\frontend\Android\Libraries\facebook\build\res\rs\debug" />
+        <source path="C:\Dream\frontend\Android\Libraries\facebook\build\res\generated\debug" />
     </dataSet>
     <dataSet config="debug" >
         <source path="C:\Dream\frontend\Android\Libraries\facebook\src\debug\res" />

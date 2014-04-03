@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import com.vivavu.dream.handler.RestTemplateResponseErrorHandler;
 import com.vivavu.dream.model.user.User;
+import com.vivavu.dream.repository.BucketConnector;
+import com.vivavu.dream.repository.Connector;
 import com.vivavu.dream.repository.DataRepository;
 
 /**
@@ -29,6 +31,8 @@ public class DreamApp extends Application {
         super.onCreate();
         loadAppDefaultInfo();
         DataRepository.setContext(this);
+        Connector.setContext(this);
+        BucketConnector.setContext(this);
         RestTemplateResponseErrorHandler.setContext(this);
     }
 

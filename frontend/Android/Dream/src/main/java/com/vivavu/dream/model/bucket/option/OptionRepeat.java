@@ -1,13 +1,11 @@
 package com.vivavu.dream.model.bucket.option;
 
-import android.util.Log;
-
 import com.vivavu.dream.common.RepeatType;
 
 /**
  * Created by yuja on 14. 1. 24.
  */
-public class OptionRepeat implements Cloneable {
+public class OptionRepeat extends Option {
     private RepeatType repeatType = RepeatType.WKRP;
     private boolean sun;
     private boolean mon;
@@ -142,17 +140,6 @@ public class OptionRepeat implements Cloneable {
     }
 
     @Override
-    public Object clone() {
-        Object o = null;
-        try{
-            o = super.clone();
-        } catch (CloneNotSupportedException e) {
-            Log.e("dream", e.getMessage());
-        }
-        return o;
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof OptionRepeat)) return false;
@@ -188,5 +175,26 @@ public class OptionRepeat implements Cloneable {
                 ", repeatCount=" + repeatCount +
                 ", period=" + period +
                 '}';
+    }
+
+    public String getOptionContents(){
+        StringBuilder sb = new StringBuilder();
+       if(repeatType == RepeatType.WKRP){
+
+            sb.append(isSun()?"일":"");
+            sb.append(isMon()?"월":"");
+            sb.append(isTue()?"화":"");
+            sb.append(isWen()?"수":"");
+            sb.append(isThu()?"목":"");
+            sb.append(isFri()?"금":"");
+            sb.append(isSat()?"토":"");
+
+            sb.append(repeatType.getValue());
+        } else {
+            sb.append(repeatCount);
+            sb.append("th");
+            sb.append(repeatType.getValue());
+        }
+        return sb.toString();
     }
 }

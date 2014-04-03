@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.7.+'
+        classpath 'com.android.tools.build:gradle:0.9.+'
     }
 }
 apply plugin: 'android'
@@ -23,9 +23,8 @@ android {
         versionName "1.0"
     }
     signingConfigs{
-
         myConfig{
-            storeFile file("dream.keystore.jks")
+            storeFile file("../dream.keystore.jks")
             storePassword "dreamproject"
             keyAlias "dreamprojectkey"
             keyPassword "dreamproject"
@@ -34,8 +33,9 @@ android {
     buildTypes {
         release {
             runProguard false
+            jniDebugBuild false
         }
-        foo{
+        debug{
             debuggable true
             jniDebugBuild true
             signingConfig signingConfigs.myConfig
@@ -63,8 +63,13 @@ dependencies {
     compile 'org.springframework.android:spring-android-auth:1.0.1.RELEASE@jar'
     compile 'org.springframework.android:spring-android-rest-template:1.0.1.RELEASE@jar'
 
+    compile 'com.navercorp.pulltorefresh:library:3.2.0@aar'
+    compile 'com.j256.ormlite:ormlite-android:4.48'
 
     compile 'com.github.johnkil.android-progressfragment:progressfragment:1.4.0'
+    compile 'com.tonicartos:stickygridheaders:1.0.1'
+    compile 'com.squareup:android-times-square:1.1.1@aar'
     compile project(':Libraries:facebook')
     compile project(':Libraries:viewpagerindicator')
+    compile project(':Libraries:bookshelf')
 }

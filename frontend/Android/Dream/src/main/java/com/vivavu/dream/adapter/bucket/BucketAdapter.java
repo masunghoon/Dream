@@ -1,49 +1,63 @@
 package com.vivavu.dream.adapter.bucket;
 
 import android.content.Context;
-import android.content.Intent;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.vivavu.dream.R;
-import com.vivavu.dream.activity.bucket.BucketViewActivity;
-import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.adapter.main.ShelfRowFragmentAdapter;
+import com.vivavu.dream.model.bucket.BucketGroup;
+import com.vivavu.dream.util.image.ImageFetcher;
+import com.vivavu.dream.view.PagerContainer;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 /**
  * Created by yuja on 14. 1. 9.
  */
 public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
     private LayoutInflater mInflater;
-    private List<Bucket> buckets;
-    private Context _context;
+    private List<BucketGroup> mBucketList;
+    private FragmentActivity mContext;
     private int resource;
+    private Fragment parentFragment;
+    private final int OFF_SCREEN_PAGE_LIMIT = 3;
+    private ImageFetcher mImageFetcher;
 
-    public BucketAdapter(Context context, int resource, List<Bucket> buckets) {
+    public BucketAdapter(FragmentActivity context, int resource, List<BucketGroup> mBucketList) {
         super();
-        this._context = context;
+        this.mContext = context;
         this.resource = resource;
-        this.mInflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.buckets = buckets;
+        this.mInflater = (LayoutInflater) this.mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.mBucketList = new ArrayList<BucketGroup>(mBucketList);
     }
 
     @Override
     public int getCount() {
-        if(buckets != null){
-            return buckets.size();
+
+        if (mBucketList != null) {
+            return mBucketList.size();
         }
         return 0;
+
     }
 
     @Override
-    public Bucket getItem(int i) {
-        return buckets.get(i);
+    public BucketGroup getItem(int i) {
+        return mBucketList.get(i);
     }
 
     @Override
@@ -53,71 +67,124 @@ public class BucketAdapter extends BaseAdapter implements View.OnClickListener {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        int res = R.layout.bucket_list_item;
-        Bucket item = buckets.get(i);
-        if(view == null){
-            view = mInflater.inflate(res, viewGroup, false);
-        }
+        BucketGroup item = mBucketList.get(i);
 
-        Button btnDone  = (Button) view.findViewById(R.id.bucket_btn_done);
-        btnDone.setOnClickListener(this);
-        btnDone.setEnabled(false);
-        if(item.getIsLive() == 1){
-            btnDone.setSelected(true);
-        }else {
-            btnDone.setSelected(false);
-        }
+        ButterknifeViewHolder holder = null;
+        /*if (view == null) {*/
+            view = mInflater.inflate(R.layout.shelf_row, viewGroup, false);
+            holder = new ButterknifeViewHolder(view);
+            final ButterknifeViewHolder finalViewHolder = holder;
+            holder.mShelfRoll.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(finalViewHolder.mShelfContainer.getVisibility() == View.VISIBLE){
+                        finalViewHolder.mShelfContainer.setVisibility(View.GONE);
+                        finalViewHolder.mShelfRoll.setText("펼치기");
+                    }else{
+                        finalViewHolder.mShelfContainer.setVisibility(View.VISIBLE);
+                        finalViewHolder.mShelfRoll.setText("접기");
+                    }
+                }
+            });
 
-        view.setOnClickListener(this);
-        TextView title = (TextView) view.findViewById(R.id.bucket_item_title);
-        title.setOnClickListener(this);
-        title.setText(item.getTitle());
-        title.setTag(item.getId());
-        TextView scope = (TextView) view.findViewById(R.id.bucket_item_scope);
-        scope.setText(item.getRange());
-        TextView remain = (TextView) view.findViewById(R.id.bucket_item_remain);
-        remain.setText(item.getRemainDays());
+            ViewPager pager = holder.mShelfRow.getViewPager();
 
-        ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.bucket_item_progressbar);
-        if(item.getTodos() == null || item.getTodos().size() < 1){
-            progressBar.setVisibility(ProgressBar.GONE);
-        }else{
-            progressBar.setVisibility(ProgressBar.VISIBLE);
-            progressBar.setProgress(item.getProgress());
-        }
-        progressBar.setEnabled(true);
+            //PagerAdapter adapter = new ShelfRowAdapter(mContext);
+            //ShelfRowAdapter adapter = new ShelfRowAdapter(getContext(), item.getBukets());
+            ShelfRowFragmentAdapter adapter = new ShelfRowFragmentAdapter(getFragmentManager(), item.getBukets());
+            adapter.setmImageFetcher(mImageFetcher);
+            //adapter.refreshDataSet(item.getBukets());
+            pager.setAdapter(adapter);
+            //Necessary or the pager will only have one extra page to show
+            // make this at least however many pages you can see
+            pager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
+            //A little space between pages
+            pager.setPageMargin(15);
 
-        view.setTag(item);
+            //If hardware acceleration is enabled, you should also remove
+            // clipping on the pager for its children.
+            pager.setClipChildren(false);
+
+
+            view.setTag(holder);
+        /*}else{
+            holder = (ButterknifeViewHolder) view.getTag();
+        }*/
+
+
+        holder.mShelfTitle.setText(item.getRangeText());
+        //ViewPager pager = holder.mShelfRow.getViewPager();
+        //ShelfRowFragmentAdapter adapter = (ShelfRowFragmentAdapter) pager.getAdapter();
+        adapter.refreshDataSet(item.getBukets());
         return view;
     }
 
     @Override
     public void onClick(View view) {
-        if(view.getId() == R.id.bucket_item_title){
-            Intent intent = new Intent(getContext().getApplicationContext(), BucketViewActivity.class);
-            intent.putExtra("bucketId", (Integer) view.getTag());
-            getContext().startActivity(intent);
-        }
+
     }
 
     private Context getContext() {
-        return this._context;
+        return this.mContext;
     }
 
-    public void notifyDataSetChanged(List<Bucket> buckets){
-        this.buckets.clear();
-        this.buckets.addAll(buckets);
+    public void refreshDataSet(List<BucketGroup> buckets) {
+        this.mBucketList.clear();
+        this.mBucketList.addAll(buckets);
 
         super.notifyDataSetChanged();
     }
 
-    public List<Bucket> getBuckets() {
-        return buckets;
+    public List<BucketGroup> getBucketList() {
+        return mBucketList;
     }
 
-    public void setBuckets(List<Bucket> buckets) {
-        this.buckets = buckets;
+    public void setBucketList(List<BucketGroup> bucketList) {
+        this.mBucketList.clear();
+        this.mBucketList.addAll(bucketList);
     }
 
+    public Fragment getParentFragment() {
+        return parentFragment;
+    }
 
+    public void setParentFragment(Fragment parentFragment) {
+        this.parentFragment = parentFragment;
+    }
+
+    public FragmentManager getFragmentManager(){
+        if(parentFragment != null){
+            return parentFragment.getChildFragmentManager();
+        }
+        return mContext.getSupportFragmentManager();
+    }
+
+    public ImageFetcher getmImageFetcher() {
+        return mImageFetcher;
+    }
+
+    public void setmImageFetcher(ImageFetcher mImageFetcher) {
+        this.mImageFetcher = mImageFetcher;
+    }
+
+    /**
+     * This class contains all butterknife-injected Views & Layouts from layout file 'null'
+     * for easy to all layout elements.
+     *
+     * @author Android Butter Zelezny, plugin for IntelliJ IDEA/Android Studio by Inmite (www.inmite.eu)
+     */
+    class ButterknifeViewHolder {
+        @InjectView(R.id.shelf_title)
+        TextView mShelfTitle;
+        @InjectView(R.id.shelf_roll)
+        Button mShelfRoll;
+        @InjectView(R.id.shelf_row)
+        PagerContainer mShelfRow;
+        @InjectView(R.id.shelf_container)
+        LinearLayout mShelfContainer;
+
+        ButterknifeViewHolder(View view) {
+            ButterKnife.inject(this, view);
+        }
+    }
 }

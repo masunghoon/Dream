@@ -23,11 +23,9 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.common.RepeatType;
 import com.vivavu.dream.common.Tag;
-import com.vivavu.dream.fragment.main.MainContentsFragment;
-import com.vivavu.dream.fragment.bucket.BucketOptionRepeatFragment;
+import com.vivavu.dream.fragment.bucket.option.repeat.RepeatFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.option.OptionRepeat;
 import com.vivavu.dream.repository.DataRepository;
@@ -40,7 +38,7 @@ import butterknife.InjectView;
 /**
  * Created by yuja on 14. 1. 10.
  */
-public class BucketViewActivity extends BaseActionBarActivity implements BucketOptionRepeatFragment.OnOptionFragmentRemovedListener {
+public class BucketViewActivity extends BaseActionBarActivity {
     @InjectView(R.id.bucket_btn_done)
     Button mBucketBtnDone;
     @InjectView(R.id.bucket_item_title)
@@ -53,8 +51,6 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
     TextView mBucketItemRemain;
     @InjectView(R.id.bucket_item_progressbar)
     ProgressBar mBucketItemProgressbar;
-    @InjectView(R.id.imageView)
-    ImageView mImageView;
     @InjectView(R.id.bucket_option_note)
     EditText mBucketOptionNote;
     @InjectView(R.id.btn_option_remove)
@@ -97,7 +93,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
     LinearLayout mLayoutBucketItemView;
     private Bucket bucket;
 
-    private MainContentsFragment mainContentsFragment;
+    /*private MainContentsFragment mainContentsFragment;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,12 +143,12 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
                 return true;
             case R.id.bucket_view_menu_save:
                 getOptionData();
-                if (DataRepository.updateBucketInfo(bucket) != null) {
+                /*if (DataRepository.updateBucketInfo(bucket) != null) {
                     Toast.makeText(this, "수정완료", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
                     Toast.makeText(this, "수정실패", Toast.LENGTH_SHORT).show();
-                }
+                }*/
                 return true;
             case R.id.bucket_view_menu_cancel:
                 finish();
@@ -199,10 +195,10 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
             case R.id.bucket_btn_done:
                 view.setSelected(!view.isSelected());
                 if (view.isSelected()) {
-                    bucket.setIsLive(1);
+                    //bucket.setIsLive(1);
                     Toast.makeText(this, "완료", Toast.LENGTH_SHORT).show();
                 } else {
-                    bucket.setIsLive(0);
+                    //bucket.setIsLive(0);
                     Toast.makeText(this, "진행중", Toast.LENGTH_SHORT).show();
                 }
                 break;
@@ -284,7 +280,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
     private void bindData() {
 
-        mBucketBtnDone.setSelected(bucket.getIsLive() == 1);
+        //mBucketBtnDone.setSelected(bucket.getIsLive() == 1);
 
         mBucketItemTitle.setText(bucket.getTitle());
         mBucketItemTitle.setTag(bucket.getId());
@@ -293,13 +289,13 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
         mBucketItemRemain.setText(bucket.getRemainDays());
 
-        if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
+        /*if (bucket.getTodos() == null || bucket.getTodos().size() < 1) {
             mBucketItemProgressbar.setVisibility(ProgressBar.GONE);
         } else {
             mBucketItemProgressbar.setVisibility(ProgressBar.VISIBLE);
             mBucketItemProgressbar.setProgress(bucket.getProgress());
         }
-
+*/
         mBucketOptionList.setVisibility(View.VISIBLE);
         mBucketOptionNote.setText(bucket.getDescription());
         if (bucket.getDescription() != null && bucket.getDescription().length() > 0) {
@@ -313,13 +309,13 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
         mBtnBucketOptionPublic.setSelected(bucket.getIsPrivate() == 1);
 
         addOptionRepeat();
-        addSubBucketList(bucket.getSubBuckets());
+        /*addSubBucketList(bucket.getSubBuckets());*/
     }
 
     private void getOptionData() {
         //옵션에서의 내용들 읽어오기
         // 반복설정
-        BucketOptionRepeatFragment repeatFragment = (BucketOptionRepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
+        RepeatFragment repeatFragment = (RepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
         if (repeatFragment != null) {
             OptionRepeat repeat = repeatFragment.getContents();
             bucket.setRptType(repeat.getRepeatType().getCode());
@@ -333,13 +329,13 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
     private void addOptionRepeat() {
 
-        BucketOptionRepeatFragment bucketOptionReaptFragment = (BucketOptionRepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
+        RepeatFragment bucketOptionReaptFragment = (RepeatFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_OPTION_FRAGMENT_REPEAT);
         if (bucketOptionReaptFragment == null) {
             if (bucket.getRptType() != null) {
                 OptionRepeat optionRepeat = new OptionRepeat();
                 optionRepeat.setRepeatType(RepeatType.fromCode(bucket.getRptType()));
                 optionRepeat.setOptionStat(bucket.getRptCndt());
-                bucketOptionReaptFragment = new BucketOptionRepeatFragment(optionRepeat);
+                bucketOptionReaptFragment = new RepeatFragment(optionRepeat);
                 getSupportFragmentManager().beginTransaction()
                         .add(mFragmentBucketOptionRepeat.getId(), bucketOptionReaptFragment, Tag.BUCKET_OPTION_FRAGMENT_REPEAT)
                         .commit();
@@ -350,7 +346,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
     }
 
     private void addSubBucketList(List<Bucket> bucketList) {
-        mainContentsFragment = (MainContentsFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_VIEW_FRAGMENT_SUB_BUCKET_LIST);
+        /*mainContentsFragment = (MainContentsFragment) getSupportFragmentManager().findFragmentByTag(Tag.BUCKET_VIEW_FRAGMENT_SUB_BUCKET_LIST);
         if (mainContentsFragment == null) {
             if (bucketList != null && bucketList.size() > 0) {
                 mainContentsFragment = new MainContentsFragment(bucketList);
@@ -361,7 +357,7 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
 
         } else {
             mainContentsFragment.refreshList(bucketList);
-        }
+        }*/
     }
 
     TextWatcher textWatcherInput = new TextWatcher() {
@@ -382,16 +378,6 @@ public class BucketViewActivity extends BaseActionBarActivity implements BucketO
         }
     };
 
-    @Override
-    public void onOptionFragmentRemoved(String tag) {
-        CustomBaseFragment bucketOptionFragment = (CustomBaseFragment) getSupportFragmentManager().findFragmentByTag(tag);
-        if (bucketOptionFragment != null) {
-            getSupportFragmentManager().beginTransaction().remove(bucketOptionFragment).commit();
-        }
-        if (Tag.BUCKET_OPTION_FRAGMENT_REPEAT.equals(tag)) {
-            mBtnBucketOptionRepeat.setVisibility(View.VISIBLE);
-        }
-    }
 
     private void goAddBucket() {
         Intent intent;

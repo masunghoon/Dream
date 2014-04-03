@@ -2,7 +2,7 @@ package com.vivavu.dream.util;
 
 import android.util.Log;
 
-import com.vivavu.dream.model.bucket.Dday;
+import com.vivavu.dream.model.bucket.option.OptionDDay;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,6 +36,28 @@ public class DateUtils {
         return remain;
     }
 
+    public static Long getRemainDay(Date startDate, Date endDate){
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(startDate);
+        startCal.set(Calendar.HOUR_OF_DAY, 0);
+        startCal.set(Calendar.MINUTE, 0);
+        startCal.set(Calendar.SECOND, 0);
+        startCal.set(Calendar.MILLISECOND, 0);
+
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(endDate);
+        endCal.set(Calendar.HOUR_OF_DAY, 0);
+        endCal.set(Calendar.MINUTE, 0);
+        endCal.set(Calendar.SECOND, 0);
+        endCal.set(Calendar.MILLISECOND, 0);
+
+        Long now = startCal.getTimeInMillis();
+        Long end = endCal.getTimeInMillis();
+        Long remain = (end-now)/1000/60/60/24;
+
+        return remain;
+    }
+
     public static String getRemainDayInString(Date deadline){
         if(deadline != null){
             Long remain = DateUtils.getRemainDay(deadline);
@@ -53,20 +75,19 @@ public class DateUtils {
     }
 
     public static int getProgress(Date startDate, Date endDate){
-        Long totalTime = endDate.getTime()-startDate.getTime();
-        Long pastTime = Calendar.getInstance().getTimeInMillis() - startDate.getTime();
-        int percentage = (int) (pastTime/totalTime)*100;
-        if(percentage < 0){
-            return 0;
-        }else if (percentage>100){
-            return 100;
+        Long totalTime = getRemainDay(startDate, endDate);
+        Long remainTime = getRemainDay(endDate);
+        int percentage = 100;
+        if(totalTime > 0){
+            int l = (int) ((1 - (remainTime / (double)totalTime)) * 100);
+            percentage = Math.max(l, 0);
         }
         return percentage;
     }
 
-    public static List<Dday> getUserDdays(Date birthday){
+    public static List<OptionDDay> getUserDdays(Date birthday){
         Calendar cal = Calendar.getInstance();
-        List<Dday> ddays = new ArrayList<Dday>();
+        List<OptionDDay> ddays = new ArrayList<OptionDDay>();
 
         if(birthday != null){
             int ageInFull = getAgeInFull(birthday);
@@ -76,13 +97,13 @@ public class DateUtils {
             cal.add(Calendar.DATE, -1);
             for(int i = 0; i < 6; i++){
                 cal.add(Calendar.YEAR, 10 );
-                ddays.add(new Dday( (period + i*10) +"대" , cal.getTime()));
+                ddays.add(new OptionDDay( (period + i*10) +"대" , cal.getTime()));
             }
         } else {
             cal.add(Calendar.DATE, -1);
             for(int i = 0; i < 6; i++){
                 cal.add(Calendar.YEAR, 10 );
-                ddays.add(new Dday( (i+1)*10 +"년 후" , cal.getTime()));
+                ddays.add(new OptionDDay( (i+1)*10 +"년 후" , cal.getTime()));
             }
         }
 
@@ -113,8 +134,26 @@ public class DateUtils {
     }
 
     public static String getDateString(Date date, String pattern) {
+        return getDateString(date, pattern, "");
+    }
+
+    public static String getDateString(Date date, String pattern, String defaultValue) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
-        String result = "";
+        String result = defaultValue;
+        try{
+            result = dateFormat.format(date);
+        } catch (NullPointerException e){
+            Log.e("dream", e.toString());
+        }
+        return result;
+    }
+
+    public static String getDateString(Date date, String pattern, Date defaultValue) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
+        String result = null;
+        if(date == null) {
+            date = defaultValue;
+        }
         try{
             result = dateFormat.format(date);
         } catch (NullPointerException e){
@@ -145,6 +184,13 @@ public class DateUtils {
     public static Date getDate(int year, int month, int dayOfMonth) {
         Calendar cal = Calendar.getInstance();
         cal.set(year, month, dayOfMonth, 0, 0);
+        return cal.getTime();
+    }
+
+    public static Date add(Date date, int filed, int value){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(filed, value);
         return cal.getTime();
     }
 }

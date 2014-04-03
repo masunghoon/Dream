@@ -5,6 +5,10 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.stmt.DeleteBuilder;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 import com.vivavu.dream.common.Constants;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
@@ -12,10 +16,10 @@ import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
-import com.vivavu.dream.model.Status;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.model.bucket.BucketWrapped;
-import com.vivavu.dream.model.bucket.Plan;
+import com.vivavu.dream.model.bucket.BucketGroup;
+import com.vivavu.dream.model.bucket.Today;
+import com.vivavu.dream.model.bucket.TodayGroup;
 import com.vivavu.dream.model.user.User;
 
 import org.springframework.http.HttpAuthentication;
@@ -30,21 +34,23 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by yuja on 14. 1. 13.
  */
 public class DataRepository {
+    public static String TAG = "com.vivavu.dream.repository.DataRepository";
     private static DreamApp context;
+    private static DatabaseHelper databaseHelper;
 
     public DataRepository(DreamApp context) {
         this.context = context;
+        databaseHelper = new DatabaseHelper(context);
     }
 
     private static HttpHeaders getBasicAuthHeader(){
@@ -122,7 +128,7 @@ public class DataRepository {
             Log.e("dream", e.toString());
         }
         ResponseBodyWrapped<BaseInfo> responseBodyWrapped = null;
-        if(result.getStatusCode() == HttpStatus.OK || result.getStatusCode()== HttpStatus.NO_CONTENT){
+        if(result != null && result.getStatusCode() == HttpStatus.OK || result.getStatusCode()== HttpStatus.NO_CONTENT){
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             Type type = new TypeToken<ResponseBodyWrapped<BaseInfo>>(){}.getType();
             responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
@@ -131,88 +137,6 @@ public class DataRepository {
         }
 
         return new ResponseBodyWrapped<BaseInfo>();
-    }
-
-    public static List<Bucket>  getBuckets() {
-        return getBuckets(context.getUser().getId());
-    }
-    public static List<Bucket> getBuckets(Integer userId) {
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        //Users users = restTemplate.getForObject(Constants.apiUsers, Users.class);
-        ResponseEntity<String> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.GET, request, String.class, userId);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        if(result != null){
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-            Type type = new TypeToken<ResponseBodyWrapped<ArrayList<Bucket>>>(){}.getType();
-            //ResponseBodyWrapped<ResponseBodyWrapped> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
-        }
-
-        return new ArrayList<Bucket>();
-    }
-
-    public static Bucket getBucket(Integer id){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-        //HttpEntity request = new HttpEntity<String>( new HttpHeaders());
-
-        ResponseEntity<Bucket> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketInfo, HttpMethod.GET, request, Bucket.class, id);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Bucket bucket = result.getBody();
-
-        return bucket;
-    }
-
-    public static Bucket postBucketDefault(Bucket bucket, Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<Bucket>(bucket, requestHeaders);
-
-        ResponseEntity<BucketWrapped> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBuckets, HttpMethod.POST, request, BucketWrapped.class, variable);
-            return result.getBody().getBucket();
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-        Log.d("dream", String.valueOf(result));
-
-        return null;
-    }
-
-    public static Bucket updateBucketInfo(Bucket bucket){
-        //return sendBucketInfo(Constants.apiBucketInfo, HttpMethod.PUT, bucket);
-
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<Bucket>(bucket, requestHeaders);
-
-        ResponseEntity<BucketWrapped> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiBucketInfo, HttpMethod.PUT, request, BucketWrapped.class, bucket.getId());
-            return result.getBody().getBucket();
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-        Log.d("dream", String.valueOf(result));
-        return null;
     }
 
     public static void deleteBucket(Integer bucketId){
@@ -252,46 +176,6 @@ public class DataRepository {
         return user.getData();
     }
 
-    public static List<Plan> getPlanList(Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        ResponseEntity<Plan[]> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiPlanList, HttpMethod.GET, request, Plan[].class, variable);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        Plan[] user = result.getBody();
-
-        return new ArrayList<Plan>(Arrays.asList(user));
-    }
-
-    public static Status updatePlanStatus(Plan plan, Object... variable){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-
-
-        HashMap<String, Object> requestBody = new HashMap<String, Object>();
-        requestBody.put("id", plan.getId());
-        requestBody.put("isDone", plan.getIsDone()?1:0);
-
-        HttpEntity request = new HttpEntity<Map>(requestBody, requestHeaders);
-
-        ResponseEntity<Status> result = null;
-        try {
-            result = restTemplate.exchange(Constants.apiPlanInfo, HttpMethod.PUT, request, Status.class, plan.getId());
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-        return result.getBody();
-
-    }
-
     public static ResponseBodyWrapped<LoginInfo> resetPassword(String email){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
         HttpHeaders requestHeaders = getBasicAuthHeader();
@@ -304,20 +188,292 @@ public class DataRepository {
             Log.e("dream", e.toString());
         }
 
+
         if(result.getStatusCode() == HttpStatus.OK){
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             Type type = new TypeToken<ResponseBodyWrapped<LoginInfo>>(){}.getType();
+
             ResponseBodyWrapped<LoginInfo> user = gson.fromJson((String) result.getBody(), type);
+            /*TypeToken.get(user.getClass());
+            ResponseBodyWrapped<LoginInfo> usr = RestTemplateUtils.responseToJson(result,type );*/
             return user;
         }
 
         return new ResponseBodyWrapped<LoginInfo>();
     }
+
     public static DreamApp getContext() {
         return context;
     }
 
     public static void setContext(DreamApp context) {
         DataRepository.context = context;
+    }
+
+    public static DatabaseHelper getDatabaseHelper() {
+        if(databaseHelper == null){
+            databaseHelper = new DatabaseHelper(context);
+        }
+        return databaseHelper;
+    }
+
+    public static void saveBuckets(List<Bucket> list){
+        deleteAllBuckets();
+        for(Bucket bucket : list){
+            saveBucket(bucket);
+        }
+    }
+
+    public static void saveBucket(Bucket bucket){
+        if(bucket.getId() != null) {
+            getDatabaseHelper().getBucketRuntimeDao().createOrUpdate(bucket);
+        }
+    }
+
+    public static void deleteAllBuckets(){
+        DeleteBuilder<Bucket,Integer> deleteBuilder = getDatabaseHelper().getBucketRuntimeDao().deleteBuilder();
+        try {
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
+    }
+
+    public static List<BucketGroup> listBucketGroup(){
+        QueryBuilder<Bucket, Integer> qb = getDatabaseHelper().getBucketRuntimeDao().queryBuilder();
+        qb.groupBy("range");
+        qb.orderBy("range", true);
+        qb.orderBy("deadline", true);
+        qb.orderBy("id", true);
+        List<BucketGroup> bucketGroups = null;
+        try {
+            List<Bucket> rangeList = qb.query();
+            bucketGroups = makeShelfList(rangeList);
+
+            for(BucketGroup range : bucketGroups){
+                QueryBuilder<Bucket, Integer> qb2 = getDatabaseHelper().getBucketRuntimeDao().queryBuilder();
+                Where where = qb2.where();
+                if(range.getRange() == null){
+                    where.isNull("range");
+                }else{
+                    where.eq("range", range.getRange());
+                }
+                qb2.orderBy("deadline", true);
+
+                List<Bucket> list = qb2.query();
+                range.setBukets(list);
+            }
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
+        return bucketGroups;
+    }
+
+    public static List<BucketGroup> makeShelfList(List<Bucket> list){
+        List<BucketGroup> returnList = new ArrayList<BucketGroup>();
+        returnList.add(new BucketGroup());
+        final int maxIndex = 7;
+        for (int i = 1; i < maxIndex; i++) {
+            returnList.add(new BucketGroup(String.valueOf(i*10)));
+        }
+
+        for (Bucket bucket : list){
+            String range = bucket.getRange();
+            if (range != null) {
+                Integer numRange = Integer.parseInt(range);
+                if(numRange >= maxIndex * 10){
+                    returnList.add(new BucketGroup(String.valueOf(range)));
+                }
+            }
+        }
+
+        return returnList;
+    }
+
+    public static Bucket getBucket(Integer id){
+        RuntimeExceptionDao<Bucket,Integer> bucketRuntimeDao = getDatabaseHelper().getBucketRuntimeDao();
+        Bucket bucket = null;
+        if(id != null) {
+            bucket = bucketRuntimeDao.queryForId(id);
+        }
+        if(bucket == null){
+            bucket = new Bucket();
+        }
+        return bucket;
+    }
+
+    public static void saveTodays(List<Today> list){
+        /*Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.MONTH, -1);
+        deleteTodays(cal.getTime());*/
+        updateTodayGroup();
+        for(Today today : list){
+            saveToday(today);
+        }
+    }
+
+    public static void saveToday(Today today){
+        if(today.getId() != null) {
+            getDatabaseHelper().getTodayRuntimeDao().createOrUpdate(today);
+        }
+    }
+
+    public static void deleteAllTodays(){
+        DeleteBuilder<Today,Integer> deleteBuilder = getDatabaseHelper().getTodayRuntimeDao().deleteBuilder();
+        try {
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
+    }
+
+    public static void deleteTodays(Date date){
+        DeleteBuilder<Today,Integer> deleteBuilder = getDatabaseHelper().getTodayRuntimeDao().deleteBuilder();
+        try {
+            Where<Today, Integer> where = deleteBuilder.where();
+            where.lt("date", date);
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
+    }
+
+    public static List<TodayGroup> listTodayGroupAndTodayData(){
+         List<TodayGroup> todayGroups = null;
+        try {
+            todayGroups = listTodayGroup();
+
+            for(TodayGroup todayGroup : todayGroups){
+                QueryBuilder<Today, Integer> todayQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
+                Where where = todayQueryBuilder.where();
+                if(todayGroup.getDate() == null){
+                    where.isNull("date");
+                }else{
+                    where.eq("date", todayGroup.getDate());
+                }
+                todayQueryBuilder.orderBy("deadline", true);
+                todayQueryBuilder.orderBy("id", true);
+
+                List<Today> list = todayQueryBuilder.query();
+                todayGroup.setTodayList(list);
+            }
+        } catch (SQLException e) {
+            todayGroups = new ArrayList<TodayGroup>();
+            Log.e("dream", e.getMessage());
+        }
+        return todayGroups;
+    }
+
+    public static void saveTodayGroups(List<TodayGroup> todayGroupList){
+        for (TodayGroup todayGroup : todayGroupList){
+            saveTodayGroup(todayGroup);
+        }
+    }
+    public static void saveTodayGroup(TodayGroup todayGroup){
+        if(todayGroup != null){
+            getDatabaseHelper().getTodayGroupRuntimeDao().createOrUpdate(todayGroup);
+        }
+    }
+
+    public static void updateTodayGroup(){
+        deleteAllTodayGroups();
+        QueryBuilder<Today, Integer> todayQueryBuilder = getDatabaseHelper().getTodayRuntimeDao().queryBuilder();
+        todayQueryBuilder.groupBy("date");
+        todayQueryBuilder.orderBy("date", false);
+        List<TodayGroup> todayGroupList = new ArrayList<TodayGroup>();
+        try {
+            List<Today> query = todayQueryBuilder.query();
+            for (Today today : query){
+                TodayGroup tmp = new TodayGroup();
+                tmp.setDate(today.getDate());
+                todayGroupList.add(tmp);
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+        saveTodayGroups(todayGroupList);
+
+    }
+
+    public static List<TodayGroup> listTodayGroup(){
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", false);
+        List<TodayGroup> today = null;
+        try {
+            today = todayGroupIntegerQueryBuilder.query();
+        } catch (SQLException e) {
+            today = new ArrayList<TodayGroup>();
+            Log.e(TAG, e.getMessage());
+        }
+
+        return today;
+    }
+
+    public static Date firstTodayDate(){
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", true);
+        TodayGroup today = null;
+        try {
+            today = todayGroupIntegerQueryBuilder.queryForFirst();
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        if(today == null) {
+            return new Date();
+        }else{
+            return today.getDate();
+        }
+    }
+
+    public static Date lastTodayDate(){
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", false);
+        TodayGroup today = null;
+        try {
+            today = todayGroupIntegerQueryBuilder.queryForFirst();
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        if(today == null) {
+            return null;
+        }else{
+            return today.getDate();
+        }
+    }
+
+    public static boolean isExistsTodayData(Date date){
+        List<TodayGroup> todays = getDatabaseHelper().getTodayGroupRuntimeDao().queryForEq("date", date);
+        if(todays != null && todays.size() > 0){
+            return true;
+        }
+        return false;
+    }
+
+    public static List<Date> getTodayDates(){
+        QueryBuilder<TodayGroup, Date> todayGroupIntegerQueryBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().queryBuilder();
+        todayGroupIntegerQueryBuilder.orderBy("date", false);
+        List<TodayGroup> todayGroups = null;
+        List<Date> dateArrayList = new ArrayList<Date>();
+        try {
+            List<TodayGroup> rangeList = todayGroupIntegerQueryBuilder.query();
+            for (TodayGroup today : rangeList){
+                dateArrayList.add(today.getDate());
+            }
+
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+        return dateArrayList;
+    }
+
+    public static void deleteAllTodayGroups(){
+        DeleteBuilder<TodayGroup,Date> deleteBuilder = getDatabaseHelper().getTodayGroupRuntimeDao().deleteBuilder();
+        try {
+            deleteBuilder.delete();
+        } catch (SQLException e) {
+            Log.e("dream", e.getMessage());
+        }
     }
 }
