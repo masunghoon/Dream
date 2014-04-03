@@ -1,4 +1,3 @@
-#!flask/bin/python
 # makeplan.py
 
 import MySQLdb

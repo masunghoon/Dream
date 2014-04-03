@@ -165,9 +165,17 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
     body = db.Column(db.String(140))
-    timestamp = db.Column(db.DateTime)
+    date = db.Column(db.String(8))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     language = db.Column(db.String(5))
+    bucket_id = db.Column(db.Integer, db.ForeignKey('bucket.id'))
+    text = db.Column(db.String(20480))
+    img_id = db.Column(db.Integer, db.ForeignKey('file.id'))
+    url1 = db.Column(db.String(256))
+    url2 = db.Column(db.String(256))
+    url3 = db.Column(db.String(256))
+    reg_dt = db.Column(db.DateTime)
+    lst_mod_dt = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<Post %r>' % self.body
@@ -190,6 +198,8 @@ class Bucket(db.Model):
     rpt_cndt = db.Column(db.String(8))                  # Repeat Condition
     reg_dt = db.Column(db.DateTime)                     # Registered Datetime
     lst_mod_dt = db.Column(db.DateTime)                 # Last Modified Datetime
+    cvr_img_id = db.Column(db.Integer(11))
+    fb_feed_id = db.Column(db.String(128))
 
     def __repr__(self):
         return '<Bucket %r>' % self.title
@@ -223,6 +233,30 @@ class File(db.Model):
         self.extension = extension
         self.type = type
 
+
+class UserSocial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    provider = db.Column(db.String(32))
+    uid = db.Column(db.String(256))
+    access_token = db.Column(db.String(512))
+
+    def __init__(self, user_id, provider, uid, access_token):
+        self.user_id = user_id
+        self.provider = provider
+        self.uid = uid
+        self.access_token = access_token
+
+    @staticmethod
+    def upsert_user(user_id, provider, uid, access_token):
+        us = UserSocial.query.filter_by(user_id=user_id, provider=provider).first()
+        if us is None:
+            us = UserSocial(user_id, provider, uid, access_token)
+            db.session.add(us)
+            db.session.commit()
+        else:
+            us.access_token = access_token;
+            db.session.commit()
 
 whooshalchemy.whoosh_index(app, Post)
 

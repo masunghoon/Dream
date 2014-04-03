@@ -2,27 +2,32 @@ __author__ = 'masunghoon'
 
 # Libraries
 import random, datetime
+import facebook
 
 from flask import request, g
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse, fields, marshal
-from flask.ext.uploads import UploadSet, IMAGES, configure_uploads
+from flask.ext.uploads import UploadSet, IMAGES, configure_uploads, patch_request_class
 
 from hashlib import md5
 from rauth.service import OAuth2Service
+from sqlalchemy.sql import func
 # Source
 from app import db, api, app
-from models import User, Bucket, Plan, File, ROLE_ADMIN, ROLE_USER
+from models import User, Bucket, Plan, File, Post, UserSocial, ROLE_ADMIN, ROLE_USER
 from emails import send_awaiting_confirm_mail, send_reset_password_mail
 from config import FB_CLIENT_ID, FB_CLIENT_SECRET
 
+photos = UploadSet('photos',IMAGES)
+configure_uploads(app, photos)
+patch_request_class(app, size=2097152) #File Upload Size = Up to 2MB
 
 ##### AUTHENTICATION #######################################
 
 auth = HTTPBasicAuth()
 
 graph_url = 'https://graph.facebook.com/'
-facebook = OAuth2Service(name='facebook',
+fb = OAuth2Service(name='facebook',
                          authorize_url='https://www.facebook.com/dialog/oauth',
                          access_token_url=graph_url+'oauth/access_token',
                          client_id=FB_CLIENT_ID,
@@ -33,7 +38,7 @@ facebook = OAuth2Service(name='facebook',
 def verify_password(username_or_token, password):
     # first try to authenticate by token
     if password == "facebook":
-        auth = facebook.get_session(token=username_or_token)
+        auth = fb.get_session(token=username_or_token)
         resp = auth.get('/me')
         if resp.status_code == 200:
             fb_user = resp.json()
@@ -138,7 +143,6 @@ class ResetPassword(Resource):
             return {'status':'error',
                     'description':'Something went wrong'}, 500
 
-
         return {'status':'success',
                 'description':'Password successfully reset'}, 200
 
@@ -168,9 +172,11 @@ class UserAPI(Resource):
     #get specific User's Profile
     def get(self, id):
         u = User.query.filter_by(id=id).first()
-        # return marshal(u, user_fields), 200
+
         return {'status':'success',
-                        'data':marshal(u, user_fields)}, 200
+                  'data':marshal(u, user_fields)}, 200
+
+
     #modify My User Profile
     def put(self, id):
         if request.json:
@@ -185,7 +191,7 @@ class UserAPI(Resource):
             return {'error': 'Unauthorized'}, 401
 
         for key in params:
-            value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja kk
+            value = None if params[key]=="" else params[key]    # Or Use (params[key],None)[params[key]==""] Sam Hang Yeonsanja
 
             # Nobody can change id, email, fb_id, last_seen
             if key in ['id', 'email', 'fb_id', 'last_seen']:
@@ -245,9 +251,7 @@ class UserListAPI(Resource):
 
     @auth.login_required
     def get(self):
-        # data = []
         u = User.query.all()
-        # return map(lambda t:marshal(t, user_fields), u)
         return {'status':'success',
                 'data':map(lambda t:marshal(t, user_fields), u)}, 200
 
@@ -259,9 +263,6 @@ class UserListAPI(Resource):
         else:
             return {'status':'error',
                     'description':'Request Failed!'}, 400
-
-        print params['email'];
-        print params['password'];
 
         # Check Requirements <Email, Password>
         if not 'email' in params:
@@ -321,7 +322,7 @@ class UserListAPI(Resource):
                                 'email': g.user.email,
                                 'birthday': g.user.birthday,
                                 'confirmed_at':g.user.confirmed_at.strftime("%Y-%m-%d %H:%M:%S") if g.user.confirmed_at else None},
-                        'token': token.decode('ascii')}}, 200
+                        'token': token.decode('ascii')}}, 201
 
 
 
@@ -330,23 +331,6 @@ api.add_resource(UserListAPI, '/api/users', endpoint='users')
 
 
 ##### about BUCKET / BUCKETLIST ####################################
-
-bucket_fields = {
-    'id': fields.Integer,
-    'user_id': fields.Integer,
-    'title': fields.String,
-    'description': fields.String,
-    'level': fields.String,
-    'status': fields.Integer,
-    'private': fields.Integer,
-    'reg_dt': fields.String,
-    'deadline': fields.String,
-    'scope': fields.String,
-    'range': fields.String,
-    'parent_id': fields.Integer,
-    'lst_mod_dt': fields.String,
-    'uri': fields.Url('bucket')
-}
 
 class BucketAPI(Resource):
     decorators = [auth.login_required]
@@ -358,6 +342,13 @@ class BucketAPI(Resource):
         b = Bucket.query.filter(Bucket.id==id, Bucket.status!='9').first()
         if b == None:
             return {'error':'No data found'}, 204
+
+        if b.fb_feed_id is not None:
+            social_user = UserSocial.query.filter_by(user_id=b.user_id).first()
+            graph = facebook.GraphAPI(social_user.access_token)
+            fb_likes = graph.get_object(b.fb_feed_id+'/likes')
+            fb_comments = graph.get_object(b.fb_feed_id+'/comments')
+
         data={
             'id': b.id,
             'user_id': b.user_id,
@@ -373,38 +364,45 @@ class BucketAPI(Resource):
             'range': b.range,
             'rpt_type': b.rpt_type,
             'rpt_cndt': b.rpt_cndt,
-            'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")
-            # 'sub_buckets': []
+            'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name),
+            'fb_feed_id': None if b.fb_feed_id is None else b.fb_feed_id,
+            'fb_likes': None if b.fb_feed_id is None else fb_likes['data'],
+            'fb_comments': None if b.fbfeed_id is None else fb_comments['data']
         }
 
-        return data, 200
+        return {'status':'success',
+                'description':'GET Success',
+                'data':data}, 200
 
     def put(self, id):
         if request.json:
             params = request.json
         elif request.form:
-            params = request.form
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
         else:
             return {'status':'error','description':'Request Failed'}, 500
 
         b = Bucket.query.filter_by(id=id).first()
         if b.user_id != g.user.id:
-            return {'error':'Unauthorized'}, 400
+            return {'status':'error','description':'Unauthorized'}, 401
 
         for key in params:
             value = None if params[key]=="" else params[key]
 
             # Editable Fields
             if key not in ['title','status','private','deadline','description','parent_id','scope','range','rpt_type','rpt_cndt']:
-                return {'error':'Invalid key: '+key}, 400
+                return {'status':'error','description':'Invalid key: '+key}, 403
 
             # Nobody can modify id, user_id, reg_dt
-            if key in ['id','user_id','reg_dt']:
-                return {'error':'Cannot change ' + key}, 400
+            # if key in ['id','user_id','reg_dt']:
+            #     return {'status':'error','description':'Cannot change '+key}, 403
 
             # Just ROLE_ADMIN user can change 'language', 'level'
             if key in ['language','level'] and g.user.role == ROLE_USER:
-                return {'error':'Only Admin can chagne' + key}, 401
+                return {'status':'error','description':'Only Admin can change' + key}, 401
 
             # When modify user's parent_id adjusts its level
             if key == 'parent_id':
@@ -413,25 +411,25 @@ class BucketAPI(Resource):
                 else:
                     pb = Bucket.query.filter_by(id=int(value)).first() # pb = parent bucket
                     if pb == None:
-                        return {'error':'Parent does not exists'}, 400
+                        return {'status':'error','description':'Parent does not exists'}, 400
                     else:
                         params['level'] = str(int(pb.level)+1)
 
             # Set other key's validation
             if key == 'title' and len(value) > 128:
-                return {'error':'Title length must be under 128'}, 400
+                return {'status':'error','description':'Title length must be under 128'}, 400
 
             if key == 'description' and len(value) > 512:
-                return {'error':'Description too long (512)'}, 400
+                return {'status':'error','description':'Description too long (512)'}, 400
 
             if key == 'deadline':
-                value = datetime.strptime(value,'%Y-%m-%d')
+                value = datetime.datetime.strptime(value,'%Y-%m-%d')
 
             if key == 'scope' and value not in ['DECADE','YEARLY','MONTHLY']:
-                return {'error':'Invalid scope value'}, 400
+                return {'status':'error','description':'Invalid scope value'}, 400
 
             if key == 'rpt_type' and value not in ['WKRP','WEEK','MNTH']:
-                return {'error':'Invalid repeat-type value'}, 400
+                return {'status':'error','description':'Invalid repeat-type value'}, 400
 
             if key == 'rpt_cndt':
                 dayOfWeek = datetime.date.today().weekday()
@@ -449,13 +447,57 @@ class BucketAPI(Resource):
 
             setattr(b, key, value)
 
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error',
+                        'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+
+            setattr(b, 'cvr_img_id', f.id)
+
         b.lst_mod_dt = datetime.datetime.now()
         try:
             db.session.commit()
+
         except:
+            db.session.rollback()
             return {'error':'Something went wrong'}, 500
 
-        return {'bucket': marshal(b, bucket_fields)}, 201
+        data={'id': b.id,
+              'user_id': b.user_id,
+              'title': b.title,
+              'description': b.description,
+              'level': b.level,
+              'status': b.status,
+              'private': b.private,
+              'parent_id': b.parent_id,
+              'reg_dt': b.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+              'deadline': b.deadline.strftime("%Y-%m-%d"),
+              'scope': b.scope,
+              'range': b.range,
+              'rpt_type': b.rpt_type,
+              'rpt_cndt': b.rpt_cndt,
+              'lst_mod_dt': None if b.lst_mod_dt is None else b.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+              'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)}
+        return {'status':'success',
+                'description':'Bucket put success.',
+                'data':data}, 201
+
 
     def delete(self, id):
         b = Bucket.query.filter_by(id=id).first()
@@ -468,9 +510,10 @@ class BucketAPI(Resource):
             b.status = '9'
             b.lst_mod_dt = datetime.datetime.now()
             db.session.commit()
-            return {'status': 'success'}, 200
+            return {'status':'success'}, 200
         except:
-            return {'status': 'delete failed'}, 500
+            return {'status':'error',
+                    'description':'delete failed'}, 403
 
 
 class UserBucketAPI(Resource):
@@ -487,74 +530,63 @@ class UserBucketAPI(Resource):
             else:
                 return {'error':'User unauthorized'}, 401
 
-        if request.values.get('syncdt'):
-            print 'syncdt'
-            sync_dt = datetime.datetime.strptime(request.values.get('syncdt'),'%Y%m%d%H%M%S')
-            b = Bucket.query.filter(Bucket.user_id==id,Bucket.scope=='DECADE',Bucket.lst_mod_dt>sync_dt).all()
+        data = []
+        if g.user == u:
+            b = Bucket.query.filter(Bucket.user_id==u.id,Bucket.status!='9',Bucket.level=='0').all()
         else:
-            print 'none'
-            b = Bucket.query.filter_by(user_id=id, scope='DECADE').all()
-        result = [{'range':'Lifetime','buckets':[]}]
+            b = Bucket.query.filter(Bucket.user_id==u.id,Bucket.status!='9',Bucket.level=='0',Bucket.private=='0').all()
+
+        if len(b) == 0:
+            return {'error':'No data Found'}, 204
+
+        social_user = UserSocial.query.filter_by(user_id=u.id).first()
+        graph = facebook.GraphAPI(social_user.access_token)
 
         for i in b:
-            resultRange = len(result)
-            for j in range(resultRange):
-
-                if 'Lifetime' if i.range is None else i.range == result[j]['range']:
-                    result[j]['buckets'].append({
-                        'id': i.id,
-                        'user_id': i.user_id,
-                        'title': i.title,
-                        'description': i.description,
-                        'level': i.level,
-                        'status': i.status,
-                        'private': i.private,
-                        'parent_id': i.parent_id,
-                        'deadline': i.deadline.strftime("%Y-%m-%d"),
-                        'scope': i.scope,
-                        'range': i.range,
-                        'rpt_type': i.rpt_type,
-                        'rpt_cndt': i.rpt_cndt,
-                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        })
-                    break
-
-                if j+1 == resultRange:
-                    result.append({'range':i.range,'buckets':[
-                        {'id': i.id,
-                        'user_id': i.user_id,
-                        'title': i.title,
-                        'description': i.description,
-                        'level': i.level,
-                        'status': i.status,
-                        'private': i.private,
-                        'parent_id': i.parent_id,
-                        'deadline': i.deadline.strftime("%Y-%m-%d"),
-                        'scope': i.scope,
-                        'range': i.range,
-                        'rpt_type': i.rpt_type,
-                        'rpt_cndt': i.rpt_cndt,
-                        'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                        'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}]
-                        })
+            if i.fb_feed_id is not None:
+                fb_likes = graph.get_object(i.fb_feed_id+'/likes')
+                fb_comments = graph.get_object(i.fb_feed_id+'/comments')
+            data.append({
+                'id': i.id,
+                'user_id': i.user_id,
+                'title': i.title,
+                'description': i.description,
+                'level': i.level,
+                'status': i.status,
+                'private': i.private,
+                'parent_id': i.parent_id,
+                'reg_dt': i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'deadline': i.deadline.strftime("%Y-%m-%d"),
+                'scope': i.scope,
+                'range': i.range,
+                'rpt_type': i.rpt_type,
+                'rpt_cndt': i.rpt_cndt,
+                'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'cvr_img_url': None if i.cvr_img_id is None else photos.url(File.query.filter_by(id=i.cvr_img_id).first().name),
+                'fb_feed_id': None if i.fb_feed_id is None else i.fb_feed_id,
+                'fb_likes': None if i.fb_feed_id is None else fb_likes['data'],
+                'fb_comments': None if i.fb_feed_id is None else fb_comments['data']
+            })
 
         return {'status':'success',
                 'description':'normal',
-                'data':result}, 200
+                'data':data}, 200
 
 
     def post(self, id):
         u = User.query.filter_by(id=id).first()
         if u.id != g.user.id:
-            return {'error':'Unauthorized'}, 401
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
 
         if request.json:
             params = request.json
         elif request.form:
-            params = request.form
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
         else:
-            return {'status':'error','description':'Request Failed'}
+            return {'status':'error','description':'Request Failed'}, 400
 
         # Replace blank value to None(null) in params
         for key in params:
@@ -579,6 +611,38 @@ class UserBucketAPI(Resource):
             else:
                 level = int(b.level) + 1
 
+        if 'rpt_cndt' in params:
+            dayOfWeek = datetime.date.today().weekday()
+            if params['rpt_type'] == 'WKRP':
+                if params['rpt_cndt'][dayOfWeek] == '1':
+                    p = Plan(date=datetime.date.today().strftime("%Y%m%d"),
+                             user_id=g.user.id,
+                             bucket_id=None,
+                             status=0,
+                             lst_mod_dt=datetime.datetime.now())
+                    db.session.add(p)
+
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error','description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+
+
         bkt = Bucket(title=params['title'],
                      user_id=g.user.id,
                      level=str(level),
@@ -586,60 +650,96 @@ class UserBucketAPI(Resource):
                      private=params['private'] if 'private' in params else False,
                      reg_dt=datetime.datetime.now(),
                      lst_mod_dt=datetime.datetime.now(),
-                     deadline=datetime.strptime(params['deadline'],'%Y/%m/%d').date() if 'deadline' in params\
+                     deadline=datetime.datetime.strptime(params['deadline'],'%Y-%m-%d').date() if 'deadline' in params \
                                                                                       else datetime.datetime.now(),
                      description=params['description'] if 'description' in params else None,
                      parent_id=params['parent_id'] if 'parent_id' in params else None,
                      scope=params['scope'] if 'scope' in params else None,
                      range=params['range'] if 'range' in params else None,
                      rpt_type=params['rpt_type'] if 'rpt_type' in params else None,
-                     rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None)
-
+                     rpt_cndt=params['rpt_cndt'] if 'rpt_cndt' in params else None,
+                     cvr_img_id=f.id if 'photo' in request.files else None)
+                     # cvr_img_id=f.id if 'cvr_img' in params and params['cvr_img'] == 'true' else None)
         db.session.add(bkt)
+        db.session.flush()
+        db.session.refresh(bkt)
+
+        if 'rpt_cndt' in params:
+            if params['rpt_type'] == 'WKRP' and params['rpt_cndt'][dayOfWeek] == '1':
+                p.bucket_id = bkt.id
+
+        if 'fb_share' in params:
+            social_user = UserSocial.query.filter_by(user_id=u.id).first()
+            graph = facebook.GraphAPI(social_user.access_token)
+            resp = graph.put_object("me","feed",
+                         message= g.user.username + " Posted " + params['title'].encode('utf-8'),
+                         link="http://masunghoon.iptime.org:5001",
+                         picture=photos.url(File.query.filter_by(id=bkt.cvr_img_id).first().name) if 'photo' in request.files else None,
+                         caption="Dream Proj.",
+                         description=None if bkt.description is None else bkt.description.encode('utf-8'),
+                         name=bkt.title.encode('utf-8'),
+                         privacy={'value':params['fb_share'].encode('utf-8')})
+
+            bkt.fb_feed_id = resp['id']
+
         db.session.commit()
 
-        return {'bucket': marshal(bkt, bucket_fields)}, 201
+        data={
+            'id': bkt.id,
+            'user_id': bkt.user_id,
+            'title': bkt.title,
+            'description': bkt.description,
+            'level': bkt.level,
+            'status': bkt.status,
+            'private': bkt.private,
+            'parent_id': bkt.parent_id,
+            'reg_dt': bkt.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            'deadline': bkt.deadline.strftime("%Y-%m-%d"),
+            'scope': bkt.scope,
+            'range': bkt.range,
+            'rpt_type': bkt.rpt_type,
+            'rpt_cndt': bkt.rpt_cndt,
+            'lst_mod_dt': None if bkt.lst_mod_dt is None else bkt.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            'cvr_img_url': None if bkt.cvr_img_id is None else photos.url(File.query.filter_by(id=bkt.cvr_img_id).first().name),
+            'fb_feed_id':None if bkt.fb_feed_id is None else bkt.fb_feed_id
+        }
+
+        return {'status':'success',
+                'description':'Bucket posted successfully.',
+                'data':data}, 201
 
 
 api.add_resource(BucketAPI, '/api/bucket/<int:id>', endpoint='bucket')
 api.add_resource(UserBucketAPI, '/api/buckets/user/<int:id>', endpoint='buckets')
 
 
-##### PLAN ##################################################
+##### TODAY ##################################################
 
-plan_fields = {
-    'id': fields.Integer,
-    'date': fields.String,
-    'bucket_id': fields.Integer,
-    'user_id': fields.Integer,
-    'title': fields.String,
-    'status': fields.Integer,
-    'private': fields.Integer,
-    'deadline': fields.String,
-    'scope': fields.String,
-    'range': fields.String,
-    'rpt_type': fields.String,
-    'rpt_cndt': fields.String,
-    'parent_id': fields.Integer,
-}
-
-
-class PlanListAPI(Resource):
+class TodayListAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(PlanListAPI, self).__init__()
+        super(TodayListAPI, self).__init__()
 
-    def get(self,username):
+    def get(self,user_id):
 
         data = []
-        u = User.query.filter_by(username = username).first()
+        u = User.query.filter_by(id = user_id).first()
         if u is None:
             return {'status':'error',
                     'description':'User does not Exists'}, 400
 
-        for p, b in db.session.query(Plan, Bucket).filter(Plan.bucket_id == Bucket.id,Plan.user_id == g.user.id).order_by(Plan.date.desc(), Bucket.deadline.desc()).all():
+        if u.id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        # if 'fdate' in request.args or 'tdate' in request.args:
+        result = db.session.query(Plan, Bucket).filter(Plan.bucket_id==Bucket.id,
+                                                           Plan.user_id==user_id,
+                                                           Plan.date>=request.args['fdate'] if 'fdate' in request.args else '19000101',
+                                                           Plan.date<=request.args['tdate'] if 'tdate' in request.args else datetime.datetime.now().strftime('%Y%m%d')).all()
+
+        for p, b in result:
             data.append({
                 'id': p.id,
                 'date': p.date,
@@ -648,23 +748,58 @@ class PlanListAPI(Resource):
                 'title': b.title,
                 'status': b.status,
                 'private': b.private,
-                'deadline': b.deadline,
+                'deadline': b.deadline.strftime("%Y-%m-%d"),
                 'scope': b.scope,
                 'range': b.range,
                 'rpt_type': b.rpt_type,
                 'rpt_cndt': b.rpt_cndt,
-                'parent_id': b.parent_id
+                'cvr_img_url': None if b.cvr_img_id is None else photos.url(File.query.filter_by(id=b.cvr_img_id).first().name)
             })
 
-        return map(lambda t: marshal(t, plan_fields), data), 200
+        if len(data) == 0:
+            return {'status':'success',
+                    'description':'No Plans returned'}, 204
+
+        return {'status':'success',
+                'description':'Get Today list succeed. (Count: '+str(len(data))+')',
+                'data':data}, 200
 
 
-class PlanAPI(Resource):
+class TodayExistsAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
-        super(PlanAPI, self).__init__()
+        super(TodayExistsAPI, self).__init__()
+
+    def get(self, user_id):
+        u = User.query.filter_by(id = user_id).first()
+        if u is None:
+            return {'status':'error',
+                    'description':'User does not Exists'}, 400
+
+        if u.id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        result = db.session.query(Plan.date).filter(Plan.user_id==user_id).distinct(Plan.date).all()
+
+        if len(result) == 0:
+            return 204
+        else:
+            data = []
+            for i in range(len(result)):
+                data.append(result[i][0])
+
+        return {"status":"success",
+                "description":"count: "+ str(len(result)),
+                "data":data}, 200
+
+
+class TodayAPI(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(TodayAPI, self).__init__()
 
     def put(self, id):
         if request.json:
@@ -688,8 +823,9 @@ class PlanAPI(Resource):
 
         return {'status':'succeed'}, 200
 
-api.add_resource(PlanListAPI, '/api/plans/<username>', endpoint='plans')
-api.add_resource(PlanAPI, '/api/plan/<id>', endpoint='plan')
+api.add_resource(TodayListAPI, '/api/user/<user_id>/today', endpoint='todayList')
+api.add_resource(TodayExistsAPI, '/api/user/<user_id>/today/exists', endpoint='todayExists')
+api.add_resource(TodayAPI, '/api/today/<id>', endpoint='today')
 
 
 ##### FILE UPLOADS ##############################################
@@ -726,7 +862,353 @@ class UploadFiles(Resource):
         return {'status':'success',
                 'description':'Upload Succeeded',
                 'data':{'id':f.id,
-                        'url':upload_files.url(f.name)}}
+                        'url':upload_files.url(f.name)}}, 201
 
 
 api.add_resource(UploadFiles, '/api/file', endpoint='uploadFiles')
+
+
+##### TIMELINE / Single Post #################################################
+
+class BucketTimeline(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(BucketTimeline, self).__init__()
+
+    def get(self, bucket_id):
+        b = Bucket.query.filter_by(id=bucket_id).first()
+        if b is None:
+            return {'status':'error',
+                    'description':'There\'s no bucket with id: '+ str(id)}, 204
+
+        u = User.query.filter_by(id=b.user_id).first()
+        if not g.user.is_following(u):
+            if g.user == u:
+                pass
+            else:
+                return {'error':'User unauthorized'}, 401
+
+        # post = Post.query.filter_by(bucket_id=bucket_id).all()
+        if 'date' in request.args:
+            result = db.session.query(Post).filter(Post.bucket_id==bucket_id, Post.date==request.args['date']).all()
+        else:
+            result = db.session.query(Post).filter(Post.bucket_id==bucket_id).all()
+
+        if result is None:
+            return {'status':'success',
+                    'description':'No posts'}, 204
+        data = {}
+        timelineData = []
+        for i in result:
+            timelineData.append({'id':i.id,
+                    'user_id':i.user_id,
+                    'date':i.date,
+                    'bucket_id':i.bucket_id,
+                    'text':None if i.text is None else i.text,
+                    'img_url':None if i.img_id is None else photos.url(File.query.filter_by(id=i.img_id).first().name),
+                    'urls':[{'url1':None if i.url1 is None else i.url1},
+                            {'url2':None if i.url2 is None else i.url2},
+                            {'url3':None if i.url3 is None else i.url3},],
+                    'reg_dt':i.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'lst_mod_dt': None if i.lst_mod_dt is None else i.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")})
+
+        data['count'] = len(result)
+        data['timelineData'] = timelineData
+
+        return {'status':'success',
+                'description': str(len(result)) + ' posts were returned.',
+                'data':data}, 200
+
+    def post(self, bucket_id):
+        b = Bucket.query.filter_by(id=bucket_id).first()
+        if b is None:
+            return {'status':'error',
+                    'description':'There\'s no bucket with id: '+id}, 403
+
+        if g.user.id != b.user_id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
+        else:
+            return {'status':'error','description':'Request Failed'}, 400
+
+        # Replace blank value to None(null) in params
+        for key in params:
+            params[key] = None if params[key] == "" else params[key]
+
+            if key in ['id', 'user_id', 'bucket_id', 'language', 'body', 'timestamp', 'reg_dt', 'lst_mod_dt']:
+                return {'error': key + ' cannot be entered manually.'}, 401
+
+        contents = []
+
+        if 'text' in params and params['text'] is not None:
+            contents.append('text')
+
+        if 'url1' in params and params['url1'] is not None:
+            contents.append('url1')
+
+        if 'url2' in params and params['url2'] is not None:
+            contents.append('url2')
+
+        if 'url3' in params and params['url3'] is not None:
+            contents.append('url3')
+
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error',
+                        'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+        else:
+            if len(contents) == 0:
+                return {'status':'error',
+                        'description':'Nothing to Post'}, 403
+
+        p = Plan.query.filter_by(bucket_id=b.id).first()
+
+        if p is None:
+            plan = Plan(date=datetime.datetime.now().strftime('%Y%m%d'),
+                        user_id=g.user.id,
+                        bucket_id=b.id,
+                        status=0,
+                        lst_mod_dt=datetime.datetime.now())
+            db.session.add(plan)
+
+        post = Post(body=None,
+                    date=params['date'] if 'date' in params else datetime.datetime.now().strftime('%Y%m%d'),
+                    user_id=b.user_id,
+                    language=None,
+                    bucket_id=bucket_id,
+                    text=params['text'] if 'text' in params else None,
+                    img_id=f.id if 'photo' in request.files else None,
+                    url1=params['url1'] if 'url1' in params else None,
+                    url2=params['url2'] if 'url2' in params else None,
+                    url3=params['url3'] if 'url3' in params else None,
+                    reg_dt=datetime.datetime.now(),
+                    lst_mod_dt=datetime.datetime.now())
+
+
+        db.session.add(post)
+        db.session.flush()
+        db.session.refresh(post)
+
+        db.session.commit()
+
+        data = {'id':post.id,
+                    'user_id':post.user_id,
+                    'bucket_id':post.bucket_id,
+                    'text':None if post.text is None else post.text,
+                    'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
+                    'urls':[{'url1':None if post.url1 is None else post.url1},
+                            {'url2':None if post.url2 is None else post.url2},
+                            {'url3':None if post.url3 is None else post.url3},],
+                    'reg_dt':post.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'lst_mod_dt': None if post.lst_mod_dt is None else post.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':'Successfully posted.',
+                'data':data}, 201
+
+
+class TimelineContent(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(TimelineContent, self).__init__()
+
+
+    def get(self,content_id):
+        post = Post.query.filter_by(id=content_id).first()
+        if post is None:
+            return {'status':'success',
+                    'description':'There\'s no content with id: '+ str(id)}, 204
+
+        u = User.query.filter_by(id=post.user_id).first()
+        if not g.user.is_following(u):
+            if g.user == u:
+                pass
+            else:
+                return {'error':'User unauthorized'}, 401
+
+        data = {'id':post.id,
+                'user_id':post.user_id,
+                'date':post.date,
+                'bucket_id':post.bucket_id,
+                'text':None if post.text is None else post.text,
+                'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
+                'urls':[{'url1':None if post.url1 is None else post.url1},
+                        {'url2':None if post.url2 is None else post.url2},
+                        {'url3':None if post.url3 is None else post.url3},],
+                'reg_dt':post.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'lst_mod_dt': None if post.lst_mod_dt is None else post.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':'success',
+                'data':data}, 200
+
+
+    def put(self,content_id):
+        if request.json:
+            params = request.json
+        elif request.form:
+            params = {}
+            for key in request.form:
+                params[key] = request.form[key]
+        else:
+            return {'status':'error','description':'Request Failed'}, 500
+
+        post =  Post.query.filter_by(id=content_id).first()
+        if post.user_id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        for key in params:
+            value = None if params[key] == "" else params[key]
+
+            # Editable Fields
+            if key not in ['text','url1','url2','url3']:
+                return {'status':'error',
+                        'description':key + ' field is not editable'}, 403
+
+            # Just ROLE_ADMIN user can change 'language', 'level'
+            if key in ['language'] and g.user.role == ROLE_USER:
+                return {'status':'error','description':'Only Admin can change' + key}, 401
+
+            # Set Key validataion
+            # TODO: Make long url to shortened url
+            if key in ['url1','url2','url3'] and len(value) > 512:
+                return {'status':'error',
+                        'description': key + ' is too long. (max 256 bytes)'}
+
+            setattr(post, key, value)
+
+        if 'photo' in request.files:
+            upload_type = 'photo'
+
+            if len(request.files[upload_type].filename) > 64:
+                return {'status':'error',
+                        'description':'Filename is too long (Max 64bytes include extensions)'}, 403
+            upload_files = UploadSet('photos',IMAGES)
+            configure_uploads(app, upload_files)
+
+            filename = upload_files.save(request.files[upload_type])
+            splits = []
+
+            for item in filename.split('.'):
+                splits.append(item)
+            extension = filename.split('.')[len(splits) -1]
+
+            f = File(filename=filename, user_id=g.user.id, extension=extension, type=upload_type)
+            db.session.add(f)
+            db.session.flush()
+            db.session.refresh(f)
+
+            setattr(post, 'img_id', f.id)
+
+        post.lst_mod_dt = datetime.datetime.now()
+
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return {'status':'error',
+                    'description':'DB write error'}, 500
+
+        data = {'id':post.id,
+                'user_id':post.user_id,
+                'date':post.date,
+                'bucket_id':post.bucket_id,
+                'text':None if post.text is None else post.text,
+                'img_url':None if post.img_id is None else photos.url(File.query.filter_by(id=post.img_id).first().name),
+                'urls':[{'url1':None if post.url1 is None else post.url1},
+                        {'url2':None if post.url2 is None else post.url2},
+                        {'url3':None if post.url3 is None else post.url3},],
+                'reg_dt':post.reg_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                'lst_mod_dt': None if post.lst_mod_dt is None else post.lst_mod_dt.strftime("%Y-%m-%d %H:%M:%S")}
+
+        return {'status':'success',
+                'description':'Post PUT success',
+                'data':data}, 201
+
+
+    def delete(self,content_id):
+        post = Post.query.filter_by(id=content_id).first()
+
+        if post.user_id != g.user.id:
+            return {'status':'error',
+                    'description':'Unauthorized'}, 401
+
+        try:
+            db.session.delete(post)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return {'status':'error',
+                    'description':'DB delete failed'}, 403
+
+        return {'status':'success',
+                'description':'DELETE success'}, 201
+
+
+class TimelineExists(Resource):
+    decorators = [auth.login_required]
+
+    def __init__(self):
+        super(TimelineExists, self).__init__()
+
+    def get(self, bucket_id):
+        b = Bucket.query.filter_by(id=bucket_id).first()
+        if b is None:
+            return {'status':'error',
+                    'description':'Bucket ' + bucket_id + ' does not exists.'}, 204
+
+        u = User.query.filter_by(id=b.user_id).first()
+        if u.id != g.user.id and b.private != '0':
+            return {'status':'error',
+                    'description':'Private Bucket'}, 401
+
+        result = db.session.query(Post.date).filter(Post.bucket_id==bucket_id).distinct(Post.date).all()
+
+        data = {}
+        if len(result) == 0:
+            return {'status':'error',
+                    'description':'No rows returned'}, 204
+        else:
+            dateList = []
+            for i in range(len(result)):
+                dateList.append(result[i][0])
+
+        data['count'] = len(result)
+        data['minDate'] = db.session.query(func.min(Post.date).label("min_date")).filter(Post.bucket_id==bucket_id).first().min_date
+        data['maxDate'] = db.session.query(func.max(Post.date).label("max_date")).filter(Post.bucket_id==bucket_id).first().max_date
+        data['dateList'] = dateList
+
+        return {'status':'success',
+                'description': 'Data successfully returned.',
+                'data':data}, 200
+
+
+api.add_resource(BucketTimeline, '/api/bucket/<bucket_id>/timeline', endpoint='bucketTimeline')
+api.add_resource(TimelineContent, '/api/content/<content_id>', endpoint='timelineContent')
+api.add_resource(TimelineExists, '/api/bucket/<bucket_id>/timeline/exists', endpoint='timelineExists')
