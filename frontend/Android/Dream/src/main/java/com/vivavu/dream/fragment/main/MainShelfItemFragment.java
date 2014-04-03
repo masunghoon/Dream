@@ -14,10 +14,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.vivavu.dream.R;
-import com.vivavu.dream.activity.bucket.BucketAddActivity;
 import com.vivavu.dream.activity.bucket.TimelineActivity;
+import com.vivavu.dream.activity.bucket.timeline.TimelineItemEditActivity;
 import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.bucket.Bucket;
+import com.vivavu.dream.model.bucket.timeline.Post;
 import com.vivavu.dream.repository.task.CustomAsyncTask;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.util.DateUtils;
@@ -28,6 +29,7 @@ import com.vivavu.dream.util.image.ImageFetcher;
 import com.vivavu.dream.view.CustomPopupWindow;
 
 import java.io.File;
+import java.util.Date;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -96,8 +98,10 @@ public class MainShelfItemFragment extends CustomBaseFragment{
             public void onClick(View v) {
                 Intent intent;
                 intent = new Intent();
-                intent.setClass(getActivity(), BucketAddActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.setClass(getActivity(), TimelineItemEditActivity.class);
+                Post post = new Post(new Date());
+                intent.putExtra(TimelineActivity.extraKeyBucket, bucket);
+                intent.putExtra(TimelineActivity.extraKeyPost, post);
                 startActivity(intent);
             }
         });

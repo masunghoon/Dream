@@ -38,7 +38,7 @@ public class TodayDailyViewAdapter extends PagerAdapter implements View.OnClickL
     private ImageFetcher mImageFetcher;
 
     public TodayDailyViewAdapter(Fragment fragment, List<TodayGroup> todayGroupList) {
-        this.context = fragment.getActivity().getApplicationContext();
+        this.context = fragment.getActivity();
         this.fragment = fragment;
         this.mInflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.todayGroupList = new ArrayList<TodayGroup>(todayGroupList);

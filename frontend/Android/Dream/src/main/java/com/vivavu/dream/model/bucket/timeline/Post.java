@@ -138,6 +138,14 @@ public class Post implements Serializable, Comparable<Post> {
         this.photo = photo;
     }
 
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

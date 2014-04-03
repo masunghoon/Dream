@@ -19,6 +19,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -47,12 +48,17 @@ public class TimelineConnector extends Connector<Post> {
             Log.e("dream", e.toString());
         }
 
-        ResponseBodyWrapped<TimelineMetaInfo> result = new ResponseBodyWrapped<TimelineMetaInfo>("error", String.valueOf(resultString.getStatusCode()), new TimelineMetaInfo());
+        ResponseBodyWrapped<TimelineMetaInfo> result = null;
 
         if(RestTemplateUtils.isAvailableParseToJson(resultString)){
             Gson gson = JsonFactory.getInstance();
             Type type = new TypeToken<ResponseBodyWrapped<TimelineMetaInfo>>(){}.getType();
             result = gson.fromJson((String) resultString.getBody(), type);
+            if(resultString.getStatusCode() == HttpStatus.NO_CONTENT){
+                result = new ResponseBodyWrapped<TimelineMetaInfo>("succes", String.valueOf(resultString.getStatusCode()), new TimelineMetaInfo());
+            }
+        } else {
+            result = new ResponseBodyWrapped<TimelineMetaInfo>("error", String.valueOf(resultString.getStatusCode()), new TimelineMetaInfo());
         }
         return result;
     }

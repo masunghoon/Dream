@@ -3,6 +3,10 @@ package com.vivavu.dream.common;
 import android.app.Application;
 import android.content.SharedPreferences;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.vivavu.dream.R;
 import com.vivavu.dream.handler.RestTemplateResponseErrorHandler;
 import com.vivavu.dream.model.user.User;
 import com.vivavu.dream.repository.BucketConnector;
@@ -26,6 +30,12 @@ public class DreamApp extends Application {
 
     private boolean login=false;
 
+    protected static DreamApp dreamApp;
+    public static DreamApp getInstance(){
+
+        return dreamApp;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -34,6 +44,18 @@ public class DreamApp extends Application {
         Connector.setContext(this);
         BucketConnector.setContext(this);
         RestTemplateResponseErrorHandler.setContext(this);
+        DisplayImageOptions options = new DisplayImageOptions.Builder()
+                .showImageOnLoading(R.drawable.no_image)
+                .showImageOnFail(R.drawable.no_image)
+                .cacheInMemory(true)
+                .cacheOnDisc(true)
+                .build();
+
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(getApplicationContext())
+                .defaultDisplayImageOptions(options)
+                .build();
+        ImageLoader.getInstance().init(config);
+        dreamApp = this;
     }
 
     @Override

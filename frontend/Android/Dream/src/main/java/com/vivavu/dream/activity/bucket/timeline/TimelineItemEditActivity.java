@@ -2,19 +2,27 @@ package com.vivavu.dream.activity.bucket.timeline;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.TimelineActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
@@ -23,7 +31,10 @@ import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.timeline.Post;
 import com.vivavu.dream.repository.TimelineConnector;
 import com.vivavu.dream.util.DateUtils;
+import com.vivavu.dream.util.ImageUtil;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 
 import butterknife.ButterKnife;
@@ -36,7 +47,7 @@ import static android.widget.Toast.LENGTH_LONG;
  */
 public class TimelineItemEditActivity extends BaseActionBarActivity {
     public static final String TAG = "com.vivavu.dream.activity.bucket.timeline.TimelineItemEditActivity";
-
+    public static final int REQUEST_CODE_TAKE_CAMERA = 0;
     @InjectView(R.id.btn_timeline_title)
     Button mBtnTimelineTitle;
     @InjectView(R.id.progressBar)
@@ -66,6 +77,9 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
 
     Bucket bucket;
     Post post;
+    protected Uri mImageCaptureUri;
+    @InjectView(R.id.iv_timeline_image)
+    ImageView mIvCardImage;
 
     private ProgressDialog progressDialog;
     private static final int SEND_DATA_START = 0;
@@ -122,11 +136,28 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
         bindData(bucket);
         bindData(post);
 
+        initEvent();
+    }
+
+    private void initEvent() {
+        mBtnPostCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                doTakePhotoAction();
+            }
+        });
     }
 
     private void bindData(Post post) {
         mTxtPostText.setText(post.getText());
         mTxtPostDate.setText(DateUtils.getDateString(post.getRegDt(), "yyyy.MM.dd HH:mm", new Date()));
+        ImageLoader.getInstance().displayImage(post.getImgUrl(), mIvCardImage, new SimpleImageLoadingListener(){
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                super.onLoadingComplete(imageUri, view, loadedImage);
+                view.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override
@@ -144,6 +175,34 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case REQUEST_CODE_TAKE_CAMERA:
+                if(resultCode == RESULT_OK){
+                    File f = new File(mImageCaptureUri.getPath());
+                    // 찍은 사진을 이미지뷰에 보여준다.
+                    if(data != null && data.getExtras() != null) {
+                        Bitmap bm = (Bitmap) data.getExtras().getParcelable("data");
+                        mIvCardImage.setVisibility(View.VISIBLE);
+                        mIvCardImage.setImageBitmap(bm);
+                    } else if( f.exists() ){
+                        /// http://stackoverflow.com/questions/9890757/android-camera-data-intent-returns-null
+                        /// EXTRA_OUTPUT을 선언해주면 해당 경로에 파일을 직접생성하고 썸네일을 리턴하지 않음
+                        mIvCardImage.setVisibility(View.VISIBLE);
+                        ImageLoader.getInstance().displayImage(mImageCaptureUri.toString(), mIvCardImage);
+                        //ImageUtil.setPic(mIvCardImage, mImageCaptureUri.getPath());
+                    }
+                    if(f.exists()){
+                        //f.delete();
+                        post.setPhoto(f);
+                    }
+                }
+                return;
+        }
     }
 
     private void postSave() {
@@ -172,6 +231,40 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
             int progress = DateUtils.getProgress(start, end);
             mProgressBar.setProgress(progress);
         }
+    }
+
+    private void doTakePhotoAction(){
+        /*
+        * 참고 해볼곳
+        * http://2009.hfoss.org/Tutorial:Camera_and_Gallery_Demo
+        * http://stackoverflow.com/questions/1050297/how-to-get-the-url-of-the-captured-image
+        * http://www.damonkohler.com/2009/02/android-recipes.html
+        * http://www.firstclown.us/tag/android/
+        */
+
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        // Ensure that there's a camera activity to handle the intent
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = ImageUtil.createImageFile();
+                mImageCaptureUri = Uri.fromFile(photoFile);
+
+            } catch (IOException ex) {
+                Log.e("dream", ex.getMessage());
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+                startActivityForResult(intent, REQUEST_CODE_TAKE_CAMERA);
+            }
+        }else{
+            Toast.makeText(this, "카메라 앱을 실행할 수 없습니다.", Toast.LENGTH_LONG).show();
+        }
+
+
     }
 
     private class NetworkThread implements Runnable{
