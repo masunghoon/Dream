@@ -8,6 +8,7 @@ import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
@@ -117,11 +118,20 @@ public class TimelineFragment extends CustomBaseFragment {
                 getActivity().startActivityForResult(intent, TimelineActivity.REQUEST_CALENDAR);
             }
         });
+        mListTimeline.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(getActivity() instanceof TimelineActivity){
+                    TimelineActivity activity = (TimelineActivity) getActivity();
+                    activity.viewPost(postList.get(position));
+                }
+            }
+        });
     }
 
     private void updateTimeline(){
         if(timelineListAdapter == null){
-            timelineListAdapter = new TimelineListAdapter(getContext(), postList);
+            timelineListAdapter = new TimelineListAdapter(getActivity(), postList);
             mListTimeline.setAdapter(timelineListAdapter);
         }
         timelineListAdapter.setPostList(postList);

@@ -128,8 +128,52 @@ public class TimelineConnector extends Connector<Post> {
     }
 
     @Override
-    public ResponseBodyWrapped<Post> put(Post data) {
-        return null;
+    public ResponseBodyWrapped<Post> put(final Post data) {
+        RestTemplate restTemplate = RestTemplateFactory.getInstance();
+        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+
+        final MultiValueMap<String, Object> requestBucket = new LinkedMultiValueMap<String, Object>();
+
+        if(data != null && data.getPhoto() != null) {
+            requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+        }else {
+            requestHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        }
+
+        if(data.getText() != null){
+            requestBucket.set("text", data.getText());
+        }
+        if(data.getPhoto() != null && data.getPhoto().isFile()){
+            Bitmap bm = ImageUtil.getBitmap(data.getPhoto().getAbsolutePath(), 1024, 1024);
+            ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
+            bm.compress(Bitmap.CompressFormat.JPEG, 70, byteArray );
+            ByteArrayResource bar = new ByteArrayResource(byteArray.toByteArray()){
+                @Override
+                public String getFilename() throws IllegalStateException {
+                    return data.getPhoto().getName();
+                }
+            };
+            requestBucket.add("photo", bar);
+        }
+
+        HttpEntity request = new HttpEntity<MultiValueMap<String, Object>>(requestBucket, requestHeaders);
+
+        ResponseEntity<String> resultString = null;
+        try {
+            resultString = restTemplate.exchange(Constants.apiTimelineInfo, HttpMethod.PUT, request, String.class, data.getId());
+
+        } catch (RestClientException e) {
+            Log.e("dream", e.toString());
+        }
+
+        ResponseBodyWrapped<Post> result = new ResponseBodyWrapped<Post>("error", String.valueOf(resultString.getStatusCode()), new Post(new Date()));
+
+        if(RestTemplateUtils.isAvailableParseToJson(resultString)){
+            Gson gson = JsonFactory.getInstance();
+            Type type = new TypeToken<ResponseBodyWrapped<Post>>(){}.getType();
+            result = gson.fromJson((String) resultString.getBody(), type);
+        }
+        return result;
     }
 
     @Override

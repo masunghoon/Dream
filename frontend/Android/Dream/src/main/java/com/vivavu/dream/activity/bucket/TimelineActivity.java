@@ -17,6 +17,7 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.timeline.TimelineCalendarActivity;
 import com.vivavu.dream.activity.bucket.timeline.TimelineItemEditActivity;
+import com.vivavu.dream.activity.bucket.timeline.TimelineItemViewActivity;
 import com.vivavu.dream.adapter.bucket.timeline.TimelineDailyAdapter;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.fragment.bucket.timeline.TimelineFragment;
@@ -194,6 +195,13 @@ public class TimelineActivity extends BaseActionBarActivity {
             case REQUEST_ADD_POST:
                 break;
         }
+    }
+
+    public void viewPost(Post post){
+        Intent intent = new Intent(this, TimelineItemViewActivity.class);
+        intent.putExtra(TimelineActivity.extraKeyBucket, bucket);
+        intent.putExtra(TimelineActivity.extraKeyPost, post);
+        startActivity(intent);
     }
 
     private class NetworkThread implements Runnable{

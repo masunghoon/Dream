@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -12,7 +13,6 @@ import android.widget.TextView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.TimelineActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
-import com.vivavu.dream.fragment.bucket.timeline.TimelineItemViewFragment;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.timeline.Post;
 import com.vivavu.dream.util.DateUtils;
@@ -27,6 +27,8 @@ import butterknife.InjectView;
  */
 public class TimelineItemViewActivity extends BaseActionBarActivity{
     public static final String TAG = "com.vivavu.dream.activity.bucket.timeline.TimelineItemViewActivity";
+    public static final String extraKeyReturnValue = "extraKeyReturnValue";
+    public static final int REQUEST_MOD_POST = 0;
 
     @InjectView(R.id.progressBar)
     ProgressBar mProgressBar;
@@ -36,8 +38,12 @@ public class TimelineItemViewActivity extends BaseActionBarActivity{
     TextView mTxtCurrentDate;
     @InjectView(R.id.txt_end_date)
     TextView mTxtEndDate;
-    @InjectView(R.id.container_post_info)
+    @InjectView(R.id.container_bucket_info)
     LinearLayout mContainerBucketInfo;
+    @InjectView(R.id.txt_post_text)
+    TextView mTxtPostText;
+    @InjectView(R.id.txt_post_date)
+    TextView mTxtPostDate;
     @InjectView(R.id.content_frame)
     LinearLayout mContentFrame;
     @InjectView(R.id.btn_timeline_title)
@@ -46,7 +52,7 @@ public class TimelineItemViewActivity extends BaseActionBarActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_timeline_item);
+        setContentView(R.layout.activity_timeline_item_view);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -62,17 +68,57 @@ public class TimelineItemViewActivity extends BaseActionBarActivity{
         post.setBucketId(bucket.getId());
 
         bindData(bucket);
+        bindData(post);
 
-        TimelineItemViewFragment timelineItemViewFragment = new TimelineItemViewFragment(post);
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.content_frame , timelineItemViewFragment, TimelineItemViewFragment.TAG)
-                .commit();
+    }
+
+    private void bindData(Post post) {
+        mTxtPostText.setText(post.getText());
+        mTxtPostDate.setText(DateUtils.getDateString(post.getRegDt(), "yyyy.MM.dd hh:mm"));
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.timeline_item_view_activity_actions, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.menu_edit:
+                goEdit();
+                return true;
+            case R.id.menu_remove:
+                removePost();
+                return true;
+            case R.id.menu_share:
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case REQUEST_MOD_POST:
+                if(resultCode == RESULT_OK){
+                    Post returnValue = (Post) data.getSerializableExtra(extraKeyReturnValue);
+                    bindData(returnValue);
+                }
+                return;
+        }
+    }
+
+    private void removePost() {
+
+    }
+
+    private void goEdit() {
+        Intent intent = getIntent();
+        intent.setClass(this, TimelineItemEditActivity.class);
+        startActivityForResult(intent, REQUEST_MOD_POST);
     }
 
     private void bindData(Bucket bucket) {

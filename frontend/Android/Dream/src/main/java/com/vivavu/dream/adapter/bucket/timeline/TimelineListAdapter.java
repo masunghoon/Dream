@@ -1,5 +1,6 @@
 package com.vivavu.dream.adapter.bucket.timeline;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +25,7 @@ public class TimelineListAdapter extends BaseAdapter {
     protected LayoutInflater layoutInflater;
     protected List<Post> postList;
 
-    public TimelineListAdapter(Context context, List<Post> postList) {
+    public TimelineListAdapter(Activity context, List<Post> postList) {
         this.context = context;
         this.layoutInflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.postList = postList;
@@ -45,11 +46,11 @@ public class TimelineListAdapter extends BaseAdapter {
 
     @Override
     public long getItemId(int position) {
-        return position;
+        return postList.get(position).getId();
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         ButterknifeViewHolder viewHolder = null;
         if(convertView == null){
             convertView = layoutInflater.inflate(R.layout.fragment_timeline_item, parent, false);
@@ -88,5 +89,9 @@ public class TimelineListAdapter extends BaseAdapter {
         ButterknifeViewHolder(View view) {
             ButterKnife.inject(this, view);
         }
+    }
+
+    public interface OnListItemSelected{
+
     }
 }

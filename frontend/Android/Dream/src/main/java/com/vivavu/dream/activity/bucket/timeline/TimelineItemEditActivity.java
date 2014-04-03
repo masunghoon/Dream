@@ -9,6 +9,7 @@ import android.support.v7.app.ActionBar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -17,7 +18,6 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.TimelineActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
-import com.vivavu.dream.fragment.bucket.timeline.TimelineItemEditFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.timeline.Post;
@@ -48,9 +48,24 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
     @InjectView(R.id.txt_end_date)
     TextView mTxtEndDate;
     @InjectView(R.id.container_post_info)
-    LinearLayout mContainerBucketInfo;
+    LinearLayout mContainerPostInfo;
     @InjectView(R.id.content_frame)
     LinearLayout mContentFrame;
+    @InjectView(R.id.container_bucket_info)
+    LinearLayout mContainerBucketInfo;
+    @InjectView(R.id.txt_post_text)
+    EditText mTxtPostText;
+    @InjectView(R.id.txt_post_date)
+    TextView mTxtPostDate;
+    @InjectView(R.id.btn_post_camera)
+    Button mBtnPostCamera;
+    @InjectView(R.id.btn_post_etc)
+    Button mBtnPostEtc;
+    @InjectView(R.id.btn_post_facebook)
+    Button mBtnPostFacebook;
+
+    Bucket bucket;
+    Post post;
 
     private ProgressDialog progressDialog;
     private static final int SEND_DATA_START = 0;
@@ -67,7 +82,10 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
                 case SEND_DATA_SUCCESS:
                     progressDialog.dismiss();
                     Toast.makeText(TimelineItemEditActivity.this, "저장하였습니다.", LENGTH_LONG).show();
-                    setResult(RESULT_OK);
+                    Intent intent = new Intent();
+                    Post obj = (Post) msg.obj;
+                    intent.putExtra(TimelineItemViewActivity.extraKeyReturnValue, obj);
+                    setResult(RESULT_OK, intent);
                     finish();
                     break;
                 case SEND_DATA_FAIL:
@@ -81,7 +99,7 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_timeline_item);
+        setContentView(R.layout.activity_timeline_item_edit);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -95,17 +113,20 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
         ButterKnife.inject(this);
 
         Intent data = getIntent();
-        Bucket bucket = (Bucket) data.getSerializableExtra(TimelineActivity.extraKeyBucket);
-        Post post  = (Post) data.getSerializableExtra(TimelineActivity.extraKeyPost);
-        post.setBucketId(bucket.getId());
+        bucket = (Bucket) data.getSerializableExtra(TimelineActivity.extraKeyBucket);
+        post = (Post) data.getSerializableExtra(TimelineActivity.extraKeyPost);
+        if(post.getId() == null || post.getId() < 1) {
+            post.setBucketId(bucket.getId());
+        }
 
         bindData(bucket);
+        bindData(post);
 
-        TimelineItemEditFragment timelineItemEditFragment = new TimelineItemEditFragment(post);
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.content_frame , timelineItemEditFragment, TimelineItemEditFragment.TAG)
-                .commit();
+    }
 
+    private void bindData(Post post) {
+        mTxtPostText.setText(post.getText());
+        mTxtPostDate.setText(DateUtils.getDateString(post.getRegDt(), "yyyy.MM.dd HH:mm", new Date()));
     }
 
     @Override
@@ -126,13 +147,16 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
     }
 
     private void postSave() {
-        TimelineItemEditFragment fragmentByTag = (TimelineItemEditFragment) getSupportFragmentManager().findFragmentByTag(TimelineItemEditFragment.TAG);
-        if(fragmentByTag != null ){
-            Post post = fragmentByTag.getPost();
-            NetworkThread networkThread = new NetworkThread(post);
-            Thread thread = new Thread(networkThread);
-            thread.start();
-        }
+        Post post = getPost();
+        NetworkThread networkThread = new NetworkThread(post);
+        Thread thread = new Thread(networkThread);
+        thread.start();
+    }
+
+    public Post getPost() {
+        post.setText(String.valueOf(mTxtPostText.getText()));
+        post.setTimestamp(DateUtils.getDateFromString(String.valueOf(mTxtPostDate.getText()), "yyyy-MM-dd HH:mm", new Date()));
+        return post;
     }
 
     private void bindData(Bucket bucket) {
@@ -162,9 +186,15 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
             handler.sendEmptyMessage(SEND_DATA_START);
 
             TimelineConnector timelineConnector = new TimelineConnector();
-            ResponseBodyWrapped<Post> result = timelineConnector.post(post);
+            ResponseBodyWrapped<Post> result;
+            if(post.getId() != null && post.getId() > 1){
+                result = timelineConnector.put(post);
+            }else {
+                result = timelineConnector.post(post);
+            }
             if(result.isSuccess()) {
-                handler.sendEmptyMessage(SEND_DATA_SUCCESS);
+                Message message = handler.obtainMessage(SEND_DATA_SUCCESS, result.getData());
+                handler.sendMessage(message);
             }else {
                 handler.sendEmptyMessage(SEND_DATA_FAIL);
             }

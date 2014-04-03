@@ -148,6 +148,20 @@ public class DateUtils {
         return result;
     }
 
+    public static String getDateString(Date date, String pattern, Date defaultValue) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
+        String result = null;
+        if(date == null) {
+            date = defaultValue;
+        }
+        try{
+            result = dateFormat.format(date);
+        } catch (NullPointerException e){
+            Log.e("dream", e.toString());
+        }
+        return result;
+    }
+
     public static Date getDateFromString(String dateStr, String pattern, Date defaultValue){
         SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
         Date result = defaultValue;
