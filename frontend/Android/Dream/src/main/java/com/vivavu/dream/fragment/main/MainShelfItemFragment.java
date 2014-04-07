@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.TimelineActivity;
 import com.vivavu.dream.activity.bucket.timeline.TimelineItemEditActivity;
@@ -25,7 +26,6 @@ import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.ViewUnbindHelper;
-import com.vivavu.dream.util.image.ImageFetcher;
 import com.vivavu.dream.view.CustomPopupWindow;
 
 import java.io.File;
@@ -56,7 +56,6 @@ public class MainShelfItemFragment extends CustomBaseFragment{
 
     View popupView;
     CustomPopupWindow mPopupWindow;
-    private ImageFetcher mImageFetcher;
 
     public MainShelfItemFragment() {
         this.bucket = new Bucket();
@@ -137,7 +136,7 @@ public class MainShelfItemFragment extends CustomBaseFragment{
         mBookDudate.setOnClickListener(this);
         mBookStatus.setOnClickListener(this);
 
-        mImageFetcher.loadImage(bucket.getCvrImgUrl(), mBookCoverImage);
+        ImageLoader.getInstance().displayImage(bucket.getCvrImgUrl(), mBookCoverImage);
     }
 
     @Override
@@ -170,14 +169,6 @@ public class MainShelfItemFragment extends CustomBaseFragment{
     public void onDestroy() {
         ViewUnbindHelper.unbindReferences(mBookCoverImage);
         super.onDestroy();
-    }
-
-    public ImageFetcher getmImageFetcher() {
-        return mImageFetcher;
-    }
-
-    public void setmImageFetcher(ImageFetcher mImageFetcher) {
-        this.mImageFetcher = mImageFetcher;
     }
 
     /**

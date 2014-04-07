@@ -155,7 +155,12 @@ public class TimelineItemEditActivity extends BaseActionBarActivity {
             @Override
             public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                 super.onLoadingComplete(imageUri, view, loadedImage);
-                view.setVisibility(View.VISIBLE);
+                // 이미지가 없을 경우에는 imageview 자체를 안보여줌
+                if(loadedImage != null) {
+                    view.setVisibility(View.VISIBLE);
+                }else {
+                    view.setVisibility(View.GONE);
+                }
             }
         });
     }

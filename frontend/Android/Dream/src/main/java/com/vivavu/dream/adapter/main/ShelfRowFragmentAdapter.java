@@ -6,7 +6,6 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 
 import com.vivavu.dream.fragment.main.MainShelfItemFragment;
 import com.vivavu.dream.model.bucket.Bucket;
-import com.vivavu.dream.util.image.ImageFetcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.List;
  */
 public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
     private List<Bucket> bucketList;
-    private ImageFetcher mImageFetcher;
 
     public ShelfRowFragmentAdapter(FragmentManager fm) {
         super(fm);
@@ -31,7 +29,6 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         MainShelfItemFragment mainShelfItemFragment = MainShelfItemFragment.newInstance(bucketList.get(position));
-        mainShelfItemFragment.setmImageFetcher(mImageFetcher);
         return mainShelfItemFragment;
     }
 
@@ -54,13 +51,5 @@ public class ShelfRowFragmentAdapter extends FragmentStatePagerAdapter {
         this.bucketList.clear();
         this.bucketList.addAll(bucketList);
         notifyDataSetChanged();
-    }
-
-    public ImageFetcher getmImageFetcher() {
-        return mImageFetcher;
-    }
-
-    public void setmImageFetcher(ImageFetcher mImageFetcher) {
-        this.mImageFetcher = mImageFetcher;
     }
 }

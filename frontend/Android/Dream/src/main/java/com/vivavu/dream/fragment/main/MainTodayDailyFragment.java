@@ -21,8 +21,6 @@ import com.vivavu.dream.model.bucket.TodayGroup;
 import com.vivavu.dream.repository.BucketConnector;
 import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
-import com.vivavu.dream.util.image.ImageCache;
-import com.vivavu.dream.util.image.ImageFetcher;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,7 +52,6 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
     private int mImageThumbHeightSize;
     private int mImageThumbWidthSize;
     private static final String IMAGE_CACHE_DIR = "thumbs";
-    private ImageFetcher mImageFetcher;
 
     protected final Handler handler = new Handler() {
         @Override
@@ -81,24 +78,6 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        initImageCache();
-    }
-
-    public void initImageCache(){
-        mImageThumbHeightSize = context.getResources().getDimensionPixelSize(R.dimen.book_height_dp);
-        mImageThumbWidthSize = context.getResources().getDimensionPixelSize(R.dimen.book_width_dp);
-
-        ImageCache.ImageCacheParams cacheParams = new ImageCache.ImageCacheParams(context, IMAGE_CACHE_DIR);
-        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
-        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        mImageFetcher = new ImageFetcher(context.getApplicationContext(), mImageThumbWidthSize, mImageThumbHeightSize);
-        mImageFetcher.setLoadingImage(R.drawable.no_image);
-        mImageFetcher.addImageCache(getFragmentManager(), cacheParams);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_shelf_daily_list, container, false);
@@ -114,7 +93,6 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         todayDailyViewAdapter = new TodayDailyViewAdapter(this, todayGroupList);
-        todayDailyViewAdapter.setmImageFetcher(mImageFetcher);
         mDailyPager.setAdapter(todayDailyViewAdapter);
         mDailyPager.setOffscreenPageLimit(OFF_SCREEN_PAGE_LIMIT);
     }
@@ -126,32 +104,11 @@ public class MainTodayDailyFragment extends CustomBaseFragment {
         networkThread.start();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mImageFetcher.setExitTasksEarly(false);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mImageFetcher.setPauseWork(false);
-        mImageFetcher.setExitTasksEarly(true);
-        mImageFetcher.flushCache();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mImageFetcher.closeCache();
-    }
-
     protected void updateContents(List<TodayGroup> obj) {
         todayGroupList.clear();
         todayGroupList.addAll(obj );
         if(todayDailyViewAdapter == null){
             todayDailyViewAdapter = new TodayDailyViewAdapter(this, todayGroupList);
-            todayDailyViewAdapter.setmImageFetcher(mImageFetcher);
             //mList.setAdapter(todayDailyViewAdapter);
         }
         todayDailyViewAdapter.setTodayGroupList(todayGroupList);
