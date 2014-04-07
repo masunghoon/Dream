@@ -59,6 +59,7 @@ public class LeftMenuDrawerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        context = DreamApp.getInstance();
     }
 
     @Override
@@ -87,7 +88,6 @@ public class LeftMenuDrawerFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        context = (DreamApp) getActivity().getApplicationContext();
         bindData();
     }
 

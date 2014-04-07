@@ -201,6 +201,9 @@ public class BucketConnector {
     }
 
     public static DreamApp getContext() {
+        if (context == null){
+            context = DreamApp.getInstance();
+        }
         return context;
     }
 

@@ -1,6 +1,5 @@
 package com.vivavu.dream.repository.task;
 
-import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Today;
 import com.vivavu.dream.repository.BucketConnector;
@@ -13,25 +12,11 @@ import java.util.List;
  */
 public class TodayAsyncTask extends CustomAsyncTask<Void, Void, ResponseBodyWrapped<List<Today>>>  {
 
-    private DreamApp context;
-
-    public TodayAsyncTask(DreamApp context){
-        this.context = context;
-    }
-
     @Override
     protected ResponseBodyWrapped<List<Today>> doInBackground(Void... params) {
         BucketConnector bucketConnector = new BucketConnector();
         ResponseBodyWrapped<List<Today>> result = bucketConnector.getTodayList(null);
         return result;
-    }
-
-    public DreamApp getContext() {
-        return context;
-    }
-
-    public void setContext(DreamApp context) {
-        this.context = context;
     }
 
     @Override

@@ -4,14 +4,12 @@ import android.app.Activity;
 import android.view.View;
 
 import com.devspark.progressfragment.ProgressFragment;
-import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.util.AndroidUtils;
 
 /**
  * Created by yuja on 14. 1. 24.
  */
 public class CustomProgressFragment extends ProgressFragment implements View.OnClickListener{
-    protected DreamApp context;
     protected OnOptionFragmentRemovedListener mListener;
 
     public static CustomProgressFragment newInstance(){
@@ -35,16 +33,11 @@ public class CustomProgressFragment extends ProgressFragment implements View.OnC
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        context = (DreamApp) getActivity().getApplicationContext();
         try{
             mListener = (OnOptionFragmentRemovedListener) activity;
         }catch (ClassCastException e){
             throw new ClassCastException(activity.toString() + " must implement OnArticleSelectedListener");
         }
 
-    }
-
-    public DreamApp getContext() {
-        return context;
     }
 }

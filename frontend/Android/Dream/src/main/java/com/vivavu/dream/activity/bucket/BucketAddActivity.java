@@ -33,8 +33,7 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.DreamApp;
-import com.vivavu.dream.common.RepeatType;
+import com.vivavu.dream.common.enums.RepeatType;
 import com.vivavu.dream.fragment.bucket.option.description.DescriptionViewFragment;
 import com.vivavu.dream.fragment.bucket.option.repeat.RepeatViewFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
@@ -172,7 +171,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
     }
 
     public void saveBucket() {
-        BucketAddTask bucketAddTask = new BucketAddTask(getContext());
+        BucketAddTask bucketAddTask = new BucketAddTask();
         bucketAddTask.execute(bucket);
     }
 
@@ -493,11 +492,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
     }
 
     public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<Bucket>>{
-        private DreamApp context;
-
-        public BucketAddTask(DreamApp context) {
-            this.context = context;
-        }
 
         @Override
         protected ResponseBodyWrapped<Bucket> doInBackground(Bucket... params) {

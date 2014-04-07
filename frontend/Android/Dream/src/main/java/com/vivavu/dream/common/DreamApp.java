@@ -7,11 +7,7 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.vivavu.dream.R;
-import com.vivavu.dream.handler.RestTemplateResponseErrorHandler;
 import com.vivavu.dream.model.user.User;
-import com.vivavu.dream.repository.BucketConnector;
-import com.vivavu.dream.repository.Connector;
-import com.vivavu.dream.repository.DataRepository;
 
 /**
  * Created by yuja on 14. 1. 17.
@@ -40,10 +36,6 @@ public class DreamApp extends Application {
     public void onCreate() {
         super.onCreate();
         loadAppDefaultInfo();
-        DataRepository.setContext(this);
-        Connector.setContext(this);
-        BucketConnector.setContext(this);
-        RestTemplateResponseErrorHandler.setContext(this);
         DisplayImageOptions options = new DisplayImageOptions.Builder()
                 .showImageOnLoading(R.drawable.no_image)
                 .showImageOnFail(R.drawable.no_image)
@@ -70,8 +62,6 @@ public class DreamApp extends Application {
         setToken(null);
         setTokenType(null);
         saveAppDefaultInfo();
-
-
     }
 
     public void loadAppDefaultInfo() {

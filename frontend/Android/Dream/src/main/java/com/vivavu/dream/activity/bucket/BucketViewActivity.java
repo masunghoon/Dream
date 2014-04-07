@@ -23,7 +23,7 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.RepeatType;
+import com.vivavu.dream.common.enums.RepeatType;
 import com.vivavu.dream.common.Tag;
 import com.vivavu.dream.fragment.bucket.option.repeat.RepeatFragment;
 import com.vivavu.dream.model.bucket.Bucket;
