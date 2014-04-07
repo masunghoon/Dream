@@ -15,6 +15,7 @@ import com.facebook.widget.LoginButton;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.intro.IntroActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
+import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.fragment.CustomBaseFragment;
 
 import java.util.ArrayList;
@@ -68,7 +69,7 @@ public class FacebookLoginFragment extends CustomBaseFragment {
 
     private void onSessionStateChange(Session session, SessionState state, Exception exception) {
         if (state.isOpened()) {
-            context.setToken(session.getAccessToken(), "facebook");
+            DreamApp.getInstance().setToken(session.getAccessToken(), "facebook");
 
             /* SessionStateChange에서 activity를 실행시키니 중복실행되는 문제가 있음
             if(getActivity() instanceof BaseActionBarActivity){
@@ -97,7 +98,7 @@ public class FacebookLoginFragment extends CustomBaseFragment {
 
         if (requestCode == Session.DEFAULT_AUTHORIZE_ACTIVITY_CODE) {
             if (resultCode == Activity.RESULT_OK) {
-                context.setToken(Session.getActiveSession().getAccessToken(), "facebook");
+                DreamApp.getInstance().setToken(Session.getActiveSession().getAccessToken(), "facebook");
                 if (getActivity() instanceof BaseActionBarActivity) {
                     BaseActionBarActivity activity = (BaseActionBarActivity) getActivity();
                     //activity.checkAppExit();

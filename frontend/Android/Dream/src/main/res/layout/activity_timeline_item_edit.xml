@@ -37,7 +37,12 @@
                 android:layout_weight="1"
                 android:id="@+id/txt_post_text"
                 />
-
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:id="@+id/iv_timeline_image"
+                android:visibility="gone"
+                />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -54,16 +59,19 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:id="@+id/btn_post_camera"
+                    android:background="@drawable/camera_blue"
                     />
                 <Button
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:id="@+id/btn_post_etc"
+                    android:text="emoticon"
                     />
                 <Button
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:id="@+id/btn_post_facebook"
+                    android:text="facebook"
                     />
             </LinearLayout>
         </LinearLayout>

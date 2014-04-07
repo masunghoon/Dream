@@ -11,6 +11,7 @@ import android.widget.DatePicker;
 import android.widget.LinearLayout;
 
 import com.vivavu.dream.R;
+import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.fragment.bucket.option.OptionBaseFragment;
 import com.vivavu.dream.model.bucket.option.OptionDDay;
 import com.vivavu.dream.util.DateUtils;
@@ -70,7 +71,7 @@ public class DDayFragment extends OptionBaseFragment<OptionDDay> implements View
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        List<OptionDDay> list = DateUtils.getUserDdays(DateUtils.getDateFromString(context.getUser().getBirthday(), "yyyyMMdd", null));
+        List<OptionDDay> list = DateUtils.getUserDdays(DateUtils.getDateFromString(DreamApp.getInstance().getUser().getBirthday(), "yyyyMMdd", null));
         makeDdaysButtonUi(list);
         addEventListener();
     }

@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.vivavu.dream.common.Constants;
+import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.timeline.Post;
@@ -19,6 +20,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -37,7 +39,7 @@ public class TimelineConnector extends Connector<Post> {
 
     public ResponseBodyWrapped<TimelineMetaInfo> getTimelineMetaInfo(Integer bucketId){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+        HttpHeaders requestHeaders = getBasicAuthHeader(DreamApp.getInstance());
         HttpEntity request = new HttpEntity<String>(requestHeaders);
         ResponseEntity<String> resultString = null;
         try {
@@ -47,19 +49,24 @@ public class TimelineConnector extends Connector<Post> {
             Log.e("dream", e.toString());
         }
 
-        ResponseBodyWrapped<TimelineMetaInfo> result = new ResponseBodyWrapped<TimelineMetaInfo>("error", String.valueOf(resultString.getStatusCode()), new TimelineMetaInfo());
+        ResponseBodyWrapped<TimelineMetaInfo> result = null;
 
         if(RestTemplateUtils.isAvailableParseToJson(resultString)){
             Gson gson = JsonFactory.getInstance();
             Type type = new TypeToken<ResponseBodyWrapped<TimelineMetaInfo>>(){}.getType();
             result = gson.fromJson((String) resultString.getBody(), type);
+            if(resultString.getStatusCode() == HttpStatus.NO_CONTENT){
+                result = new ResponseBodyWrapped<TimelineMetaInfo>("succes", String.valueOf(resultString.getStatusCode()), new TimelineMetaInfo());
+            }
+        } else {
+            result = new ResponseBodyWrapped<TimelineMetaInfo>("error", String.valueOf(resultString.getStatusCode()), new TimelineMetaInfo());
         }
         return result;
     }
 
     public ResponseBodyWrapped<Timeline> getTimelineForDate(Integer bucketId, String date){
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+        HttpHeaders requestHeaders = getBasicAuthHeader(DreamApp.getInstance());
         HttpEntity request = new HttpEntity<String>(requestHeaders);
         ResponseEntity<String> resultString = null;
         try {
@@ -81,7 +88,7 @@ public class TimelineConnector extends Connector<Post> {
     @Override
     public ResponseBodyWrapped<Post> post(final Post data) {
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+        HttpHeaders requestHeaders = getBasicAuthHeader(DreamApp.getInstance());
 
         final MultiValueMap<String, Object> requestBucket = new LinkedMultiValueMap<String, Object>();
 
@@ -130,7 +137,7 @@ public class TimelineConnector extends Connector<Post> {
     @Override
     public ResponseBodyWrapped<Post> put(final Post data) {
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+        HttpHeaders requestHeaders = getBasicAuthHeader(DreamApp.getInstance());
 
         final MultiValueMap<String, Object> requestBucket = new LinkedMultiValueMap<String, Object>();
 
@@ -179,7 +186,7 @@ public class TimelineConnector extends Connector<Post> {
     @Override
     public ResponseBodyWrapped<Post> get(Post data) {
         RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(getContext());
+        HttpHeaders requestHeaders = getBasicAuthHeader(DreamApp.getInstance());
         HttpEntity request = new HttpEntity<String>(requestHeaders);
         ResponseEntity<String> resultString = null;
         try {

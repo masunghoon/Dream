@@ -13,7 +13,12 @@
         android:id="@+id/txt_post_text"
         android:focusable="false"
         />
-
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:id="@+id/iv_timeline_image"
+        android:visibility="gone"
+        />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

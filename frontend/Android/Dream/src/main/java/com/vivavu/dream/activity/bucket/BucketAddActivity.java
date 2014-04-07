@@ -10,7 +10,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
@@ -34,8 +33,7 @@ import android.widget.Toast;
 import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.Code;
-import com.vivavu.dream.common.DreamApp;
-import com.vivavu.dream.common.RepeatType;
+import com.vivavu.dream.common.enums.RepeatType;
 import com.vivavu.dream.fragment.bucket.option.description.DescriptionViewFragment;
 import com.vivavu.dream.fragment.bucket.option.repeat.RepeatViewFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
@@ -54,8 +52,6 @@ import com.vivavu.dream.util.ViewUnbindHelper;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -85,7 +81,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
     Button mBtnBucketOptionPic;
     @InjectView(R.id.btn_bucket_option_gallery)
     Button mBtnBucketOptionGallery;
-    @InjectView(R.id.ivCardImage)
+    @InjectView(R.id.iv_timeline_image)
     ImageView mIvCardImage;
     @InjectView(R.id.option_contents)
     LinearLayout mOptionContents;
@@ -175,7 +171,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
     }
 
     public void saveBucket() {
-        BucketAddTask bucketAddTask = new BucketAddTask(getContext());
+        BucketAddTask bucketAddTask = new BucketAddTask();
         bucketAddTask.execute(bucket);
     }
 
@@ -207,11 +203,12 @@ public class BucketAddActivity extends BaseActionBarActivity {
                     // 찍은 사진을 이미지뷰에 보여준다.
                     if(data != null && data.getExtras() != null) {
                         Bitmap bm = (Bitmap) data.getExtras().getParcelable("data");
-                        ImageView ivCardImage = (ImageView) findViewById(R.id.ivCardImage);
-                        ivCardImage.setImageBitmap(bm);
+                        mIvCardImage.setVisibility(View.VISIBLE);
+                        mIvCardImage.setImageBitmap(bm);
                     } else if( f.exists() ){
                         /// http://stackoverflow.com/questions/9890757/android-camera-data-intent-returns-null
                         /// EXTRA_OUTPUT을 선언해주면 해당 경로에 파일을 직접생성하고 썸네일을 리턴하지 않음
+                        mIvCardImage.setVisibility(View.VISIBLE);
                         ImageUtil.setPic(mIvCardImage, mImageCaptureUri.getPath());
                     }
                     if(f.exists()){
@@ -245,7 +242,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
                     final Bundle extras = data.getExtras();
                     if(extras != null){
                         Bitmap photo = extras.getParcelable("data");
-                        ImageView ivCardImage = (ImageView) findViewById(R.id.ivCardImage);
+                        ImageView ivCardImage = (ImageView) findViewById(R.id.iv_timeline_image);
                         ivCardImage.setImageBitmap(photo);
                     }
                 }
@@ -440,7 +437,8 @@ public class BucketAddActivity extends BaseActionBarActivity {
             // Create the File where the photo should go
             File photoFile = null;
             try {
-                photoFile = createImageFile();
+                photoFile = ImageUtil.createImageFile();
+                mImageCaptureUri = Uri.fromFile(photoFile);
             } catch (IOException ex) {
                 Log.e("dream", ex.getMessage());
             }
@@ -456,23 +454,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
 
     }
 
-    private File createImageFile() throws IOException{
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
 
-        // Save a file: path for use with ACTION_VIEW intents
-        mImageCaptureUri = Uri.fromFile(image);
-        return image;
-
-    }
 
     private void doTakeAlbumAction(){
         Intent intent = new Intent( Intent.ACTION_PICK ) ;
@@ -510,11 +492,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
     }
 
     public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<Bucket>>{
-        private DreamApp context;
-
-        public BucketAddTask(DreamApp context) {
-            this.context = context;
-        }
 
         @Override
         protected ResponseBodyWrapped<Bucket> doInBackground(Bucket... params) {

@@ -127,7 +127,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     }
 
     public void logout(){
-        getContext().logout();
+        DreamApp.getInstance().logout();
 
         Session session = Session.getActiveSession();
         if(session != null && !session.isClosed()){

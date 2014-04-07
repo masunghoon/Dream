@@ -1,6 +1,6 @@
 package com.vivavu.dream.model.bucket.option;
 
-import com.vivavu.dream.common.RepeatType;
+import com.vivavu.dream.common.enums.RepeatType;
 
 /**
  * Created by yuja on 14. 1. 24.

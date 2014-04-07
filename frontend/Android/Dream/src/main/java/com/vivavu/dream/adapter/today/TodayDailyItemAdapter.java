@@ -11,13 +11,18 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.vivavu.dream.R;
-import com.vivavu.dream.activity.bucket.BucketAddActivity;
+import com.vivavu.dream.activity.bucket.TimelineActivity;
+import com.vivavu.dream.activity.bucket.timeline.TimelineItemEditActivity;
+import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.Today;
+import com.vivavu.dream.model.bucket.timeline.Post;
+import com.vivavu.dream.repository.DataRepository;
 import com.vivavu.dream.util.DateUtils;
-import com.vivavu.dream.util.image.ImageFetcher;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -30,7 +35,6 @@ public class TodayDailyItemAdapter extends BaseAdapter implements View.OnClickLi
     private Context context;
     private LayoutInflater mInflater;
     private List<Today> todayList;
-    private ImageFetcher mImageFetcher;
 
     public TodayDailyItemAdapter(Context context, List<Today> todayList) {
         this.context = context;
@@ -74,7 +78,7 @@ public class TodayDailyItemAdapter extends BaseAdapter implements View.OnClickLi
         return convertView;
     }
 
-    public void init(ButterknifeViewHolder holder, Today today) {
+    public void init(ButterknifeViewHolder holder, final Today today) {
 
         holder.mBookTitle.setText(today.getTitle());
         holder.mBookDudate.setText(DateUtils.getDateString(today.getDeadline(), "yyyy-MM-dd"));
@@ -83,8 +87,12 @@ public class TodayDailyItemAdapter extends BaseAdapter implements View.OnClickLi
             public void onClick(View v) {
                 Intent intent;
                 intent = new Intent();
-                intent.setClass(context, BucketAddActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.setClass(context, TimelineItemEditActivity.class);
+                Bucket bucket = DataRepository.getBucket(today.getBucketId());
+                Post post = new Post(new Date());
+                intent.putExtra(TimelineActivity.extraKeyBucket, bucket);
+                intent.putExtra(TimelineActivity.extraKeyPost, post);
+                //intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                 context.startActivity(intent);
             }
         });
@@ -97,20 +105,12 @@ public class TodayDailyItemAdapter extends BaseAdapter implements View.OnClickLi
 
         // Finally load the image asynchronously into the ImageView, this also takes care of
         // setting a placeholder image while the background thread runs
-        mImageFetcher.loadImage(today.getCvrImgUrl(), holder.mBookCoverImage);
+        ImageLoader.getInstance().displayImage(today.getCvrImgUrl(), holder.mBookCoverImage);
     }
 
     @Override
     public void onClick(View v) {
 
-    }
-
-    public ImageFetcher getmImageFetcher() {
-        return mImageFetcher;
-    }
-
-    public void setmImageFetcher(ImageFetcher mImageFetcher) {
-        this.mImageFetcher = mImageFetcher;
     }
 
     /**

@@ -108,7 +108,7 @@ public class MainTodayFragment extends CustomBaseFragment implements PullToRefre
 
     @Override
     public void onRefresh(PullToRefreshBase<ListView> listViewPullToRefreshBase) {
-        TodayAsyncTask todayAsyncTask = new TodayAsyncTask(getContext());
+        TodayAsyncTask todayAsyncTask = new TodayAsyncTask();
         todayAsyncTask.setOnPostExecuteCallback(new CustomAsyncTask.OnPostExecuteCallback() {
             @Override
             public void onPostExecuteCallback() {

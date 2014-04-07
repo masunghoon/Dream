@@ -1,15 +1,20 @@
 package com.vivavu.dream.activity.bucket.timeline;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.bucket.TimelineActivity;
 import com.vivavu.dream.common.BaseActionBarActivity;
@@ -48,6 +53,8 @@ public class TimelineItemViewActivity extends BaseActionBarActivity{
     LinearLayout mContentFrame;
     @InjectView(R.id.btn_timeline_title)
     Button mBtnTimelineTitle;
+    @InjectView(R.id.iv_timeline_image)
+    ImageView mIvTimelineImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +82,18 @@ public class TimelineItemViewActivity extends BaseActionBarActivity{
     private void bindData(Post post) {
         mTxtPostText.setText(post.getText());
         mTxtPostDate.setText(DateUtils.getDateString(post.getRegDt(), "yyyy.MM.dd hh:mm"));
+        ImageLoader.getInstance().displayImage(post.getImgUrl(), mIvTimelineImage, new SimpleImageLoadingListener(){
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                super.onLoadingComplete(imageUri, view, loadedImage);
+                // 이미지가 없을 경우에는 imageview 자체를 안보여줌
+                if(loadedImage != null) {
+                    view.setVisibility(View.VISIBLE);
+                }else {
+                    view.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     @Override

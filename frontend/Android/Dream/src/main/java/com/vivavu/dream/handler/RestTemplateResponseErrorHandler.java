@@ -58,10 +58,9 @@ public class RestTemplateResponseErrorHandler implements ResponseErrorHandler {
     }
 
     public static DreamApp getContext() {
+        if (context == null) {
+            context = DreamApp.getInstance();
+        }
         return context;
-    }
-
-    public static void setContext(DreamApp context) {
-        RestTemplateResponseErrorHandler.context = context;
     }
 }

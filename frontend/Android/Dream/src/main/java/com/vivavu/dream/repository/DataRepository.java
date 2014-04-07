@@ -48,18 +48,18 @@ public class DataRepository {
     private static DreamApp context;
     private static DatabaseHelper databaseHelper;
 
-    public DataRepository(DreamApp context) {
-        this.context = context;
-        databaseHelper = new DatabaseHelper(context);
+    public DataRepository() {
+        this.context = DreamApp.getInstance();
+        databaseHelper = new DatabaseHelper(getContext());
     }
 
     private static HttpHeaders getBasicAuthHeader(){
 
-        if(context.getTokenType() !=null &&  !"facebook".equals(context.getTokenType())){
-            return getBasicAuthHeader(context.getToken(), "unused");
+        if(getContext().getTokenType() !=null &&  !"facebook".equals(getContext().getTokenType())){
+            return getBasicAuthHeader(DreamApp.getInstance().getToken(), "unused");
         }
         else{
-            return getBasicAuthHeader(context.getToken(), "facebook");
+            return getBasicAuthHeader(DreamApp.getInstance().getToken(), "facebook");
         }
 
     }
@@ -203,6 +203,9 @@ public class DataRepository {
     }
 
     public static DreamApp getContext() {
+        if(context == null){
+            context = DreamApp.getInstance();
+        }
         return context;
     }
 
@@ -212,7 +215,7 @@ public class DataRepository {
 
     public static DatabaseHelper getDatabaseHelper() {
         if(databaseHelper == null){
-            databaseHelper = new DatabaseHelper(context);
+            databaseHelper = new DatabaseHelper(getContext());
         }
         return databaseHelper;
     }

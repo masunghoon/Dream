@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.ScrollView;
 
 import com.vivavu.dream.R;
+import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.fragment.CustomProgressFragment;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
@@ -130,11 +131,11 @@ public class UserRegisterFragment extends CustomProgressFragment {
             if (userInfo == null || !userInfo.isSuccess()) {
                 return false;
             } else {
-                context.setUser(userInfo.getData().getUser());
-                context.setUsername(userInfo.getData().getUser().getUsername());
-                context.setToken(userInfo.getData().getToken());
-                context.setTokenType("unused");
-                context.saveAppDefaultInfo();
+                DreamApp.getInstance().setUser(userInfo.getData().getUser());
+                DreamApp.getInstance().setUsername(userInfo.getData().getUser().getUsername());
+                DreamApp.getInstance().setToken(userInfo.getData().getToken());
+                DreamApp.getInstance().setTokenType("unused");
+                DreamApp.getInstance().saveAppDefaultInfo();
             }
 
             return true;
@@ -144,12 +145,12 @@ public class UserRegisterFragment extends CustomProgressFragment {
         protected void onPostExecute(final Boolean success) {
             setContentShown(true);
             if (success) {
-                context.setLogin(false);
+                DreamApp.getInstance().setLogin(false);
                 getActivity().setResult(Activity.RESULT_OK);
                 getActivity().finish();
             } else {
                 this.cancel(false);
-                context.setLogin(false);
+                DreamApp.getInstance().setLogin(false);
                 mPassword.setError(getString(R.string.error_incorrect_password));
                 mPassword.requestFocus();
             }
