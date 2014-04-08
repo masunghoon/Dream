@@ -29,7 +29,7 @@ import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.timeline.Post;
-import com.vivavu.dream.repository.TimelineConnector;
+import com.vivavu.dream.repository.connector.TimelineConnector;
 import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.ImageUtil;
 

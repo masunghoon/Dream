@@ -13,7 +13,7 @@ import com.vivavu.dream.R;
 import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
-import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.repository.connector.UserInfoConnector;
 import com.vivavu.dream.util.ValidationUtils;
 
 import butterknife.ButterKnife;
@@ -62,7 +62,8 @@ public class ResetPasswordActivity extends BaseActionBarActivity {
 
         @Override
         protected ResponseBodyWrapped<LoginInfo> doInBackground(Void... voids) {
-            ResponseBodyWrapped<LoginInfo> response =  DataRepository.resetPassword(String.valueOf(mEmail.getText()));
+            UserInfoConnector userInfoConnector = new UserInfoConnector();
+            ResponseBodyWrapped<LoginInfo> response =  userInfoConnector.resetPassword(String.valueOf(mEmail.getText()));
 
             return response;
         }

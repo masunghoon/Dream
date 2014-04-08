@@ -19,9 +19,12 @@ public class RestTemplateUtils {
 
 
     public static HttpHeaders getBasicAuthHeader(String username, String password){
-        HttpAuthentication httpAuthentication = new HttpBasicAuthentication(username, password);
+
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setAuthorization(httpAuthentication);
+        if(username != null && password != null) {
+            HttpAuthentication httpAuthentication = new HttpBasicAuthentication(username, password);
+            httpHeaders.setAuthorization(httpAuthentication);
+        }
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         httpHeaders.setAccept(Collections.singletonList(new MediaType("application", "json")));
 

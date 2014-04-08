@@ -26,7 +26,7 @@ import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.timeline.Post;
 import com.vivavu.dream.model.bucket.timeline.TimelineMetaInfo;
 import com.vivavu.dream.repository.DataRepository;
-import com.vivavu.dream.repository.TimelineConnector;
+import com.vivavu.dream.repository.connector.TimelineConnector;
 import com.vivavu.dream.util.DateUtils;
 
 import java.util.Collections;

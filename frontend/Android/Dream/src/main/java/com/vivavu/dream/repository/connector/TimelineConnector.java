@@ -1,4 +1,4 @@
-package com.vivavu.dream.repository;
+package com.vivavu.dream.repository.connector;
 
 import android.graphics.Bitmap;
 import android.util.Log;
@@ -12,6 +12,7 @@ import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.timeline.Post;
 import com.vivavu.dream.model.bucket.timeline.Timeline;
 import com.vivavu.dream.model.bucket.timeline.TimelineMetaInfo;
+import com.vivavu.dream.repository.Connector;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.JsonFactory;
 import com.vivavu.dream.util.RestTemplateUtils;

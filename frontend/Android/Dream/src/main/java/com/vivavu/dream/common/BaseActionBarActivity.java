@@ -1,11 +1,15 @@
 package com.vivavu.dream.common;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.facebook.Session;
 import com.vivavu.dream.activity.StartActivity;
@@ -13,20 +17,53 @@ import com.vivavu.dream.activity.intro.IntroActivity;
 import com.vivavu.dream.activity.main.MainActivity;
 import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
-import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.repository.connector.UserInfoConnector;
 import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.util.FacebookUtils;
+import com.vivavu.dream.util.NetworkUtil;
 
 /**
  * Created by yuja on 14. 2. 6.
  */
 public class BaseActionBarActivity extends ActionBarActivity implements View.OnClickListener{
     protected DreamApp context;
+    protected NetworkChangeReceiver networkChangeReceiver;
+    protected IntentFilter intentFilterChange;
+    protected IntentFilter intentFilterWifi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        context = (DreamApp) getApplicationContext();
+        context = DreamApp.getInstance();
+        networkChangeReceiver = new NetworkChangeReceiver();
+        intentFilterChange = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
+        intentFilterWifi = new IntentFilter("android.net.wifi.WIFI_STATE_CHANGED");
+        checkNetwork();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(networkChangeReceiver, intentFilterChange);
+        registerReceiver(networkChangeReceiver, intentFilterWifi);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(networkChangeReceiver);
+    }
+
+    protected void onNetworkStateChanged(boolean connected){
+        if(!connected) {
+            Toast.makeText(this, "인터넷 연결을 확인해 주세요.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private boolean checkNetwork() {
+        boolean connected = NetworkUtil.isAvaliableNetworkAccess(context);
+        onNetworkStateChanged(connected);
+        return connected;
     }
 
     public DreamApp getContext() {
@@ -62,13 +99,6 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     }
 
     public void goHome(){
-        /*
-        Intent intent = new Intent();
-        intent.setClass(this, StartActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        */
-
         Intent intent = new Intent();
         intent.setAction("android.intent.action.MAIN");
         intent.addCategory("android.intent.category.HOME");
@@ -106,9 +136,15 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     }
 
     public boolean checkLogin(){
+        int connectivityStatus = NetworkUtil.getConnectivityStatus(context);
+        if(connectivityStatus == NetworkUtil.TYPE_NOT_CONNECTED){
+            return false;
+        }
         if(context.isLogin() == false || FacebookUtils.isOpen()){
             if(context.hasValidToken()){
-            ResponseBodyWrapped<BaseInfo> response = DataRepository.getBaseInfo();
+                UserInfoConnector userInfoConnector = new UserInfoConnector();
+
+            ResponseBodyWrapped<BaseInfo> response = userInfoConnector.getBaseInfo();
                 if(response.isSuccess()){
                     BaseInfo baseInfo = response.getData();
                     context.setUser(baseInfo);
@@ -127,7 +163,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     }
 
     public void logout(){
-        DreamApp.getInstance().logout();
+        context.logout();
 
         Session session = Session.getActiveSession();
         if(session != null && !session.isClosed()){
@@ -184,6 +220,20 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         protected Void doInBackground(Void... voids) {
             checkLogin();
             return null;
+        }
+    }
+
+    public class NetworkChangeReceiver extends BroadcastReceiver {
+        protected boolean connected;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            connected = NetworkUtil.isAvaliableNetworkAccess(DreamApp.getInstance());
+            onNetworkStateChanged(connected);
+        }
+
+        public boolean isConnected() {
+            return connected;
         }
     }
 }

@@ -20,7 +20,7 @@ import com.vivavu.dream.common.Code;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
-import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.repository.connector.UserInfoConnector;
 import com.vivavu.dream.util.ValidationUtils;
 
 import butterknife.ButterKnife;
@@ -222,8 +222,8 @@ public class LoginActivity extends BaseActionBarActivity {
                 return new ResponseBodyWrapped<SecureToken>("error", "unknown", new SecureToken());
             }
 
-
-            ResponseBodyWrapped<SecureToken> userInfo = DataRepository.getToken(user.getEmail(), user.getPassword());
+            UserInfoConnector userInfoConnector = new UserInfoConnector();
+            ResponseBodyWrapped<SecureToken> userInfo = userInfoConnector.getToken(user.getEmail(), user.getPassword());
 
             return userInfo;
         }

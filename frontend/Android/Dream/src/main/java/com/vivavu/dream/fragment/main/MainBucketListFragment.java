@@ -8,17 +8,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.handmark.pulltorefresh.library.PullToRefreshBase;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 import com.vivavu.dream.R;
 import com.vivavu.dream.adapter.bucket.BucketAdapter;
+import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.fragment.CustomBaseFragment;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.bucket.Bucket;
 import com.vivavu.dream.model.bucket.BucketGroup;
 import com.vivavu.dream.repository.BucketConnector;
 import com.vivavu.dream.repository.DataRepository;
+import com.vivavu.dream.util.NetworkUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,8 +136,13 @@ public class MainBucketListFragment extends CustomBaseFragment implements PullTo
 
     @Override
     public void onRefresh(final PullToRefreshBase<ListView> listViewPullToRefreshBase) {
-        Thread thread = new Thread(new NetworkThread());
-        thread.start();
+        if(NetworkUtil.isAvaliableNetworkAccess(DreamApp.getInstance())) {
+            Thread thread = new Thread(new NetworkThread());
+            thread.start();
+        }else {
+            Toast.makeText(getActivity(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
+            mList.onRefreshComplete();
+        }
     }
 
 

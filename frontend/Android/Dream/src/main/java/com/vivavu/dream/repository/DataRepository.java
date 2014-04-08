@@ -12,7 +12,6 @@ import com.j256.ormlite.stmt.Where;
 import com.vivavu.dream.common.Constants;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.common.RestTemplateFactory;
-import com.vivavu.dream.model.BaseInfo;
 import com.vivavu.dream.model.LoginInfo;
 import com.vivavu.dream.model.ResponseBodyWrapped;
 import com.vivavu.dream.model.SecureToken;
@@ -21,14 +20,11 @@ import com.vivavu.dream.model.bucket.BucketGroup;
 import com.vivavu.dream.model.bucket.Today;
 import com.vivavu.dream.model.bucket.TodayGroup;
 import com.vivavu.dream.model.user.User;
+import com.vivavu.dream.util.RestTemplateUtils;
 
-import org.springframework.http.HttpAuthentication;
-import org.springframework.http.HttpBasicAuthentication;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -36,7 +32,6 @@ import org.springframework.web.client.RestTemplate;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -56,21 +51,12 @@ public class DataRepository {
     private static HttpHeaders getBasicAuthHeader(){
 
         if(getContext().getTokenType() !=null &&  !"facebook".equals(getContext().getTokenType())){
-            return getBasicAuthHeader(DreamApp.getInstance().getToken(), "unused");
+            return RestTemplateUtils.getBasicAuthHeader(DreamApp.getInstance().getToken(), "unused");
         }
         else{
-            return getBasicAuthHeader(DreamApp.getInstance().getToken(), "facebook");
+            return RestTemplateUtils.getBasicAuthHeader(DreamApp.getInstance().getToken(), "facebook");
         }
 
-    }
-    private static HttpHeaders getBasicAuthHeader(String username, String password){
-        HttpAuthentication httpAuthentication = new HttpBasicAuthentication(username, password);
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setAuthorization(httpAuthentication);
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        httpHeaders.setAccept(Collections.singletonList(new MediaType("application", "json")));
-
-        return httpHeaders;
     }
 
     public static ResponseBodyWrapped<SecureToken> registUser(LoginInfo loginInfo){
@@ -90,53 +76,6 @@ public class DataRepository {
         ResponseBodyWrapped<SecureToken> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
 
         return responseBodyWrapped;
-    }
-
-    public static ResponseBodyWrapped<SecureToken> getToken(String email, String password){
-
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader(email, password);
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-        ResponseEntity<String> result = null;
-        try{
-            result = restTemplate.exchange(Constants.apiToken, HttpMethod.GET, request, String.class);
-        }catch (RestClientException e) {
-            Log.e("dream", e.toString());
-            return new ResponseBodyWrapped<SecureToken>("error", "오류가 발생하였습니다. 다시 시도해주시기 바랍니다.", null);
-        }
-
-        if(result.getStatusCode() == HttpStatus.OK){
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-            Type type = new TypeToken<ResponseBodyWrapped<SecureToken>>(){}.getType();
-            ResponseBodyWrapped<SecureToken> responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
-            return responseBodyWrapped;
-        }else if (result.getStatusCode() == HttpStatus.UNAUTHORIZED){
-            return new ResponseBodyWrapped<SecureToken>("error", "사용자 정보 확인 필요", null);
-        }
-        return new ResponseBodyWrapped<SecureToken>();
-    }
-
-    public static ResponseBodyWrapped<BaseInfo> getBaseInfo(){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-
-        ResponseEntity<String> result = null;
-        try{
-            result = restTemplate.exchange(Constants.apiBaseInfo, HttpMethod.GET, request, String.class);
-        }catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-        ResponseBodyWrapped<BaseInfo> responseBodyWrapped = null;
-        if(result != null && result.getStatusCode() == HttpStatus.OK || result.getStatusCode()== HttpStatus.NO_CONTENT){
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-            Type type = new TypeToken<ResponseBodyWrapped<BaseInfo>>(){}.getType();
-            responseBodyWrapped = gson.fromJson(String.valueOf(result.getBody()), type);
-            //GsonBuilder
-            return responseBodyWrapped;
-        }
-
-        return new ResponseBodyWrapped<BaseInfo>();
     }
 
     public static void deleteBucket(Integer bucketId){
@@ -176,31 +115,7 @@ public class DataRepository {
         return user.getData();
     }
 
-    public static ResponseBodyWrapped<LoginInfo> resetPassword(String email){
-        RestTemplate restTemplate = RestTemplateFactory.getInstance();
-        HttpHeaders requestHeaders = getBasicAuthHeader();
-        HttpEntity request = new HttpEntity<String>(requestHeaders);
-        ResponseEntity<String> result = null;
 
-        try {
-            result = restTemplate.exchange(Constants.apiResetPassword, HttpMethod.POST, request, String.class, email);
-        } catch (RestClientException e) {
-            Log.e("dream", e.toString());
-        }
-
-
-        if(result.getStatusCode() == HttpStatus.OK){
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-            Type type = new TypeToken<ResponseBodyWrapped<LoginInfo>>(){}.getType();
-
-            ResponseBodyWrapped<LoginInfo> user = gson.fromJson((String) result.getBody(), type);
-            /*TypeToken.get(user.getClass());
-            ResponseBodyWrapped<LoginInfo> usr = RestTemplateUtils.responseToJson(result,type );*/
-            return user;
-        }
-
-        return new ResponseBodyWrapped<LoginInfo>();
-    }
 
     public static DreamApp getContext() {
         if(context == null){
