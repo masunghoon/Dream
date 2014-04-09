@@ -139,13 +139,8 @@ public class MainActivity extends BaseActionBarActivity {
 
     @Override
     protected void onResume() {
-        //다시 활성화 될때.
         super.onResume();
-        if (checkLogin() == false) {
-            //goLogin();
-        } else {
 
-        }
     }
 
     @Override

@@ -61,6 +61,7 @@ import butterknife.InjectView;
 public class BucketAddActivity extends BaseActionBarActivity {
     private static final int SEND_DATA_START = 0;
     private static final int SEND_DATA_END = 1;
+    private static final int SEND_DATA_ERROR = 2;
     @InjectView(R.id.bucket_input_title)
     EditText mBucketInputTitle;
     @InjectView(R.id.btn_input_dday)
@@ -102,7 +103,17 @@ public class BucketAddActivity extends BaseActionBarActivity {
                     progressDialog.show();
                     break;
                 case SEND_DATA_END:
-                    progressDialog.dismiss();
+                    if(progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
+                    Toast.makeText(BucketAddActivity.this, modString + "성공", Toast.LENGTH_LONG).show();
+                    Intent intent = new Intent();
+                    intent.putExtra("bucketId", (Integer) bucket.getId());
+                    setResult(RESULT_OK, intent);
+                    finish();
+                    break;
+                case SEND_DATA_ERROR:
+                    Toast.makeText(BucketAddActivity.this, modString + "실패하였습니다. 다시 시도해주세요.", Toast.LENGTH_LONG).show();
                     break;
             }
         }
@@ -170,6 +181,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
     }
 
     public void saveBucket() {
+        handler.sendEmptyMessage(SEND_DATA_START);
         BucketAddTask bucketAddTask = new BucketAddTask();
         bucketAddTask.execute(bucket);
     }
@@ -251,6 +263,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
 
     private void updateUiData(OptionDDay dday) {
         bucket.setTitle(mBucketInputTitle.getText().toString());
+        bucket.setScope("DECADE");
         bucket.setRange(dday.getRange());
         bucket.setDeadline(dday.getDeadline());
         bindData();
@@ -280,8 +293,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
 
 
     private void bindData() {
-        mTextInputDday.setText(DateUtils.getDateString(bucket.getDeadline(), "yyyy-MM-dd"));
-        mTextInputRemain.setText(bucket.getRemainDays());
         mBucketInputTitle.setText(bucket.getTitle());
 
         if(bucket.getCvrImgUrl() != null && mIvCardImage.getDrawable()== null) {
@@ -293,9 +304,11 @@ public class BucketAddActivity extends BaseActionBarActivity {
             mTextInputDday.setText( DateUtils.getDateString(bucket.getDeadline(), "yyyy-MM-dd"));
             mTextInputRemain.setText(DateUtils.getRemainDayInString(bucket.getDeadline()));
         } else {
-            mTextInputDday.setText("");
+            mTextInputDday.setText("in my life");
             mTextInputRemain.setText("");
         }
+
+        mBtnBucketOptionPublic.setSelected( bucket.getIsPrivate() == null || bucket.getIsPrivate() == 1 );
 
         DescriptionViewFragment descriptionViewFragment = (DescriptionViewFragment) getSupportFragmentManager().findFragmentByTag(DescriptionViewFragment.TAG);
         if(ValidationUtils.isNotEmpty(bucket.getDescription())){
@@ -457,7 +470,7 @@ public class BucketAddActivity extends BaseActionBarActivity {
 
     private void doTakeAlbumAction(){
         Intent intent = new Intent( Intent.ACTION_PICK ) ;
-        intent.setType( MediaStore.Images.Media.CONTENT_TYPE ) ;
+        intent.setType(MediaStore.Images.Media.CONTENT_TYPE) ;
         startActivityForResult( intent, Code.ACT_ADD_BUCKET_TAKE_GALLERY ) ;
     }
 
@@ -481,7 +494,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
 
         @Override
         protected ResponseBodyWrapped<Bucket> doInBackground(Bucket... params) {
-            handler.sendEmptyMessage(SEND_DATA_START);
             BucketConnector bucketConnector = new BucketConnector();
             ResponseBodyWrapped<Bucket> responseBodyWrapped = new ResponseBodyWrapped<Bucket>();
 
@@ -503,19 +515,10 @@ public class BucketAddActivity extends BaseActionBarActivity {
                 Bucket bucket = bucketWrappedResponseBodyWrapped.getData();
                 if(bucket != null){
                     DataRepository.saveBucket(bucket);
-
-                    if (bucket != null) {
-                        Toast.makeText(BucketAddActivity.this, modString + "성공", Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent();
-                        intent.putExtra("bucketId", (Integer) bucket.getId());
-                        setResult(RESULT_OK, intent);
-                        handler.sendEmptyMessage(SEND_DATA_END);
-                        finish();
-                    }
+                    handler.sendEmptyMessage(SEND_DATA_END);
                 }
             }else {
-                Toast.makeText(BucketAddActivity.this, modString + "실패하였습니다. 다시 시도해주세요.", Toast.LENGTH_LONG).show();
-                handler.sendEmptyMessage(SEND_DATA_END);
+                handler.sendEmptyMessage(SEND_DATA_ERROR);
             }
         }
     }

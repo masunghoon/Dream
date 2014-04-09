@@ -143,8 +143,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
         if(context.isLogin() == false || FacebookUtils.isOpen()){
             if(context.hasValidToken()){
                 UserInfoConnector userInfoConnector = new UserInfoConnector();
-
-            ResponseBodyWrapped<BaseInfo> response = userInfoConnector.getBaseInfo();
+                ResponseBodyWrapped<BaseInfo> response = userInfoConnector.getBaseInfo();
                 if(response.isSuccess()){
                     BaseInfo baseInfo = response.getData();
                     context.setUser(baseInfo);

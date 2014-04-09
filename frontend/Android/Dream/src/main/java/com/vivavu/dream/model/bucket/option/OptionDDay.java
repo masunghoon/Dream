@@ -10,10 +10,18 @@ import java.util.Date;
 public class OptionDDay extends Option {
     private String range;
     private Date deadline;
+    private String postfix;
 
     public OptionDDay(String range, Date deadline) {
         this.range = range;
         this.deadline = deadline;
+        this.postfix = "";
+    }
+
+    public OptionDDay(String range, Date deadline, String postfix) {
+        this.range = range;
+        this.deadline = deadline;
+        this.postfix = postfix;
     }
 
     public String getDdayString(){
@@ -36,6 +44,17 @@ public class OptionDDay extends Option {
         this.deadline = deadline;
     }
 
+    public String getPostfix() {
+        return postfix;
+    }
+
+    public void setPostfix(String postfix) {
+        this.postfix = postfix;
+    }
+
+    public String getRangeString(){
+        return range + String.valueOf(postfix);
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

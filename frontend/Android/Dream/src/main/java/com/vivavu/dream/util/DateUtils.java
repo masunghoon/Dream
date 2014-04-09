@@ -97,13 +97,13 @@ public class DateUtils {
             cal.add(Calendar.DATE, -1);
             for(int i = 0; i < 6; i++){
                 cal.add(Calendar.YEAR, 10 );
-                ddays.add(new OptionDDay( (period + i*10) +"대" , cal.getTime()));
+                ddays.add(new OptionDDay( String.valueOf(period + i*10) , cal.getTime(), "대"));
             }
         } else {
             cal.add(Calendar.DATE, -1);
             for(int i = 0; i < 6; i++){
                 cal.add(Calendar.YEAR, 10 );
-                ddays.add(new OptionDDay( (i+1)*10 +"년 후" , cal.getTime()));
+                ddays.add(new OptionDDay( String.valueOf((i+1)*10), cal.getTime(), "년 후"));
             }
         }
 

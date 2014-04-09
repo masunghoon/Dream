@@ -80,6 +80,17 @@ public class BucketConnector {
         if (bucket.getDeadline() != null) {
             requestBucket.add("deadline", DateUtils.getDateString(bucket.getDeadline(), "yyyy-MM-dd"));
         }
+
+        if(bucket.getIsPrivate() != null){
+            requestBucket.add("private", String.valueOf(bucket.getIsPrivate()));
+        }
+        if(bucket.getRange() != null){
+            requestBucket.add("range", bucket.getRange());
+        }
+
+        if(bucket.getScope() != null){
+            requestBucket.add("scope", bucket.getScope());
+        }
         if (bucket.getRptType() != null) {
             requestBucket.add("rpt_type", bucket.getRptType());
             requestBucket.add("rpt_cndt", bucket.getRptCndt());
