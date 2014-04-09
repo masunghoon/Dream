@@ -140,7 +140,7 @@ public class MainBucketListFragment extends CustomBaseFragment implements PullTo
             Thread thread = new Thread(new NetworkThread());
             thread.start();
         }else {
-            Toast.makeText(getActivity(), "인터넷 연결을 확인해 주세요.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), getText(R.string.no_network_connection_toast), Toast.LENGTH_SHORT).show();
             mList.onRefreshComplete();
         }
     }

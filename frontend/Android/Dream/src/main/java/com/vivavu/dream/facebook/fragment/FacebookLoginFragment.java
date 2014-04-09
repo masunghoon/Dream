@@ -1,7 +1,9 @@
 package com.vivavu.dream.facebook.fragment;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,9 +16,12 @@ import com.facebook.UiLifecycleHelper;
 import com.facebook.widget.LoginButton;
 import com.vivavu.dream.R;
 import com.vivavu.dream.activity.intro.IntroActivity;
-import com.vivavu.dream.common.BaseActionBarActivity;
 import com.vivavu.dream.common.DreamApp;
 import com.vivavu.dream.fragment.CustomBaseFragment;
+import com.vivavu.dream.model.LoginInfo;
+import com.vivavu.dream.model.ResponseBodyWrapped;
+import com.vivavu.dream.model.SecureToken;
+import com.vivavu.dream.repository.connector.UserInfoConnector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +39,7 @@ public class FacebookLoginFragment extends CustomBaseFragment {
     @InjectView(R.id.txt_facebook_login_explain)
     TextView mTxtFacebookLoginExplain;
     private UiLifecycleHelper uiHelper;
+    private ProgressDialog progressDialog;
 
     private Session.StatusCallback callback = new Session.StatusCallback() {
         public void call(Session session, SessionState state, Exception exception) {
@@ -65,6 +71,9 @@ public class FacebookLoginFragment extends CustomBaseFragment {
         super.onCreate(savedInstanceState);
         uiHelper = new UiLifecycleHelper(getActivity(), callback);
         uiHelper.onCreate(savedInstanceState);
+
+        progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setMessage("진행중");
     }
 
     private void onSessionStateChange(Session session, SessionState state, Exception exception) {
@@ -98,13 +107,18 @@ public class FacebookLoginFragment extends CustomBaseFragment {
 
         if (requestCode == Session.DEFAULT_AUTHORIZE_ACTIVITY_CODE) {
             if (resultCode == Activity.RESULT_OK) {
-                DreamApp.getInstance().setToken(Session.getActiveSession().getAccessToken(), "facebook");
-                if (getActivity() instanceof BaseActionBarActivity) {
+                LoginInfo loginInfo = new LoginInfo();
+                loginInfo.setEmail(Session.getActiveSession().getAccessToken());
+                loginInfo.setPassword("facebook");
+
+                GetTokenTask getTokenTask = new GetTokenTask();
+                getTokenTask.execute(loginInfo);
+                /*if (getActivity() instanceof BaseActionBarActivity) {
                     BaseActionBarActivity activity = (BaseActionBarActivity) getActivity();
                     //activity.checkAppExit();
                     activity.setResult(Activity.RESULT_OK);
                     activity.finish();
-                }
+                }*/
             }
             return;
         }
@@ -126,5 +140,74 @@ public class FacebookLoginFragment extends CustomBaseFragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         uiHelper.onSaveInstanceState(outState);
+    }
+
+    public class GetTokenTask extends AsyncTask<LoginInfo, Void, ResponseBodyWrapped<SecureToken>> {
+
+        @Override
+        protected ResponseBodyWrapped<SecureToken> doInBackground(LoginInfo... params) {
+            showProgress(true);
+            LoginInfo user = null;
+            if (params.length > 0) {
+                user = params[0];
+            } else {
+                return new ResponseBodyWrapped<SecureToken>("error", "unknown", new SecureToken());
+            }
+
+            UserInfoConnector userInfoConnector = new UserInfoConnector();
+            ResponseBodyWrapped<SecureToken> userInfo = userInfoConnector.getToken(user.getEmail(), user.getPassword());
+
+            return userInfo;
+        }
+
+        @Override
+        protected void onPostExecute(final ResponseBodyWrapped<SecureToken> success) {
+
+            if (success != null && success.isSuccess()) {
+                DreamApp.getInstance().setLogin(true);
+                DreamApp.getInstance().setUser(success.getData().getUser());
+                DreamApp.getInstance().setUsername(success.getData().getUser().getUsername());
+                DreamApp.getInstance().setToken(success.getData().getToken());
+                DreamApp.getInstance().setTokenType("unused");
+                DreamApp.getInstance().saveAppDefaultInfo();
+                Session session = Session.getActiveSession();
+                if (session != null && (session.isOpened() || session.isClosed())) {
+                    Session.getActiveSession().closeAndClearTokenInformation();
+                }
+                getActivity().setResult(Activity.RESULT_OK);
+                getActivity().finish();
+            } else {
+                this.cancel(false);
+                Session session = Session.getActiveSession();
+                if (session != null && (session.isOpened() || session.isClosed())) {
+                    Session.getActiveSession().closeAndClearTokenInformation();
+                }
+
+                DreamApp.getInstance().setLogin(false);
+            }
+            showProgress(false);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            showProgress(true);
+        }
+
+        @Override
+        protected void onCancelled() {
+            this.cancel(true);
+            showProgress(false);
+        }
+    }
+
+    private void showProgress(boolean b) {
+        if(b) {
+            progressDialog.show();
+            mAuthButton.setVisibility(View.GONE);
+        }else {
+            progressDialog.dismiss();
+            mAuthButton.setVisibility(View.VISIBLE);
+        }
     }
 }

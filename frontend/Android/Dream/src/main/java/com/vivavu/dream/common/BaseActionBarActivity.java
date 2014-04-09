@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.facebook.Session;
+import com.vivavu.dream.R;
 import com.vivavu.dream.activity.StartActivity;
 import com.vivavu.dream.activity.intro.IntroActivity;
 import com.vivavu.dream.activity.main.MainActivity;
@@ -56,7 +57,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
 
     protected void onNetworkStateChanged(boolean connected){
         if(!connected) {
-            Toast.makeText(this, "인터넷 연결을 확인해 주세요.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getText(R.string.no_network_connection_toast), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -136,8 +137,7 @@ public class BaseActionBarActivity extends ActionBarActivity implements View.OnC
     }
 
     public boolean checkLogin(){
-        int connectivityStatus = NetworkUtil.getConnectivityStatus(context);
-        if(connectivityStatus == NetworkUtil.TYPE_NOT_CONNECTED){
+        if(!checkNetwork()){
             return false;
         }
         if(context.isLogin() == false || FacebookUtils.isOpen()){

@@ -25,7 +25,6 @@ import com.vivavu.dream.util.AndroidUtils;
 import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
-import com.vivavu.dream.util.ViewUnbindHelper;
 import com.vivavu.dream.view.CustomPopupWindow;
 
 import java.io.File;
@@ -157,18 +156,6 @@ public class MainShelfItemFragment extends CustomBaseFragment{
             intent.putExtra(TimelineActivity.extraKey, bucket.getId());
             startActivity(intent);
         }
-    }
-
-    @Override
-    public void onDestroyView() {
-        ViewUnbindHelper.unbindReferences(getView());
-        super.onDestroyView();
-    }
-
-    @Override
-    public void onDestroy() {
-        ViewUnbindHelper.unbindReferences(mBookCoverImage);
-        super.onDestroy();
     }
 
     /**

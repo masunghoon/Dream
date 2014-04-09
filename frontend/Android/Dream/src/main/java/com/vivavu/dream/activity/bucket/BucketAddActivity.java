@@ -48,7 +48,6 @@ import com.vivavu.dream.util.DateUtils;
 import com.vivavu.dream.util.FileUtils;
 import com.vivavu.dream.util.ImageUtil;
 import com.vivavu.dream.util.ValidationUtils;
-import com.vivavu.dream.util.ViewUnbindHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -476,19 +475,6 @@ public class BucketAddActivity extends BaseActionBarActivity {
         intent.putExtra("scale", true);
         intent.putExtra("return-data", true);
         startActivityForResult(intent, Code.ACT_ADD_BUCKET_CROP_FROM_CAMERA);
-    }
-
-    @Override
-    protected void onDestroy() {
-
-        ViewUnbindHelper.unbindReferences(mBtnBucketOptionGallery);
-        ViewUnbindHelper.unbindReferences(mBtnBucketOptionNote);
-        ViewUnbindHelper.unbindReferences(mBtnBucketOptionPic);
-        ViewUnbindHelper.unbindReferences(mBtnBucketOptionPublic);
-        ViewUnbindHelper.unbindReferences(mBtnBucketOptionRepeat);
-        ViewUnbindHelper.unbindReferences(mBtnInputDday);
-        ViewUnbindHelper.unbindReferences(mIvCardImage);
-        super.onDestroy();
     }
 
     public class BucketAddTask extends CustomAsyncTask<Bucket, Void, ResponseBodyWrapped<Bucket>>{
