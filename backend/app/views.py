@@ -175,9 +175,12 @@ def verify_password(username_or_token, password):
                                        'fb_exchange_token':username_or_token})
             conn.request("GET","/oauth/access_token?"+ params)
             response = conn.getresponse()
+            print response
             resp_body = response.read()
+            print resp_body
 
             longLivedAccessToken=resp_body.split('&')[0].split('=')[1]
+            print longLivedAccessToken
 
             UserSocial.upsert_user(user.id, 'facebook', fb_user['id'], longLivedAccessToken)
 
