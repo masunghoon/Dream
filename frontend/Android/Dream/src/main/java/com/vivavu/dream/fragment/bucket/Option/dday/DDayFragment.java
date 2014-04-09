@@ -167,12 +167,12 @@ public class DDayFragment extends OptionBaseFragment<OptionDDay> implements View
             mBtnRange5.setTag(ddays.get(4));
             mBtnRange6.setTag(ddays.get(5));
 
-            mBtnRange1.setText(ddays.get(0).getRange());
-            mBtnRange2.setText(ddays.get(1).getRange());
-            mBtnRange3.setText(ddays.get(2).getRange());
-            mBtnRange4.setText(ddays.get(3).getRange());
-            mBtnRange5.setText(ddays.get(4).getRange());
-            mBtnRange6.setText(ddays.get(5).getRange());
+            mBtnRange1.setText(ddays.get(0).getRangeString());
+            mBtnRange2.setText(ddays.get(1).getRangeString());
+            mBtnRange3.setText(ddays.get(2).getRangeString());
+            mBtnRange4.setText(ddays.get(3).getRangeString());
+            mBtnRange5.setText(ddays.get(4).getRangeString());
+            mBtnRange6.setText(ddays.get(5).getRangeString());
         }
 
         return;
